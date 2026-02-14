@@ -1,0 +1,236 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* EVERSOL Design System - Solar Energy Premium Brand */
+
+@layer base {
+  :root {
+    /* Primary: Dark Gray - Main brand color */
+    --primary: 220 14% 23%;
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 220 14% 30%;
+    --primary-dark: 220 14% 15%;
+
+    /* Background: Clean White */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 15%;
+
+    /* Card: Pure White */
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 15%;
+
+    /* Popover */
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 15%;
+
+    /* Secondary: Orange */
+    --secondary: 30 100% 50%;
+    --secondary-foreground: 0 0% 100%;
+
+    /* Muted: Light gray */
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+
+    /* Accent: Orange */
+    --accent: 30 100% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Solar Orange */
+    --solar-yellow: 30 100% 50%;
+    --solar-yellow-light: 30 100% 60%;
+    --solar-yellow-dark: 30 100% 40%;
+
+    /* Green - Used sparingly (10%) */
+    --eco-green: 147 100% 33%;
+    --eco-green-light: 147 100% 38%;
+    --eco-green-dark: 147 100% 25%;
+
+    /* Destructive */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Border & Input */
+    --border: 0 0% 90%;
+    --input: 0 0% 95%;
+    --ring: 30 100% 50%;
+    /* Orange ring to match secondary color */
+
+    /* Radius */
+    --radius: 0.5rem;
+
+    /* Sidebar */
+    --sidebar-background: 220 14% 23%;
+    /* Dark gray */
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 30 100% 50%;
+    /* Orange */
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 30 100% 50%;
+    /* Orange */
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 220 14% 30%;
+    --sidebar-ring: 30 100% 50%;
+
+    /* Custom Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(220 14% 23%) 0%, hsl(220 14% 15%) 100%);
+    --gradient-solar: linear-gradient(135deg, hsl(30 100% 50%) 0%, hsl(30 100% 40%) 100%);
+    --gradient-eco: linear-gradient(135deg, hsl(30 100% 50%) 0%, hsl(30 100% 40%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(0 0% 98%) 100%);
+
+    /* Shadows */
+    --shadow-sm: 0 2px 8px -2px hsl(0 0% 0% / 0.05);
+    --shadow-md: 0 8px 24px -8px hsl(0 0% 0% / 0.1);
+    --shadow-lg: 0 16px 48px -12px hsl(0 0% 0% / 0.15);
+    --shadow-glow-orange: 0 0 40px hsl(30 100% 50% / 0.3);
+  }
+
+  .dark {
+    --background: 0 0% 10%;
+    --foreground: 0 0% 98%;
+
+    --card: 0 0% 15%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 0 0% 15%;
+    --popover-foreground: 0 0% 98%;
+
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: 'Montserrat', sans-serif;
+    @apply font-bold tracking-tight;
+  }
+}
+
+@layer components {
+
+  /* Hero Section Styles */
+  .hero-gradient {
+    background: var(--gradient-hero);
+  }
+
+  .solar-glow {
+    box-shadow: var(--shadow-glow-yellow);
+  }
+
+  .eco-glow {
+    box-shadow: var(--shadow-glow-green);
+  }
+
+  /* Section backgrounds */
+  .section-primary {
+    @apply bg-primary text-primary-foreground;
+  }
+
+  .section-light {
+    @apply bg-card;
+  }
+
+  /* Animated underline */
+  .underline-animate {
+    position: relative;
+  }
+
+  .underline-animate::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: hsl(var(--accent));
+    transition: width 0.3s ease;
+  }
+
+  .underline-animate:hover::after {
+    width: 100%;
+  }
+
+  /* Card hover effect */
+  .card-hover {
+    @apply transition-all duration-300;
+  }
+
+  .card-hover:hover {
+    @apply -translate-y-2;
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* Counter animation */
+  .counter-glow {
+    text-shadow: 0 0 30px hsl(var(--solar-yellow) / 0.5);
+  }
+}
+
+@layer utilities {
+
+  /* Text colors */
+  .text-solar {
+    color: hsl(var(--solar-yellow));
+  }
+
+  .text-eco {
+    color: hsl(var(--eco-green));
+  }
+
+  /* Background colors */
+  .bg-solar {
+    background-color: hsl(var(--solar-yellow));
+  }
+
+  .bg-eco {
+    background-color: hsl(var(--eco-green));
+  }
+
+  .bg-primary-light {
+    background-color: hsl(var(--primary-light));
+  }
+
+  .bg-primary-dark {
+    background-color: hsl(var(--primary-dark));
+  }
+
+  /* Gradient backgrounds */
+  .bg-gradient-hero {
+    background: var(--gradient-hero);
+  }
+
+  .bg-gradient-solar {
+    background: var(--gradient-solar);
+  }
+
+  .bg-gradient-eco {
+    background: var(--gradient-eco);
+  }
+
+  /* Animation delays */
+  .animation-delay-200 {
+    animation-delay: 200ms;
+  }
+
+  .animation-delay-400 {
+    animation-delay: 400ms;
+  }
+
+  .animation-delay-600 {
+    animation-delay: 600ms;
+  }
+}
