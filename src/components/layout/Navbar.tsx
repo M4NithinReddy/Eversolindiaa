@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Sun, ShoppingCart } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Menu, X, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useCart } from '@/context/CartContext';
 
 const navLinks = [
   { name: 'Home', path: '/' },
-  { name: 'Products', path: '/shop' },
+  { name: 'About', path: '/about' },
+  { name: 'Products', path: '/shop', hash: 'product-search' },
   { name: 'Solutions', path: '/solutions' },
   { name: 'Impact', path: '/impact' },
-  { name: 'About', path: '/about' },
   { name: 'Contact', path: '/contact' },
 ];
 
@@ -17,6 +18,27 @@ export const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { totalItems } = useCart();
+
+  const handleNavClick = (e: React.MouseEvent, link: { path: string; hash?: string }) => {
+    if (link.hash) {
+      e.preventDefault();
+      if (location.pathname === link.path) {
+        // Already on the page — just scroll
+        const el = document.getElementById(link.hash);
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        // Navigate first, then scroll after mount
+        navigate(link.path);
+        setTimeout(() => {
+          const el = document.getElementById(link.hash!);
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }, 300);
+      }
+      setIsMobileMenuOpen(false);
+    }
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -27,8 +49,8 @@ export const Navbar = () => {
   }, []);
 
   const isHome = location.pathname === '/';
-  const navBg = isScrolled || !isHome 
-    ? 'bg-background/95 backdrop-blur-md shadow-md' 
+  const navBg = isScrolled || !isHome
+    ? 'bg-background/95 backdrop-blur-md shadow-md'
     : 'bg-transparent';
   const textColor = isScrolled || !isHome ? 'text-foreground' : 'text-primary-foreground';
   const logoColor = isScrolled || !isHome ? 'text-primary' : 'text-primary-foreground';
@@ -39,10 +61,10 @@ export const Navbar = () => {
         <nav className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center h-16">
-            <img 
-              src="/images/eversollogo.png" 
-              alt="Eversol Logo" 
-              className="h-full w-auto object-contain" 
+            <img
+              src="/images/eversol.png"
+              alt="Eversol Logo"
+              className="h-full w-auto object-contain"
             />
           </Link>
 
@@ -51,7 +73,8 @@ export const Navbar = () => {
             {navLinks.map((link) => (
               <Link
                 key={link.path}
-                to={link.path}
+                to={link.hash ? `${link.path}#${link.hash}` : link.path}
+                onClick={(e) => link.hash ? handleNavClick(e, link) : undefined}
                 className={`relative font-medium transition-colors duration-300 ${textColor} hover:text-solar underline-animate`}
               >
                 {link.name}
@@ -67,14 +90,16 @@ export const Navbar = () => {
 
           {/* CTA Buttons */}
           <div className="hidden lg:flex items-center gap-4">
+            <Link to="/cart" className={`relative p-2 rounded-full hover:bg-white/10 transition-colors ${textColor}`}>
+              <ShoppingCart className="h-5 w-5" />
+              {totalItems > 0 && (
+                <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                  {totalItems > 99 ? '99+' : totalItems}
+                </span>
+              )}
+            </Link>
             <Button variant={isScrolled || !isHome ? "outline" : "heroOutline"} size="sm" asChild>
               <Link to="/contact">Get Quote</Link>
-            </Button>
-            <Button variant="solar" size="sm" asChild>
-              <Link to="/shop" className="flex items-center gap-2">
-                <ShoppingCart className="h-4 w-4" />
-                Shop Now
-              </Link>
             </Button>
           </div>
 
@@ -102,11 +127,10 @@ export const Navbar = () => {
               {navLinks.map((link) => (
                 <Link
                   key={link.path}
-                  to={link.path}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`block py-3 font-medium text-foreground hover:text-primary transition-colors ${
-                    location.pathname === link.path ? 'text-primary' : ''
-                  }`}
+                  to={link.hash ? `${link.path}#${link.hash}` : link.path}
+                  onClick={(e) => link.hash ? handleNavClick(e, link) : setIsMobileMenuOpen(false)}
+                  className={`block py-3 font-medium text-foreground hover:text-primary transition-colors ${location.pathname === link.path ? 'text-primary' : ''
+                    }`}
                 >
                   {link.name}
                 </Link>

@@ -31,13 +31,14 @@ export const Footer = () => {
           {/* Brand Column */}
           <div className="lg:col-span-2">
             <Link to="/" className="flex items-center gap-2 mb-6">
-              <Sun className="h-10 w-10 text-solar" />
-              <span className="text-3xl font-heading font-bold">
-                EVER<span className="text-solar">SOL</span>
-              </span>
+              <img
+                src="/images/eversol.png"
+                alt="Eversol Logo"
+                className="h-14 w-auto object-contain"
+              />
             </Link>
             <p className="text-primary-foreground/80 mb-4 max-w-sm leading-relaxed">
-              Powering India's sustainable future with premium solar energy solutions. 
+              Powering India's sustainable future with premium solar energy solutions.
               Generate | Conserve | Contribute
             </p>
             <div className="flex gap-4 mt-6">
@@ -62,8 +63,8 @@ export const Footer = () => {
             <ul className="space-y-3">
               {footerLinks.products.map((link) => (
                 <li key={link.path}>
-                  <Link 
-                    to={link.path} 
+                  <Link
+                    to={link.path}
                     className="text-primary-foreground/80 hover:text-solar transition-colors duration-300"
                   >
                     {link.name}
@@ -79,8 +80,8 @@ export const Footer = () => {
             <ul className="space-y-3">
               {footerLinks.solutions.map((link) => (
                 <li key={link.path}>
-                  <Link 
-                    to={link.path} 
+                  <Link
+                    to={link.path}
                     className="text-primary-foreground/80 hover:text-solar transition-colors duration-300"
                   >
                     {link.name}

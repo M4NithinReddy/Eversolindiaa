@@ -1,4 +1,4 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
@@ -9,6 +9,8 @@ import panelImg from '@/assets/product-solar-panel.jpg';
 import inverterImg from '@/assets/product-inverter.jpg';
 import batteryImg from '@/assets/product-battery.jpg';
 import kitImg from '@/assets/product-rooftop-kit.jpg';
+import { useCart } from '@/context/CartContext';
+import { useState } from 'react';
 
 // Product type definitions
 type ProductSpecification = {
@@ -1182,7 +1184,7 @@ const ProductDetail = () => {
         </div>
       ));
     }
-    
+
     // Handle object format
     return Object.entries(product.specifications).map(([key, value]) => (
       <div key={key} className="flex justify-between py-2 border-b">
@@ -1190,6 +1192,25 @@ const ProductDetail = () => {
         <span className="font-medium text-right">{String(value)}</span>
       </div>
     ));
+  };
+
+  const { addToCart } = useCart();
+  const navigate = useNavigate();
+  const [added, setAdded] = useState(false);
+
+  const handleAddToCart = () => {
+    addToCart({
+      id: String(product.id),
+      name: product.name,
+      category: product.category,
+      brand: product.brand,
+      capacity: product.capacity,
+      price: product.price,
+      image: product.image,
+      warranty: product.warranty,
+    });
+    setAdded(true);
+    setTimeout(() => setAdded(false), 2000);
   };
 
   const formatPrice = (price: number) => {
@@ -1299,9 +1320,14 @@ const ProductDetail = () => {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4 mb-8">
-                <Button variant="solar" size="xl" className="flex-1">
-                  <ShoppingCart className="h-5 w-5" />
-                  Add to Cart
+                <Button
+                  variant="solar"
+                  size="xl"
+                  className={`flex-1 transition-all duration-300 ${added ? 'bg-green-500 hover:bg-green-600' : ''}`}
+                  onClick={handleAddToCart}
+                >
+                  {added ? <Check className="h-5 w-5" /> : <ShoppingCart className="h-5 w-5" />}
+                  {added ? 'Added to Cart!' : 'Add to Cart'}
                 </Button>
                 {product.datasheet && (
                   <Button
