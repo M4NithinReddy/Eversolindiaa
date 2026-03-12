@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import * as api from '@/services/adminApi';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 export interface AdminModule {
@@ -53,14 +54,18 @@ export interface AdminData {
 
 interface AdminContextType {
   data: AdminData;
+  loading: boolean;
+  error: string | null;
   // Module CRUD
-  addModule: (name: string) => void;
-  updateModule: (id: string, name: string) => void;
-  deleteModule: (id: string) => void;
+  refreshModules: () => Promise<void>;
+  addModule: (name: string) => Promise<void>;
+  updateModule: (id: string, name: string) => Promise<void>;
+  deleteModule: (id: string) => Promise<void>;
   // Brand CRUD
-  addBrand: (name: string, moduleId: string) => void;
-  updateBrand: (id: string, name: string) => void;
-  deleteBrand: (id: string) => void;
+  refreshBrands: () => Promise<void>;
+  addBrand: (name: string, moduleId: string) => Promise<void>;
+  updateBrand: (id: string, name: string) => Promise<void>;
+  deleteBrand: (id: string) => Promise<void>;
   // Sub-brand CRUD
   addSubBrand: (name: string, brandId: string) => void;
   updateSubBrand: (id: string, name: string) => void;
@@ -100,8 +105,8 @@ const SEED_BRANDS = [
 const ts = '2026-01-01T00:00:00.000Z';
 
 const defaultData: AdminData = {
-  modules: SEED_MODULES.map(m => ({ ...m, createdAt: ts })),
-  brands: SEED_BRANDS.map(b => ({ ...b, createdAt: ts })),
+  modules: [],
+  brands: [],
   subBrands: [],
   products: [],
 };
@@ -110,16 +115,19 @@ function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
 }
 
-function loadData(): AdminData {
+function loadLocalData(): AdminData {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as AdminData;
-      // If stored data has no modules, seed it with defaults
-      if (!parsed.modules || parsed.modules.length === 0) {
-        return defaultData;
-      }
-      return parsed;
+      // We no longer fallback to seed data. Modules/Brands come from API.
+      // Sub-brands/Products read from local storage.
+      return {
+        ...defaultData,
+        ...parsed,
+        modules: [], // Clear modules to force API fetch
+        brands: [],   // Clear brands to force API fetch
+      };
     }
     return defaultData;
   } catch {
@@ -130,62 +138,184 @@ function loadData(): AdminData {
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
 export const AdminProvider = ({ children }: { children: ReactNode }) => {
-  const [data, setData] = useState<AdminData>(loadData);
+  const [data, setData] = useState<AdminData>(loadLocalData);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
+  // Sync ONLY subBrands and products to local storage
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  }, [data]);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      ...data,
+      modules: [], // do not persist modules
+      brands: [],  // do not persist brands
+    }));
+  }, [data.subBrands, data.products]);
+
+  // Initial load
+  useEffect(() => {
+    let mounted = true;
+    
+    async function init() {
+      setLoading(true);
+      setError(null);
+      try {
+        const [apiModules, apiBrands] = await Promise.all([
+          api.fetchModules(),
+          api.fetchBrands(),
+        ]);
+        if (mounted) {
+          setData(prev => ({ ...prev, modules: apiModules, brands: apiBrands }));
+        }
+      } catch (err: any) {
+        if (mounted) setError(err.message || 'Failed to load initial data');
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    }
+    init();
+    
+    return () => { mounted = false; };
+  }, []);
 
   // ── Module ─────────────────────────────────────────────────────────────────
-  const addModule = useCallback((name: string) => {
-    setData(prev => ({
-      ...prev,
-      modules: [...prev.modules, { id: generateId(), name, createdAt: new Date().toISOString() }],
-    }));
+  
+  const refreshModules = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const modules = await api.fetchModules();
+      setData(prev => ({ ...prev, modules }));
+    } catch (err: any) {
+      setError(err.message || 'Failed to refresh modules');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const updateModule = useCallback((id: string, name: string) => {
-    setData(prev => ({
-      ...prev,
-      modules: prev.modules.map(m => (m.id === id ? { ...m, name } : m)),
-    }));
+  const addModule = useCallback(async (name: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const newModule = await api.createModule(name);
+      setData(prev => ({
+        ...prev,
+        modules: [...prev.modules, newModule],
+      }));
+    } catch (err: any) {
+      setError(err.message || 'Failed to create module');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const deleteModule = useCallback((id: string) => {
-    setData(prev => {
-      const brandIds = prev.brands.filter(b => b.moduleId === id).map(b => b.id);
-      const subBrandIds = prev.subBrands.filter(sb => brandIds.includes(sb.brandId)).map(sb => sb.id);
-      return {
-        modules: prev.modules.filter(m => m.id !== id),
-        brands: prev.brands.filter(b => b.moduleId !== id),
-        subBrands: prev.subBrands.filter(sb => !brandIds.includes(sb.brandId)),
-        products: prev.products.filter(p => p.moduleId !== id),
-      };
-    });
+  const updateModule = useCallback(async (id: string, name: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const updated = await api.updateModule(id, name);
+      // Backend returns the updated module, but let's refresh to be safe or update inline
+      setData(prev => ({
+        ...prev,
+        modules: prev.modules.map(m => (m.id === id ? { ...updated } : m)),
+      }));
+    } catch (err: any) {
+      setError(err.message || 'Failed to update module');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const deleteModule = useCallback(async (id: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await api.deleteModuleApi(id);
+      setData(prev => {
+        const brandIds = prev.brands.filter(b => b.moduleId === id).map(b => b.id);
+        const subBrandIds = prev.subBrands.filter(sb => brandIds.includes(sb.brandId)).map(sb => sb.id);
+        return {
+          modules: prev.modules.filter(m => m.id !== id),
+          brands: prev.brands.filter(b => b.moduleId !== id),
+          subBrands: prev.subBrands.filter(sb => !brandIds.includes(sb.brandId)),
+          products: prev.products.filter(p => p.moduleId !== id),
+        };
+      });
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete module');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   // ── Brand ──────────────────────────────────────────────────────────────────
-  const addBrand = useCallback((name: string, moduleId: string) => {
-    setData(prev => ({
-      ...prev,
-      brands: [...prev.brands, { id: generateId(), name, moduleId, createdAt: new Date().toISOString() }],
-    }));
+  
+  const refreshBrands = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const brands = await api.fetchBrands();
+      setData(prev => ({ ...prev, brands }));
+    } catch (err: any) {
+      setError(err.message || 'Failed to refresh brands');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const updateBrand = useCallback((id: string, name: string) => {
-    setData(prev => ({
-      ...prev,
-      brands: prev.brands.map(b => (b.id === id ? { ...b, name } : b)),
-    }));
+  const addBrand = useCallback(async (name: string, moduleId: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const newBrand = await api.createBrand(name, moduleId);
+      setData(prev => ({
+        ...prev,
+        brands: [...prev.brands, newBrand],
+      }));
+    } catch (err: any) {
+      setError(err.message || 'Failed to create brand');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const deleteBrand = useCallback((id: string) => {
-    setData(prev => ({
-      ...prev,
-      brands: prev.brands.filter(b => b.id !== id),
-      subBrands: prev.subBrands.filter(sb => sb.brandId !== id),
-      products: prev.products.filter(p => p.brandId !== id),
-    }));
+  const updateBrand = useCallback(async (id: string, name: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const updated = await api.updateBrand(id, name);
+      setData(prev => ({
+        ...prev,
+        brands: prev.brands.map(b => (b.id === id ? { ...updated } : b)),
+      }));
+    } catch (err: any) {
+      setError(err.message || 'Failed to update brand');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const deleteBrand = useCallback(async (id: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await api.deleteBrandApi(id);
+      setData(prev => ({
+        ...prev,
+        brands: prev.brands.filter(b => b.id !== id),
+        subBrands: prev.subBrands.filter(sb => sb.brandId !== id),
+        products: prev.products.filter(p => p.brandId !== id),
+      }));
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete brand');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   // ── Sub-brand ──────────────────────────────────────────────────────────────
@@ -237,8 +367,10 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     <AdminContext.Provider
       value={{
         data,
-        addModule, updateModule, deleteModule,
-        addBrand, updateBrand, deleteBrand,
+        loading,
+        error,
+        refreshModules, addModule, updateModule, deleteModule,
+        refreshBrands, addBrand, updateBrand, deleteBrand,
         addSubBrand, updateSubBrand, deleteSubBrand,
         addProduct, updateProduct, deleteProduct,
       }}

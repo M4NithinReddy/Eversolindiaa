@@ -7,13 +7,13 @@ import ProductList from '@/components/admin/ProductList';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Plus, LayoutDashboard, Package, Tags, ShoppingBag, ChevronRight } from 'lucide-react';
+import { Plus, LayoutDashboard, Package, Tags, ShoppingBag, ChevronRight, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 type View = 'dashboard' | 'productForm';
 
 const AdminDashboard = () => {
-  const { data } = useAdmin();
+  const { data, loading, error } = useAdmin();
   const [selectedModule, setSelectedModule] = useState<AdminModule | null>(null);
   const [selectedBrand, setSelectedBrand] = useState<AdminBrand | null>(null);
   const [selectedSubBrand, setSelectedSubBrand] = useState<AdminSubBrand | null>(null);
@@ -54,6 +54,30 @@ const AdminDashboard = () => {
     setEditProduct(null);
     setView('dashboard');
   };
+
+  if (loading && data.modules.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-emerald-600 mb-4" />
+        <p className="text-gray-500 font-medium animate-pulse">Loading dashboard data...</p>
+      </div>
+    );
+  }
+
+  if (error && data.modules.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4 text-red-600">
+           <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+        </div>
+        <h2 className="text-xl font-bold text-gray-900 mb-2">Failed to load dashboard</h2>
+        <p className="text-gray-500 max-w-md">{error}</p>
+        <Button onClick={() => window.location.reload()} className="mt-6 bg-emerald-600 hover:bg-emerald-700">
+          Try Again
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

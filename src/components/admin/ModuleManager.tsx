@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, Package } from 'lucide-react';
+import { Plus, Pencil, Trash2, Package, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface ModuleManagerProps {
@@ -13,27 +13,35 @@ interface ModuleManagerProps {
 }
 
 const ModuleManager = ({ onSelectModule, selectedModuleId }: ModuleManagerProps) => {
-  const { data, addModule, updateModule, deleteModule } = useAdmin();
+  const { data, loading, error, addModule, updateModule, deleteModule } = useAdmin();
   const [newName, setNewName] = useState('');
   const [editId, setEditId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (newName.trim()) {
-      addModule(newName.trim());
-      setNewName('');
-      setCreateOpen(false);
+      try {
+        await addModule(newName.trim());
+        setNewName('');
+        setCreateOpen(false);
+      } catch (err) {
+        // error handled by context
+      }
     }
   };
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     if (editId && editName.trim()) {
-      updateModule(editId, editName.trim());
-      setEditId(null);
-      setEditName('');
-      setEditOpen(false);
+      try {
+        await updateModule(editId, editName.trim());
+        setEditId(null);
+        setEditName('');
+        setEditOpen(false);
+      } catch (err) {
+        // error handled by context
+      }
     }
   };
 
@@ -69,9 +77,12 @@ const ModuleManager = ({ onSelectModule, selectedModuleId }: ModuleManagerProps)
             />
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant="outline" className="border-gray-300 text-gray-600">Cancel</Button>
+                <Button variant="outline" disabled={loading} className="border-gray-300 text-gray-600">Cancel</Button>
               </DialogClose>
-              <Button onClick={handleCreate} className="bg-emerald-600 hover:bg-emerald-700">Create</Button>
+              <Button onClick={handleCreate} disabled={loading || !newName.trim()} className="bg-emerald-600 hover:bg-emerald-700">
+                {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                Create
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -91,15 +102,35 @@ const ModuleManager = ({ onSelectModule, selectedModuleId }: ModuleManagerProps)
           />
           <DialogFooter>
             <DialogClose asChild>
-              <Button variant="outline" className="border-gray-300 text-gray-600">Cancel</Button>
+              <Button variant="outline" disabled={loading} className="border-gray-300 text-gray-600">Cancel</Button>
             </DialogClose>
-            <Button onClick={handleUpdate} className="bg-emerald-600 hover:bg-emerald-700">Save</Button>
+            <Button onClick={handleUpdate} disabled={loading || !editName.trim()} className="bg-emerald-600 hover:bg-emerald-700">
+              {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Save
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <AnimatePresence>
-        {data.modules.length === 0 ? (
+        {loading && data.modules.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex items-center justify-center py-12 text-emerald-600"
+          >
+            <Loader2 className="w-8 h-8 animate-spin" />
+          </motion.div>
+        ) : error ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-8 text-red-500 bg-red-50 p-4 rounded-lg border border-red-100"
+          >
+            <p className="text-sm font-medium">Error loading modules</p>
+            <p className="text-xs mt-1">{error}</p>
+          </motion.div>
+        ) : data.modules.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -137,6 +168,7 @@ const ModuleManager = ({ onSelectModule, selectedModuleId }: ModuleManagerProps)
                       <Button
                         size="icon"
                         variant="ghost"
+                        disabled={loading}
                         className="h-7 w-7 text-gray-400 hover:text-gray-700 hover:bg-gray-100"
                         onClick={() => startEdit(mod)}
                       >
@@ -145,8 +177,17 @@ const ModuleManager = ({ onSelectModule, selectedModuleId }: ModuleManagerProps)
                       <Button
                         size="icon"
                         variant="ghost"
+                        disabled={loading}
                         className="h-7 w-7 text-gray-400 hover:text-red-500 hover:bg-red-50"
-                        onClick={() => deleteModule(mod.id)}
+                        onClick={async () => {
+                          try {
+                            if (confirm('Are you sure you want to delete this module?')) {
+                              await deleteModule(mod.id);
+                            }
+                          } catch (err) {
+                            // error is handled in context
+                          }
+                        }}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </Button>

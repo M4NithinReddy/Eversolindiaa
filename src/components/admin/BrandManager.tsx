@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAdmin, AdminBrand, AdminSubBrand } from '@/context/AdminContext';
+import * as api from '@/services/adminApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, Tags, ChevronDown, ChevronRight, Layers } from 'lucide-react';
+import { Plus, Pencil, Trash2, Tags, ChevronDown, ChevronRight, Layers, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface BrandManagerProps {
@@ -24,8 +25,34 @@ const BrandManager = ({
   onSelectSubBrand,
   selectedSubBrandId,
 }: BrandManagerProps) => {
-  const { data, addBrand, updateBrand, deleteBrand, addSubBrand, updateSubBrand, deleteSubBrand } = useAdmin();
-  const [newBrandName, setNewBrandName] = useState('');
+  const { data, loading: contextLoading, error: contextError, addBrand, updateBrand, deleteBrand, addSubBrand, updateSubBrand, deleteSubBrand } = useAdmin();
+  
+  // Local state for fetching module-specific brands
+  const [moduleBrands, setModuleBrands] = useState<AdminBrand[]>([]);
+  const [loadingBrands, setLoadingBrands] = useState(false);
+  const [brandsError, setBrandsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    async function loadBrandsForModule() {
+      setLoadingBrands(true);
+      setBrandsError(null);
+      try {
+        const fetched = await api.fetchBrandsByModule(moduleId);
+        if (mounted) setModuleBrands(fetched);
+      } catch (err: any) {
+        if (mounted) setBrandsError(err.message || 'Failed to load brands for module');
+      } finally {
+        if (mounted) setLoadingBrands(false);
+      }
+    }
+    if (moduleId) {
+      loadBrandsForModule();
+    }
+    return () => { mounted = false; };
+  }, [moduleId, data.brands]); // re-fetch if global brands change (create/update/delete)
+
+  const newBrandNameState = useState('');
   const [createBrandOpen, setCreateBrandOpen] = useState(false);
   const [editBrandId, setEditBrandId] = useState<string | null>(null);
   const [editBrandName, setEditBrandName] = useState('');
@@ -43,20 +70,30 @@ const BrandManager = ({
 
   const brands = data.brands.filter(b => b.moduleId === moduleId);
 
-  const handleCreateBrand = () => {
+  const [newBrandName, setNewBrandName] = newBrandNameState;
+
+  const handleCreateBrand = async () => {
     if (newBrandName.trim()) {
-      addBrand(newBrandName.trim(), moduleId);
-      setNewBrandName('');
-      setCreateBrandOpen(false);
+      try {
+        await addBrand(newBrandName.trim(), moduleId);
+        setNewBrandName('');
+        setCreateBrandOpen(false);
+      } catch (err) {
+        // error handled by context
+      }
     }
   };
 
-  const handleUpdateBrand = () => {
+  const handleUpdateBrand = async () => {
     if (editBrandId && editBrandName.trim()) {
-      updateBrand(editBrandId, editBrandName.trim());
-      setEditBrandId(null);
-      setEditBrandName('');
-      setEditBrandOpen(false);
+      try {
+        await updateBrand(editBrandId, editBrandName.trim());
+        setEditBrandId(null);
+        setEditBrandName('');
+        setEditBrandOpen(false);
+      } catch (err) {
+         // error handled by context
+      }
     }
   };
 
@@ -105,9 +142,12 @@ const BrandManager = ({
             />
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant="outline" className="border-gray-300 text-gray-600">Cancel</Button>
+                <Button variant="outline" disabled={contextLoading} className="border-gray-300 text-gray-600">Cancel</Button>
               </DialogClose>
-              <Button onClick={handleCreateBrand} className="bg-blue-600 hover:bg-blue-700">Create</Button>
+              <Button onClick={handleCreateBrand} disabled={contextLoading || !newBrandName.trim()} className="bg-blue-600 hover:bg-blue-700">
+                {contextLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                Create
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -127,9 +167,12 @@ const BrandManager = ({
           />
           <DialogFooter>
             <DialogClose asChild>
-              <Button variant="outline" className="border-gray-300 text-gray-600">Cancel</Button>
+              <Button variant="outline" disabled={contextLoading} className="border-gray-300 text-gray-600">Cancel</Button>
             </DialogClose>
-            <Button onClick={handleUpdateBrand} className="bg-blue-600 hover:bg-blue-700">Save</Button>
+            <Button onClick={handleUpdateBrand} disabled={contextLoading || !editBrandName.trim()} className="bg-blue-600 hover:bg-blue-700">
+              {contextLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Save
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -178,7 +221,24 @@ const BrandManager = ({
       </Dialog>
 
       <AnimatePresence>
-        {brands.length === 0 ? (
+        {loadingBrands ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex items-center justify-center py-8 text-blue-600"
+          >
+            <Loader2 className="w-6 h-6 animate-spin" />
+          </motion.div>
+        ) : brandsError || contextError ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-6 text-red-500 bg-red-50 p-4 rounded-lg border border-red-100"
+          >
+            <p className="text-sm font-medium">Error loading brands</p>
+            <p className="text-xs mt-1">{brandsError || contextError}</p>
+          </motion.div>
+        ) : moduleBrands.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -189,7 +249,7 @@ const BrandManager = ({
           </motion.div>
         ) : (
           <div className="space-y-2">
-            {brands.map(brand => {
+            {moduleBrands.map(brand => {
               const subBrands = data.subBrands.filter(sb => sb.brandId === brand.id);
               const isExpanded = expandedBrandId === brand.id;
               const productCount = data.products.filter(p => p.brandId === brand.id).length;
@@ -233,6 +293,7 @@ const BrandManager = ({
                           <Button
                             size="icon"
                             variant="ghost"
+                            disabled={contextLoading}
                             className="h-7 w-7 text-gray-400 hover:text-gray-700 hover:bg-gray-100"
                             onClick={() => {
                               setEditBrandId(brand.id);
@@ -245,8 +306,17 @@ const BrandManager = ({
                           <Button
                             size="icon"
                             variant="ghost"
+                            disabled={contextLoading}
                             className="h-7 w-7 text-gray-400 hover:text-red-500 hover:bg-red-50"
-                            onClick={() => deleteBrand(brand.id)}
+                            onClick={async () => {
+                              try {
+                                if (confirm('Are you sure you want to delete this brand?')) {
+                                  await deleteBrand(brand.id);
+                                }
+                              } catch(err) {
+                                // handled in context
+                              }
+                            }}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </Button>
