@@ -16,9 +16,10 @@ interface ProductFormProps {
   editProduct?: AdminProduct;
   onCancel: () => void;
   onSaved: () => void;
+  onSaveOverride?: (productData: Omit<AdminProduct, 'id' | 'createdAt'>) => void;
 }
 
-const ProductForm = ({ moduleId, brandId, subBrandId, editProduct, onCancel, onSaved }: ProductFormProps) => {
+const ProductForm = ({ moduleId, brandId, subBrandId, editProduct, onCancel, onSaved, onSaveOverride }: ProductFormProps) => {
   const { data, addProduct, updateProduct } = useAdmin();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -99,7 +100,9 @@ const ProductForm = ({ moduleId, brandId, subBrandId, editProduct, onCancel, onS
       datasheet: datasheet.trim(),
     };
 
-    if (editProduct) {
+    if (onSaveOverride) {
+      onSaveOverride(productData);
+    } else if (editProduct) {
       updateProduct(editProduct.id, productData);
     } else {
       addProduct(productData);
