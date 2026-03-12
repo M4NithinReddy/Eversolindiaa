@@ -1,4 +1,14 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import {
+  getModules,
+  createModuleApi,
+  updateModuleApi,
+  deleteModuleApi,
+  getBrands,
+  createBrandApi,
+  updateBrandApi,
+  deleteBrandApi,
+} from '@/lib/api';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 export interface AdminModule {
@@ -53,14 +63,20 @@ export interface AdminData {
 
 interface AdminContextType {
   data: AdminData;
+  modulesLoading: boolean;
+  modulesError: string | null;
+  modulesBusy: boolean;
+  brandsLoading: boolean;
+  brandsError: string | null;
+  brandsBusy: boolean;
   // Module CRUD
-  addModule: (name: string) => void;
-  updateModule: (id: string, name: string) => void;
-  deleteModule: (id: string) => void;
+  addModule: (name: string) => Promise<void>;
+  updateModule: (id: string, name: string) => Promise<void>;
+  deleteModule: (id: string) => Promise<void>;
   // Brand CRUD
-  addBrand: (name: string, moduleId: string) => void;
-  updateBrand: (id: string, name: string) => void;
-  deleteBrand: (id: string) => void;
+  addBrand: (name: string, moduleId: string) => Promise<void>;
+  updateBrand: (id: string, name: string) => Promise<void>;
+  deleteBrand: (id: string) => Promise<void>;
   // Sub-brand CRUD
   addSubBrand: (name: string, brandId: string) => void;
   updateSubBrand: (id: string, name: string) => void;
@@ -71,172 +87,254 @@ interface AdminContextType {
   deleteProduct: (id: string) => void;
 }
 
-const STORAGE_KEY = 'eversol_admin_data';
+const LOCAL_KEY = 'eversol_admin_data_v2';
 
-// ── Pre-populated modules & brands matching existing Shop data ─────────────
-const SEED_MODULES = [
-  { id: 'mod-solar-modules', name: 'Solar Modules' },
-  { id: 'mod-solar-inverters', name: 'Solar Inverters' },
-  { id: 'mod-solar-storage', name: 'Solar Storage' },
-  { id: 'mod-rooftop-kits', name: 'Rooftop Kits' },
-];
-
-const SEED_BRANDS = [
-  // Solar Modules brands
-  { id: 'brand-solex', name: 'Solex', moduleId: 'mod-solar-modules' },
-  { id: 'brand-pahal', name: 'Pahal', moduleId: 'mod-solar-modules' },
-  { id: 'brand-waaree', name: 'Waaree', moduleId: 'mod-solar-modules' },
-  { id: 'brand-panasonic', name: 'Panasonic', moduleId: 'mod-solar-modules' },
-  // Solar Inverters brands
-  { id: 'brand-solplanet-inv', name: 'Solplanet', moduleId: 'mod-solar-inverters' },
-  { id: 'brand-involtics', name: 'Involtics', moduleId: 'mod-solar-inverters' },
-  { id: 'brand-goodwe', name: 'GoodWe', moduleId: 'mod-solar-inverters' },
-  { id: 'brand-sunways', name: 'Sunways', moduleId: 'mod-solar-inverters' },
-  // Solar Storage brands
-  { id: 'brand-solaryaan', name: 'Solaryaan', moduleId: 'mod-solar-storage' },
-  { id: 'brand-solplanet-stor', name: 'Solplanet', moduleId: 'mod-solar-storage' },
-];
-
-const ts = '2026-01-01T00:00:00.000Z';
-
-const defaultData: AdminData = {
-  modules: SEED_MODULES.map(m => ({ ...m, createdAt: ts })),
-  brands: SEED_BRANDS.map(b => ({ ...b, createdAt: ts })),
-  subBrands: [],
-  products: [],
-};
+function loadLocalData(): Pick<AdminData, 'subBrands' | 'products'> {
+  try {
+    const raw = localStorage.getItem(LOCAL_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        subBrands: parsed.subBrands ?? [],
+        products:  parsed.products  ?? [],
+      };
+    }
+  } catch { /* ignore */ }
+  return { subBrands: [], products: [] };
+}
 
 function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
 }
 
-function loadData(): AdminData {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw) as AdminData;
-      // If stored data has no modules, seed it with defaults
-      if (!parsed.modules || parsed.modules.length === 0) {
-        return defaultData;
-      }
-      return parsed;
-    }
-    return defaultData;
-  } catch {
-    return defaultData;
-  }
-}
-
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
 export const AdminProvider = ({ children }: { children: ReactNode }) => {
-  const [data, setData] = useState<AdminData>(loadData);
+  const local = loadLocalData();
 
+  const [modules,        setModules]        = useState<AdminModule[]>([]);
+  const [brands,         setBrands]         = useState<AdminBrand[]>([]);
+  const [subBrands,      setSubBrands]      = useState<AdminSubBrand[]>(local.subBrands);
+  const [products,       setProducts]       = useState<AdminProduct[]>(local.products);
+  const [modulesLoading, setModulesLoading] = useState(true);
+  const [modulesError,   setModulesError]   = useState<string | null>(null);
+  const [modulesBusy,    setModulesBusy]    = useState(false);
+  const [brandsLoading,  setBrandsLoading]  = useState(true);
+  const [brandsError,    setBrandsError]    = useState<string | null>(null);
+  const [brandsBusy,     setBrandsBusy]     = useState(false);
+
+  // Persist subBrands / products to localStorage (brands now in API)
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  }, [data]);
+    localStorage.setItem(LOCAL_KEY, JSON.stringify({ subBrands, products }));
+  }, [subBrands, products]);
 
-  // ── Module ─────────────────────────────────────────────────────────────────
-  const addModule = useCallback((name: string) => {
-    setData(prev => ({
-      ...prev,
-      modules: [...prev.modules, { id: generateId(), name, createdAt: new Date().toISOString() }],
-    }));
+  // ── Helper: re-fetch modules from GET (used after CORS-blocked mutations) ───
+  const refreshModules = useCallback(async () => {
+    try {
+      const apiModules = await getModules();
+      setModules(apiModules);
+    } catch { /* silently ignore */ }
   }, []);
 
-  const updateModule = useCallback((id: string, name: string) => {
-    setData(prev => ({
-      ...prev,
-      modules: prev.modules.map(m => (m.id === id ? { ...m, name } : m)),
-    }));
+  // ── Helper: re-fetch brands from GET ──────────────────────────────────────
+  const refreshBrands = useCallback(async () => {
+    try {
+      const apiBrands = await getBrands();
+      setBrands(apiBrands);
+    } catch { /* silently ignore */ }
   }, []);
 
-  const deleteModule = useCallback((id: string) => {
-    setData(prev => {
-      const brandIds = prev.brands.filter(b => b.moduleId === id).map(b => b.id);
-      const subBrandIds = prev.subBrands.filter(sb => brandIds.includes(sb.brandId)).map(sb => sb.id);
-      return {
-        modules: prev.modules.filter(m => m.id !== id),
-        brands: prev.brands.filter(b => b.moduleId !== id),
-        subBrands: prev.subBrands.filter(sb => !brandIds.includes(sb.brandId)),
-        products: prev.products.filter(p => p.moduleId !== id),
-      };
-    });
+  // ── Helper: detect CORS / network failure (server succeeded but browser blocked)
+  function isCorsOrNetworkError(err: unknown): boolean {
+    return err instanceof TypeError;
+  }
+
+  // ── Fetch modules from API on mount ────────────────────────────────────────
+  useEffect(() => {
+    let cancelled = false;
+    setModulesLoading(true);
+    setModulesError(null);
+    getModules()
+      .then(apiModules => {
+        if (!cancelled) setModules(apiModules);
+      })
+      .catch(err => {
+        if (!cancelled) setModulesError(err.message ?? 'Failed to load modules');
+      })
+      .finally(() => {
+        if (!cancelled) setModulesLoading(false);
+      });
+    return () => { cancelled = true; };
   }, []);
 
-  // ── Brand ──────────────────────────────────────────────────────────────────
-  const addBrand = useCallback((name: string, moduleId: string) => {
-    setData(prev => ({
-      ...prev,
-      brands: [...prev.brands, { id: generateId(), name, moduleId, createdAt: new Date().toISOString() }],
-    }));
+  // ── Fetch brands from API on mount ─────────────────────────────────────────
+  useEffect(() => {
+    let cancelled = false;
+    setBrandsLoading(true);
+    setBrandsError(null);
+    getBrands()
+      .then(apiBrands => {
+        if (!cancelled) setBrands(apiBrands);
+      })
+      .catch(err => {
+        if (!cancelled) setBrandsError(err.message ?? 'Failed to load brands');
+      })
+      .finally(() => {
+        if (!cancelled) setBrandsLoading(false);
+      });
+    return () => { cancelled = true; };
   }, []);
 
-  const updateBrand = useCallback((id: string, name: string) => {
-    setData(prev => ({
-      ...prev,
-      brands: prev.brands.map(b => (b.id === id ? { ...b, name } : b)),
-    }));
+  // ── Module CRUD (API-backed) ────────────────────────────────────────────────
+  const addModule = useCallback(async (name: string) => {
+    setModulesBusy(true);
+    try {
+      const created = await createModuleApi(name);
+      setModules(prev => [...prev, created]);
+    } finally {
+      setModulesBusy(false);
+    }
   }, []);
 
-  const deleteBrand = useCallback((id: string) => {
-    setData(prev => ({
-      ...prev,
-      brands: prev.brands.filter(b => b.id !== id),
-      subBrands: prev.subBrands.filter(sb => sb.brandId !== id),
-      products: prev.products.filter(p => p.brandId !== id),
-    }));
-  }, []);
+  const updateModule = useCallback(async (id: string, name: string) => {
+    setModulesBusy(true);
+    // Optimistically update UI immediately so it feels instant
+    setModules(prev => prev.map(m => (m.id === id ? { ...m, name } : m)));
+    try {
+      const updated = await updateModuleApi(id, name);
+      // Server returned clean CORS response — apply authoritative data
+      setModules(prev => prev.map(m => (m.id === id ? updated : m)));
+    } catch (err) {
+      if (isCorsOrNetworkError(err)) {
+        // Browser blocked the response due to missing CORS headers on the dev API,
+        // but the server DID succeed (200). Re-fetch from GET to sync state.
+        await refreshModules();
+      } else {
+        // Real error — roll back optimistic update
+        await refreshModules();
+        throw err;
+      }
+    } finally {
+      setModulesBusy(false);
+    }
+  }, [refreshModules]);
 
-  // ── Sub-brand ──────────────────────────────────────────────────────────────
+  const deleteModule = useCallback(async (id: string) => {
+    setModulesBusy(true);
+    // Optimistically remove from UI immediately
+    const brandIds = brands.filter(b => b.moduleId === id).map(b => b.id);
+    setModules(prev   => prev.filter(m => m.id !== id));
+    setBrands(prev    => prev.filter(b => b.moduleId !== id));
+    setSubBrands(prev => prev.filter(sb => !brandIds.includes(sb.brandId)));
+    setProducts(prev  => prev.filter(p => p.moduleId !== id));
+    try {
+      await deleteModuleApi(id);
+      // Success — nothing more to do, UI already updated
+    } catch (err) {
+      if (isCorsOrNetworkError(err)) {
+        // Browser blocked response but server succeeded — re-fetch to confirm
+        await refreshModules();
+      } else {
+        // Real error — restore by re-fetching
+        await refreshModules();
+        throw err;
+      }
+    } finally {
+      setModulesBusy(false);
+    }
+  }, [brands, refreshModules]);
+
+  // ── Brand CRUD (API-backed) ────────────────────────────────────────────────
+  const addBrand = useCallback(async (name: string, moduleId: string) => {
+    setBrandsBusy(true);
+    try {
+      const created = await createBrandApi(name, moduleId);
+      setBrands(prev => [...prev, created]);
+    } catch (err) {
+      if (isCorsOrNetworkError(err)) {
+        await refreshBrands();
+      } else { throw err; }
+    } finally {
+      setBrandsBusy(false);
+    }
+  }, [refreshBrands]);
+
+  const updateBrand = useCallback(async (id: string, name: string) => {
+    setBrandsBusy(true);
+    setBrands(prev => prev.map(b => (b.id === id ? { ...b, name } : b)));
+    try {
+      const updated = await updateBrandApi(id, name);
+      setBrands(prev => prev.map(b => (b.id === id ? updated : b)));
+    } catch (err) {
+      if (isCorsOrNetworkError(err)) {
+        await refreshBrands();
+      } else {
+        await refreshBrands();
+        throw err;
+      }
+    } finally {
+      setBrandsBusy(false);
+    }
+  }, [refreshBrands]);
+
+  const deleteBrand = useCallback(async (id: string) => {
+    setBrandsBusy(true);
+    setBrands(prev    => prev.filter(b => b.id !== id));
+    setSubBrands(prev => prev.filter(sb => sb.brandId !== id));
+    setProducts(prev  => prev.filter(p => p.brandId !== id));
+    try {
+      await deleteBrandApi(id);
+    } catch (err) {
+      if (isCorsOrNetworkError(err)) {
+        await refreshBrands();
+      } else {
+        await refreshBrands();
+        throw err;
+      }
+    } finally {
+      setBrandsBusy(false);
+    }
+  }, [refreshBrands]);
+
+  // ── Sub-brand CRUD (localStorage) ─────────────────────────────────────────
   const addSubBrand = useCallback((name: string, brandId: string) => {
-    setData(prev => ({
-      ...prev,
-      subBrands: [...prev.subBrands, { id: generateId(), name, brandId, createdAt: new Date().toISOString() }],
-    }));
+    setSubBrands(prev => [...prev, { id: generateId(), name, brandId, createdAt: new Date().toISOString() }]);
   }, []);
 
   const updateSubBrand = useCallback((id: string, name: string) => {
-    setData(prev => ({
-      ...prev,
-      subBrands: prev.subBrands.map(sb => (sb.id === id ? { ...sb, name } : sb)),
-    }));
+    setSubBrands(prev => prev.map(sb => (sb.id === id ? { ...sb, name } : sb)));
   }, []);
 
   const deleteSubBrand = useCallback((id: string) => {
-    setData(prev => ({
-      ...prev,
-      subBrands: prev.subBrands.filter(sb => sb.id !== id),
-      products: prev.products.map(p => (p.subBrandId === id ? { ...p, subBrandId: undefined } : p)),
-    }));
+    setSubBrands(prev => prev.filter(sb => sb.id !== id));
+    setProducts(prev  => prev.map(p => (p.subBrandId === id ? { ...p, subBrandId: undefined } : p)));
   }, []);
 
-  // ── Product ────────────────────────────────────────────────────────────────
+  // ── Product CRUD (localStorage) ────────────────────────────────────────────
   const addProduct = useCallback((product: Omit<AdminProduct, 'id' | 'createdAt'>) => {
-    setData(prev => ({
-      ...prev,
-      products: [...prev.products, { ...product, id: generateId(), createdAt: new Date().toISOString() }],
-    }));
+    setProducts(prev => [...prev, { ...product, id: generateId(), createdAt: new Date().toISOString() }]);
   }, []);
 
   const updateProduct = useCallback((id: string, product: Omit<AdminProduct, 'id' | 'createdAt'>) => {
-    setData(prev => ({
-      ...prev,
-      products: prev.products.map(p => (p.id === id ? { ...p, ...product } : p)),
-    }));
+    setProducts(prev => prev.map(p => (p.id === id ? { ...p, ...product } : p)));
   }, []);
 
   const deleteProduct = useCallback((id: string) => {
-    setData(prev => ({
-      ...prev,
-      products: prev.products.filter(p => p.id !== id),
-    }));
+    setProducts(prev => prev.filter(p => p.id !== id));
   }, []);
+
+  const data: AdminData = { modules, brands, subBrands, products };
 
   return (
     <AdminContext.Provider
       value={{
         data,
+        modulesLoading,
+        modulesError,
+        modulesBusy,
+        brandsLoading,
+        brandsError,
+        brandsBusy,
         addModule, updateModule, deleteModule,
         addBrand, updateBrand, deleteBrand,
         addSubBrand, updateSubBrand, deleteSubBrand,

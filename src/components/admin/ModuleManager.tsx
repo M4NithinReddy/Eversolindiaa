@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, Package } from 'lucide-react';
+import { Plus, Pencil, Trash2, Package, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface ModuleManagerProps {
@@ -13,28 +13,35 @@ interface ModuleManagerProps {
 }
 
 const ModuleManager = ({ onSelectModule, selectedModuleId }: ModuleManagerProps) => {
-  const { data, addModule, updateModule, deleteModule } = useAdmin();
+  const { data, addModule, updateModule, deleteModule, modulesLoading, modulesError, modulesBusy } = useAdmin();
   const [newName, setNewName] = useState('');
   const [editId, setEditId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (newName.trim()) {
-      addModule(newName.trim());
+      await addModule(newName.trim());
       setNewName('');
       setCreateOpen(false);
     }
   };
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     if (editId && editName.trim()) {
-      updateModule(editId, editName.trim());
+      await updateModule(editId, editName.trim());
       setEditId(null);
       setEditName('');
       setEditOpen(false);
     }
+  };
+
+  const handleDelete = async (id: string) => {
+    setDeletingId(id);
+    await deleteModule(id);
+    setDeletingId(null);
   };
 
   const startEdit = (mod: AdminModule) => {
@@ -49,10 +56,17 @@ const ModuleManager = ({ onSelectModule, selectedModuleId }: ModuleManagerProps)
         <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
           <Package className="w-5 h-5 text-emerald-600" />
           Modules
+          {modulesLoading && (
+            <Loader2 className="w-4 h-4 text-emerald-500 animate-spin ml-1" />
+          )}
         </h2>
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1">
+            <Button
+              size="sm"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1"
+              disabled={modulesLoading || modulesBusy}
+            >
               <Plus className="w-4 h-4" /> New
             </Button>
           </DialogTrigger>
@@ -64,14 +78,23 @@ const ModuleManager = ({ onSelectModule, selectedModuleId }: ModuleManagerProps)
               placeholder="Module name (e.g., Solar Modules)"
               value={newName}
               onChange={e => setNewName(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleCreate()}
+              onKeyDown={e => e.key === 'Enter' && !modulesBusy && handleCreate()}
               className="bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400"
+              disabled={modulesBusy}
             />
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant="outline" className="border-gray-300 text-gray-600">Cancel</Button>
+                <Button variant="outline" className="border-gray-300 text-gray-600" disabled={modulesBusy}>
+                  Cancel
+                </Button>
               </DialogClose>
-              <Button onClick={handleCreate} className="bg-emerald-600 hover:bg-emerald-700">Create</Button>
+              <Button
+                onClick={handleCreate}
+                className="bg-emerald-600 hover:bg-emerald-700 gap-2"
+                disabled={modulesBusy || !newName.trim()}
+              >
+                {modulesBusy ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</> : 'Create'}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -86,20 +109,59 @@ const ModuleManager = ({ onSelectModule, selectedModuleId }: ModuleManagerProps)
           <Input
             value={editName}
             onChange={e => setEditName(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleUpdate()}
+            onKeyDown={e => e.key === 'Enter' && !modulesBusy && handleUpdate()}
             className="bg-gray-50 border-gray-300 text-gray-900"
+            disabled={modulesBusy}
           />
           <DialogFooter>
             <DialogClose asChild>
-              <Button variant="outline" className="border-gray-300 text-gray-600">Cancel</Button>
+              <Button variant="outline" className="border-gray-300 text-gray-600" disabled={modulesBusy}>
+                Cancel
+              </Button>
             </DialogClose>
-            <Button onClick={handleUpdate} className="bg-emerald-600 hover:bg-emerald-700">Save</Button>
+            <Button
+              onClick={handleUpdate}
+              className="bg-emerald-600 hover:bg-emerald-700 gap-2"
+              disabled={modulesBusy || !editName.trim()}
+            >
+              {modulesBusy ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</> : 'Save'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
+      {/* Error Banner */}
+      {modulesError && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+        >
+          <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+          <div className="flex-1">
+            <p className="font-medium">Failed to load modules</p>
+            <p className="text-xs text-red-500 mt-0.5">{modulesError}</p>
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            className="text-red-500 hover:text-red-700 flex items-center gap-1 text-xs shrink-0"
+          >
+            <RefreshCw className="w-3 h-3" /> Retry
+          </button>
+        </motion.div>
+      )}
+
+      {/* Loading skeleton */}
+      {modulesLoading && data.modules.length === 0 && (
+        <div className="space-y-2">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="h-12 rounded-lg bg-gray-100 animate-pulse" />
+          ))}
+        </div>
+      )}
+
       <AnimatePresence>
-        {data.modules.length === 0 ? (
+        {!modulesLoading && data.modules.length === 0 && !modulesError ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -139,6 +201,7 @@ const ModuleManager = ({ onSelectModule, selectedModuleId }: ModuleManagerProps)
                         variant="ghost"
                         className="h-7 w-7 text-gray-400 hover:text-gray-700 hover:bg-gray-100"
                         onClick={() => startEdit(mod)}
+                        disabled={modulesBusy}
                       >
                         <Pencil className="w-3.5 h-3.5" />
                       </Button>
@@ -146,9 +209,13 @@ const ModuleManager = ({ onSelectModule, selectedModuleId }: ModuleManagerProps)
                         size="icon"
                         variant="ghost"
                         className="h-7 w-7 text-gray-400 hover:text-red-500 hover:bg-red-50"
-                        onClick={() => deleteModule(mod.id)}
+                        onClick={() => handleDelete(mod.id)}
+                        disabled={modulesBusy}
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        {deletingId === mod.id
+                          ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          : <Trash2 className="w-3.5 h-3.5" />
+                        }
                       </Button>
                     </div>
                   </CardContent>

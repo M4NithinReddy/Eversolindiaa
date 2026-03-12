@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, Tags, ChevronDown, ChevronRight, Layers } from 'lucide-react';
+import { Plus, Pencil, Trash2, Tags, ChevronDown, ChevronRight, Layers, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface BrandManagerProps {
@@ -24,40 +24,51 @@ const BrandManager = ({
   onSelectSubBrand,
   selectedSubBrandId,
 }: BrandManagerProps) => {
-  const { data, addBrand, updateBrand, deleteBrand, addSubBrand, updateSubBrand, deleteSubBrand } = useAdmin();
+  const {
+    data,
+    addBrand, updateBrand, deleteBrand,
+    addSubBrand, updateSubBrand, deleteSubBrand,
+    brandsLoading, brandsError, brandsBusy,
+  } = useAdmin();
+
   const [newBrandName, setNewBrandName] = useState('');
   const [createBrandOpen, setCreateBrandOpen] = useState(false);
   const [editBrandId, setEditBrandId] = useState<string | null>(null);
   const [editBrandName, setEditBrandName] = useState('');
   const [editBrandOpen, setEditBrandOpen] = useState(false);
+  const [deletingBrandId, setDeletingBrandId] = useState<string | null>(null);
 
-  // Sub-brand state
   const [newSubBrandName, setNewSubBrandName] = useState('');
   const [subBrandParent, setSubBrandParent] = useState<string | null>(null);
   const [createSubOpen, setCreateSubOpen] = useState(false);
   const [editSubId, setEditSubId] = useState<string | null>(null);
   const [editSubName, setEditSubName] = useState('');
   const [editSubOpen, setEditSubOpen] = useState(false);
-
   const [expandedBrandId, setExpandedBrandId] = useState<string | null>(null);
 
   const brands = data.brands.filter(b => b.moduleId === moduleId);
 
-  const handleCreateBrand = () => {
+  const handleCreateBrand = async () => {
     if (newBrandName.trim()) {
-      addBrand(newBrandName.trim(), moduleId);
+      await addBrand(newBrandName.trim(), moduleId);
       setNewBrandName('');
       setCreateBrandOpen(false);
     }
   };
 
-  const handleUpdateBrand = () => {
+  const handleUpdateBrand = async () => {
     if (editBrandId && editBrandName.trim()) {
-      updateBrand(editBrandId, editBrandName.trim());
+      await updateBrand(editBrandId, editBrandName.trim());
       setEditBrandId(null);
       setEditBrandName('');
       setEditBrandOpen(false);
     }
+  };
+
+  const handleDeleteBrand = async (id: string) => {
+    setDeletingBrandId(id);
+    await deleteBrand(id);
+    setDeletingBrandId(null);
   };
 
   const handleCreateSubBrand = () => {
@@ -85,10 +96,15 @@ const BrandManager = ({
           <Tags className="w-5 h-5 text-blue-600" />
           Brands
           <span className="text-xs font-normal text-gray-400">in {moduleName}</span>
+          {brandsLoading && <Loader2 className="w-4 h-4 text-blue-400 animate-spin ml-1" />}
         </h2>
         <Dialog open={createBrandOpen} onOpenChange={setCreateBrandOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white gap-1">
+            <Button
+              size="sm"
+              className="bg-blue-600 hover:bg-blue-700 text-white gap-1"
+              disabled={brandsLoading || brandsBusy}
+            >
               <Plus className="w-4 h-4" /> New Brand
             </Button>
           </DialogTrigger>
@@ -100,14 +116,21 @@ const BrandManager = ({
               placeholder="Brand name (e.g., Waaree)"
               value={newBrandName}
               onChange={e => setNewBrandName(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleCreateBrand()}
+              onKeyDown={e => e.key === 'Enter' && !brandsBusy && handleCreateBrand()}
               className="bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400"
+              disabled={brandsBusy}
             />
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant="outline" className="border-gray-300 text-gray-600">Cancel</Button>
+                <Button variant="outline" className="border-gray-300 text-gray-600" disabled={brandsBusy}>Cancel</Button>
               </DialogClose>
-              <Button onClick={handleCreateBrand} className="bg-blue-600 hover:bg-blue-700">Create</Button>
+              <Button
+                onClick={handleCreateBrand}
+                className="bg-blue-600 hover:bg-blue-700 gap-2"
+                disabled={brandsBusy || !newBrandName.trim()}
+              >
+                {brandsBusy ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</> : 'Create'}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -122,14 +145,21 @@ const BrandManager = ({
           <Input
             value={editBrandName}
             onChange={e => setEditBrandName(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleUpdateBrand()}
+            onKeyDown={e => e.key === 'Enter' && !brandsBusy && handleUpdateBrand()}
             className="bg-gray-50 border-gray-300 text-gray-900"
+            disabled={brandsBusy}
           />
           <DialogFooter>
             <DialogClose asChild>
-              <Button variant="outline" className="border-gray-300 text-gray-600">Cancel</Button>
+              <Button variant="outline" className="border-gray-300 text-gray-600" disabled={brandsBusy}>Cancel</Button>
             </DialogClose>
-            <Button onClick={handleUpdateBrand} className="bg-blue-600 hover:bg-blue-700">Save</Button>
+            <Button
+              onClick={handleUpdateBrand}
+              className="bg-blue-600 hover:bg-blue-700 gap-2"
+              disabled={brandsBusy || !editBrandName.trim()}
+            >
+              {brandsBusy ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</> : 'Save'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -177,13 +207,39 @@ const BrandManager = ({
         </DialogContent>
       </Dialog>
 
-      <AnimatePresence>
-        {brands.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center py-6 text-gray-400"
+      {/* Error Banner */}
+      {brandsError && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+        >
+          <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+          <div className="flex-1">
+            <p className="font-medium">Failed to load brands</p>
+            <p className="text-xs text-red-500 mt-0.5">{brandsError}</p>
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            className="text-red-500 hover:text-red-700 flex items-center gap-1 text-xs shrink-0"
           >
+            <RefreshCw className="w-3 h-3" /> Retry
+          </button>
+        </motion.div>
+      )}
+
+      {/* Loading skeleton */}
+      {brandsLoading && brands.length === 0 && (
+        <div className="space-y-2">
+          {[1, 2].map(i => (
+            <div key={i} className="h-12 rounded-lg bg-gray-100 animate-pulse" />
+          ))}
+        </div>
+      )}
+
+      <AnimatePresence>
+        {!brandsLoading && brands.length === 0 && !brandsError ? (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-6 text-gray-400">
             <Tags className="w-10 h-10 mx-auto mb-2 opacity-40" />
             <p className="text-sm">No brands in this module yet.</p>
           </motion.div>
@@ -234,6 +290,7 @@ const BrandManager = ({
                             size="icon"
                             variant="ghost"
                             className="h-7 w-7 text-gray-400 hover:text-gray-700 hover:bg-gray-100"
+                            disabled={brandsBusy}
                             onClick={() => {
                               setEditBrandId(brand.id);
                               setEditBrandName(brand.name);
@@ -246,9 +303,13 @@ const BrandManager = ({
                             size="icon"
                             variant="ghost"
                             className="h-7 w-7 text-gray-400 hover:text-red-500 hover:bg-red-50"
-                            onClick={() => deleteBrand(brand.id)}
+                            disabled={brandsBusy}
+                            onClick={() => handleDeleteBrand(brand.id)}
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            {deletingBrandId === brand.id
+                              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              : <Trash2 className="w-3.5 h-3.5" />
+                            }
                           </Button>
                         </div>
                       </div>
