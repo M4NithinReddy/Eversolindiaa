@@ -4,13 +4,14 @@ import ModuleManager from '@/components/admin/ModuleManager';
 import BrandManager from '@/components/admin/BrandManager';
 import ProductForm from '@/components/admin/ProductForm';
 import ProductList from '@/components/admin/ProductList';
+import ExcelManager from '@/components/admin/ExcelManager';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Plus, LayoutDashboard, Package, Tags, ShoppingBag, ChevronRight } from 'lucide-react';
+import { Plus, LayoutDashboard, Package, Tags, ShoppingBag, ChevronRight, Download } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-type View = 'dashboard' | 'productForm';
+type View = 'dashboard' | 'productForm' | 'excelUpload';
 
 const AdminDashboard = () => {
   const { data } = useAdmin();
@@ -43,6 +44,10 @@ const AdminDashboard = () => {
   const handleAddProduct = () => {
     setEditProduct(null);
     setView('productForm');
+  };
+
+  const handleUploadExcel = () => {
+    setView('excelUpload');
   };
 
   const handleProductSaved = () => {
@@ -81,6 +86,16 @@ const AdminDashboard = () => {
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200">
               <ShoppingBag className="w-3.5 h-3.5 text-amber-600" />
               <span>{data.products.length} Products</span>
+            </div>
+            <div className="ml-4 border-l border-gray-200 pl-4">
+              <Button
+                onClick={() => setView('excelUpload')}
+                size="sm"
+                variant="outline"
+                className="text-emerald-700 bg-emerald-50 border-emerald-200 hover:bg-emerald-100 gap-1.5"
+              >
+                <Download className="w-3.5 h-3.5 rotate-180" /> Bulk Import
+              </Button>
             </div>
           </div>
         </div>
@@ -127,6 +142,8 @@ const AdminDashboard = () => {
                 onCancel={handleProductCancel}
                 onSaved={handleProductSaved}
               />
+            ) : view === 'excelUpload' ? (
+              <ExcelManager onCancel={() => setView('dashboard')} />
             ) : (
               <>
                 {/* Breadcrumb */}
