@@ -1,8 +1,11 @@
 {
     "rewrites": [
-        {
-            "source": "/(.*)",
-            "destination": "/index.html"
-        }
+        { "source": "/api/prod/:path*",     "destination": "https://401i8cjuoj.execute-api.ap-south-1.amazonaws.com/prod/:path*" },
+        { "source": "/api/dev/:path*",      "destination": "https://6rdwi5p3pd.execute-api.ap-south-1.amazonaws.com/dev/:path*" },
+        { "source": "/api/brandmod/:path*", "destination": "https://zkw7qsaxz3.execute-api.ap-south-1.amazonaws.com/dev/:path*" },
+        { "source": "/api/brand/:path*",    "destination": "https://umehtqxexd.execute-api.ap-south-1.amazonaws.com/dev/:path*" },
+        { "source": "/api/img/:path*",      "destination": "https://yf5ifvprf2.execute-api.ap-south-1.amazonaws.com/dev/:path*" },
+        { "source": "/api/products/:path*", "destination": "https://llbjgne219.execute-api.ap-south-1.amazonaws.com/dev/:path*" },
+        { "source": "/(.*)",                "destination": "/index.html" }
     ]
 }

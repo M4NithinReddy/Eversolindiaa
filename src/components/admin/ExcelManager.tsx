@@ -13,7 +13,7 @@ interface ExcelManagerProps {
 }
 
 const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
-  const { data, addProduct } = useAdmin();
+  const { data, bulkAddProducts, addModule, addBrand } = useAdmin();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [draftProducts, setDraftProducts] = useState<AdminProduct[]>([]);
   const [editingDraftId, setEditingDraftId] = useState<string | null>(null);
@@ -60,26 +60,34 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
             applications = row.Applications.split(',').map((s: string) => s.trim());
           }
 
-          // Try to match Module and Brand names to IDs if provided
-          let moduleId = defaultModuleId;
-          let brandId = defaultBrandId;
+          let moduleId = '';
+          let brandId = '';
+          const excelModule = row.Category || row.category || row.Module || row.module;
+          const excelBrand = row.Brand || row.brand;
+          let rawModuleName = excelModule ? String(excelModule).trim() : '';
+          let rawBrandName = excelBrand ? String(excelBrand).trim() : '';
 
-          if (row.Module) {
-            const mod = data.modules.find(m => m.name.toLowerCase() === String(row.Module).toLowerCase());
+          if (rawModuleName) {
+            const mod = data.modules.find(m => m.name.toLowerCase() === rawModuleName.toLowerCase());
             if (mod) moduleId = mod.id;
           }
-          if (row.Brand) {
-            const brand = data.brands.find(b => b.name.toLowerCase() === String(row.Brand).toLowerCase());
+          if (rawBrandName) {
+            const brand = data.brands.find(b => b.name.toLowerCase() === rawBrandName.toLowerCase());
             if (brand) brandId = brand.id;
           }
+
+          const isModuleNew = rawModuleName && !moduleId;
+          const isBrandNew = rawBrandName && !brandId;
 
           return {
             id: `draft-${Date.now()}-${index}`,
             title: row.Title || row.title || row.Name || row.name || `Imported Product ${index + 1}`,
             description: row.Description || row.description || '',
             images: row.Image ? [row.Image] : [],
-            moduleId,
-            brandId,
+            moduleId: moduleId || defaultModuleId,
+            brandId: brandId || defaultBrandId,
+            rawModuleName: isModuleNew ? rawModuleName : undefined,
+            rawBrandName: isBrandNew ? rawBrandName : undefined,
             subBrandId: undefined, // Add logic if needed
             specifications: specs,
             benefits: benefits,
@@ -89,7 +97,7 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
             warranty: row.Warranty || row.warranty || '',
             datasheet: row.Datasheet || row.datasheet || '',
             createdAt: new Date().toISOString(),
-          };
+          } as any;
         });
 
         setDraftProducts(drafts);
@@ -105,16 +113,61 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handleSaveAll = () => {
+  const handleSaveAll = async () => {
     if (draftProducts.length === 0) return;
     
-    draftProducts.forEach(draft => {
-      const { id, createdAt, ...productData } = draft;
-      addProduct({ ...productData });
-    });
-    
-    alert(`Successfully imported ${draftProducts.length} products!`);
-    onCancel();
+    setIsUploading(true);
+    try {
+      // Step A: Gather unique modules to create
+      const uniqueNewModules = new Set<string>();
+      draftProducts.forEach((d: any) => { if (d.rawModuleName) uniqueNewModules.add(d.rawModuleName); });
+      
+      const createdModulesMap: Record<string, string> = {};
+      for (const modName of uniqueNewModules) {
+         const newMod = await addModule(modName);
+         createdModulesMap[modName.toLowerCase()] = newMod.id;
+      }
+
+      // Step B: Gather unique brands to create based on their Module IDs
+      const uniqueNewBrands = new Map<string, {name: string, moduleId: string}>();
+      draftProducts.forEach((d: any) => {
+         if (d.rawBrandName) {
+            const finalModId = d.rawModuleName ? createdModulesMap[d.rawModuleName.toLowerCase()] : d.moduleId;
+            const key = `${d.rawBrandName.toLowerCase()}-${finalModId}`;
+            uniqueNewBrands.set(key, { name: d.rawBrandName, moduleId: finalModId });
+         }
+      });
+
+      const createdBrandsMap: Record<string, string> = {};
+      for (const [key, brandInfo] of uniqueNewBrands) {
+         const newBrand = await addBrand(brandInfo.name, brandInfo.moduleId);
+         createdBrandsMap[key] = newBrand.id;
+      }
+
+      // Step C: Prepare final products payload with the new IDs
+      const productsToCreate = draftProducts.map((draft: any) => {
+        const { id, createdAt, rawModuleName, rawBrandName, ...productData } = draft;
+        
+        if (rawModuleName) {
+          productData.moduleId = createdModulesMap[rawModuleName.toLowerCase()];
+        }
+        if (rawBrandName) {
+          const key = `${rawBrandName.toLowerCase()}-${productData.moduleId}`;
+          productData.brandId = createdBrandsMap[key];
+        }
+
+        return productData;
+      });
+      
+      await bulkAddProducts(productsToCreate);
+      alert(`Successfully imported ${draftProducts.length} products!`);
+      onCancel();
+    } catch (error) {
+      console.error("Bulk import failed:", error);
+      alert("Failed to import products. Please check the console for details.");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleRemoveDraft = (id: string) => {
@@ -133,8 +186,8 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
   };
 
   // Helper functions to get names
-  const getModuleName = (id: string) => data.modules.find(m => m.id === id)?.name || 'Unknown Module';
-  const getBrandName = (id: string) => data.brands.find(b => b.id === id)?.name || 'Unknown Brand';
+  const getModuleName = (draft: any) => draft.rawModuleName ? `${draft.rawModuleName} (New)` : (data.modules.find(m => m.id === draft.moduleId)?.name || 'Unknown Module');
+  const getBrandName = (draft: any) => draft.rawBrandName ? `${draft.rawBrandName} (New)` : (data.brands.find(b => b.id === draft.brandId)?.name || 'Unknown Brand');
 
   // Render detail view
   if (viewingDraftId) {
@@ -145,8 +198,8 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
           <DraftProductDetail 
             product={draft} 
             onBack={() => setViewingDraftId(null)} 
-            moduleName={getModuleName(draft.moduleId)}
-            brandName={getBrandName(draft.brandId)}
+            moduleName={getModuleName(draft)}
+            brandName={getBrandName(draft)}
           />
         </div>
       );
@@ -247,7 +300,7 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
                       <div className="p-4 flex-1 flex flex-col">
                         <div className="flex items-center gap-2 mb-2">
                           <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
-                            {getBrandName(draft.brandId)}
+                            {getBrandName(draft)}
                           </span>
                         </div>
                         <h3 className="font-bold text-gray-900 line-clamp-1 mb-1">{draft.title}</h3>

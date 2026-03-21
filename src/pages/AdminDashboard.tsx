@@ -187,53 +187,21 @@ const AdminDashboard = () => {
                         : 'Select a module from the sidebar to begin'}
                     </p>
                   </div>
-                  {selectedBrand && (
-                    <Button
-                      onClick={handleAddProduct}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
-                    >
-                      <Plus className="w-4 h-4" /> Add Product
-                    </Button>
-                  )}
+                  <Button
+                    onClick={handleAddProduct}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
+                  >
+                    <Plus className="w-4 h-4" /> Add Product
+                  </Button>
                 </div>
 
                 {/* Content */}
-                {!selectedModule ? (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="text-center py-24"
-                  >
-                    <div className="w-24 h-24 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-100 border border-emerald-200 flex items-center justify-center">
-                      <LayoutDashboard className="w-10 h-10 text-emerald-500" />
-                    </div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Welcome to Admin Dashboard</h3>
-                    <p className="text-gray-500 max-w-md mx-auto">
-                      Start by selecting a <strong className="text-emerald-600">Module</strong> from the sidebar, then pick a{' '}
-                      <strong className="text-blue-600">Brand</strong> to manage its{' '}
-                      <strong className="text-amber-600">Products</strong>.
-                    </p>
-                  </motion.div>
-                ) : !selectedBrand ? (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="text-center py-20"
-                  >
-                    <Tags className="w-16 h-16 mx-auto mb-4 text-blue-300" />
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Select a Brand</h3>
-                    <p className="text-gray-500">
-                      Choose a brand from the sidebar or create a new one to manage products.
-                    </p>
-                  </motion.div>
-                ) : (
-                  <ProductList
-                    moduleId={selectedModule.id}
-                    brandId={selectedBrand.id}
-                    subBrandId={selectedSubBrand?.id}
-                    onEdit={handleEditProduct}
-                  />
-                )}
+                <ProductList
+                  moduleId={selectedModule?.id}
+                  brandId={selectedBrand?.id}
+                  subBrandId={selectedSubBrand?.id}
+                  onEdit={handleEditProduct}
+                />
               </>
             )}
           </div>

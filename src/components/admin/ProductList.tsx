@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import { useAdmin, AdminProduct } from '@/context/AdminContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Pencil, Trash2, ShoppingBag, Image as ImageIcon } from 'lucide-react';
+import { Pencil, Trash2, ShoppingBag, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface ProductListProps {
@@ -13,6 +14,13 @@ interface ProductListProps {
 
 const ProductList = ({ moduleId, brandId, subBrandId, onEdit }: ProductListProps) => {
   const { data, deleteProduct } = useAdmin();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const handleDelete = async (id: string) => {
+    setDeletingId(id);
+    await deleteProduct(id);
+    setDeletingId(null);
+  };
 
   let products = data.products;
   if (moduleId) products = products.filter(p => p.moduleId === moduleId);
@@ -87,9 +95,12 @@ const ProductList = ({ moduleId, brandId, subBrandId, onEdit }: ProductListProps
                           size="icon"
                           variant="ghost"
                           className="h-8 w-8 text-gray-400 hover:text-red-500 hover:bg-red-50"
-                          onClick={() => deleteProduct(product.id)}
+                          onClick={() => handleDelete(product.id)}
+                          disabled={deletingId === product.id}
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          {deletingId === product.id
+                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            : <Trash2 className="w-3.5 h-3.5" />}
                         </Button>
                       </div>
                     </div>

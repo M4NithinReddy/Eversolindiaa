@@ -1,12 +1,13 @@
 import { useState, useRef } from 'react';
 import { useAdmin, AdminProduct, ProductSpecification } from '@/context/AdminContext';
+import { uploadImageApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Trash2, Upload, X, Image as ImageIcon, Save, ArrowLeft } from 'lucide-react';
+import { Plus, Trash2, Upload, X, Image as ImageIcon, Save, ArrowLeft, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface ProductFormProps {
@@ -20,8 +21,9 @@ interface ProductFormProps {
 }
 
 const ProductForm = ({ moduleId, brandId, subBrandId, editProduct, onCancel, onSaved, onSaveOverride }: ProductFormProps) => {
-  const { data, addProduct, updateProduct } = useAdmin();
+  const { data, addProduct, updateProduct, productsBusy } = useAdmin();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [imageUploading, setImageUploading] = useState(false);
 
   const [title, setTitle] = useState(editProduct?.title || '');
   const [description, setDescription] = useState(editProduct?.description || '');
@@ -39,21 +41,27 @@ const ProductForm = ({ moduleId, brandId, subBrandId, editProduct, onCancel, onS
   const [selectedBrandId, setSelectedBrandId] = useState(editProduct?.brandId || brandId);
   const [selectedSubBrandId, setSelectedSubBrandId] = useState(editProduct?.subBrandId || subBrandId || '');
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
-
-    Array.from(files).forEach(file => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (reader.result) {
-          setImages(prev => [...prev, reader.result as string]);
-        }
-      };
-      reader.readAsDataURL(file);
-    });
-
-    if (fileInputRef.current) fileInputRef.current.value = '';
+    setImageUploading(true);
+    try {
+      const uploads = await Promise.all(
+        Array.from(files).map(file => uploadImageApi(file))
+      );
+      setImages(prev => [...prev, ...uploads]);
+    } catch (err) {
+      console.error('Image upload failed:', err);
+      // fallback: read as base64
+      Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = () => { if (reader.result) setImages(prev => [...prev, reader.result as string]); };
+        reader.readAsDataURL(file);
+      });
+    } finally {
+      setImageUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const removeImage = (index: number) => {
@@ -81,7 +89,7 @@ const ProductForm = ({ moduleId, brandId, subBrandId, editProduct, onCancel, onS
     setApplications(prev => prev.map((a, i) => (i === index ? val : a)));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!title.trim()) return;
 
     const productData = {
@@ -103,9 +111,9 @@ const ProductForm = ({ moduleId, brandId, subBrandId, editProduct, onCancel, onS
     if (onSaveOverride) {
       onSaveOverride(productData);
     } else if (editProduct) {
-      updateProduct(editProduct.id, productData);
+      await updateProduct(editProduct.id, productData);
     } else {
-      addProduct(productData);
+      await addProduct(productData);
     }
     onSaved();
   };
@@ -156,10 +164,13 @@ const ProductForm = ({ moduleId, brandId, subBrandId, editProduct, onCancel, onS
             ))}
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="aspect-square rounded-lg border-2 border-dashed border-gray-300 hover:border-emerald-400 flex flex-col items-center justify-center text-gray-400 hover:text-emerald-600 transition-colors"
+              disabled={imageUploading}
+              className="aspect-square rounded-lg border-2 border-dashed border-gray-300 hover:border-emerald-400 flex flex-col items-center justify-center text-gray-400 hover:text-emerald-600 transition-colors disabled:opacity-50"
             >
-              <Upload className="w-6 h-6 mb-1" />
-              <span className="text-xs">Upload</span>
+              {imageUploading
+                ? <><Loader2 className="w-6 h-6 mb-1 animate-spin text-emerald-500" /><span className="text-xs">Uploading…</span></>
+                : <><Upload className="w-6 h-6 mb-1" /><span className="text-xs">Upload</span></>
+              }
             </button>
           </div>
           <input
@@ -400,10 +411,12 @@ const ProductForm = ({ moduleId, brandId, subBrandId, editProduct, onCancel, onS
         <Button
           onClick={handleSubmit}
           className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
-          disabled={!title.trim() || !selectedBrandId}
+          disabled={!title.trim() || !selectedBrandId || productsBusy || imageUploading}
         >
-          <Save className="w-4 h-4" />
-          {editProduct ? 'Update Product' : 'Save Product'}
+          {productsBusy
+            ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</>
+            : <><Save className="w-4 h-4" /> {editProduct ? 'Update Product' : 'Save Product'}</>
+          }
         </Button>
       </div>
     </motion.div>
