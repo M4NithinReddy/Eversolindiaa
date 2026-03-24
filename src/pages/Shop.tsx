@@ -91,7 +91,7 @@ const Shop = () => {
       datasheet: p.datasheet || '',
       specifications: (p.specifications || []).reduce((acc: any, s) => { acc[s.key] = s.value; return acc; }, {}),
       features: p.benefits?.length ? p.benefits : (p.applications || []),
-      inverterType: (p.specifications || []).find(s => s.key === 'inverterType')?.value || '',
+      inverterType: p.productType || (p.specifications || []).find(s => s.key === 'inverterType')?.value || '',
     };
   });
 
@@ -112,7 +112,14 @@ const Shop = () => {
   const [isInverterFiltersOpen, setIsInverterFiltersOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 20;
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategory, selectedBrand, selectedInverterType, selectedInverterBrand, searchQuery]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -410,16 +417,16 @@ const Shop = () => {
           <div className="py-16 bg-background">
             <div className="container mx-auto px-4">
               <div className="mb-8">
-                <p className="text-muted-foreground">
-                  Showing {filteredProducts.length} products
-                </p>
+                  Showing {Math.min(filteredProducts.length, (currentPage - 1) * ITEMS_PER_PAGE + 1)} - {Math.min(filteredProducts.length, currentPage * ITEMS_PER_PAGE)} of {filteredProducts.length} products
               </div>
 
               <div className={viewMode === 'grid'
                 ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
                 : 'flex flex-col gap-4'
               }>
-                {filteredProducts.map((product, index) => (
+                {filteredProducts
+                  .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+                  .map((product, index) => (
                   <Link key={product.id} to={`/product/${product.id}`} className="block cursor-pointer">
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
@@ -474,6 +481,52 @@ const Shop = () => {
                   </Link>
                 ))}
               </div>
+
+              {/* Pagination Controls */}
+              {filteredProducts.length > ITEMS_PER_PAGE && (
+                <div className="mt-12 flex justify-center items-center gap-4">
+                  <Button
+                    variant="outline"
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage(prev => prev - 1)}
+                  >
+                    Previous
+                  </Button>
+                  <div className="flex items-center gap-2">
+                    {Array.from({ length: Math.ceil(filteredProducts.length / ITEMS_PER_PAGE) }).map((_, i) => {
+                      const page = i + 1;
+                      if (
+                        page === 1 ||
+                        page === Math.ceil(filteredProducts.length / ITEMS_PER_PAGE) ||
+                        (page >= currentPage - 1 && page <= currentPage + 1)
+                      ) {
+                        return (
+                          <Button
+                            key={page}
+                            variant={currentPage === page ? 'default' : 'ghost'}
+                            size="sm"
+                            onClick={() => setCurrentPage(page)}
+                            className="w-10"
+                          >
+                            {page}
+                          </Button>
+                        );
+                      }
+                      if (page === currentPage - 2 || page === currentPage + 2) {
+                        return <span key={page}>...</span>;
+                      }
+                      return null;
+                    })}
+                  </div>
+                  <Button
+                    variant="outline"
+                    disabled={currentPage === Math.ceil(filteredProducts.length / ITEMS_PER_PAGE)}
+                    onClick={() => setCurrentPage(prev => prev + 1)}
+                  >
+                    Next
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>

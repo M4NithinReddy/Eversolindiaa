@@ -95,6 +95,7 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
             price: parseFloat(row.Price || row.price || '0') || 0,
             capacity: row.Capacity || row.capacity || '',
             warranty: row.Warranty || row.warranty || '',
+            productType: row.Type || row.type || row["Product Type"] || row["product type"] || '',
             datasheet: row.Datasheet || row.datasheet || '',
             createdAt: new Date().toISOString(),
           } as any;

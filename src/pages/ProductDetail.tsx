@@ -80,6 +80,7 @@ const ProductDetail = () => {
       benefits: pData.benefits || [],
       applications: pData.applications || [],
       datasheet: pData.datasheet || '',
+      productType: pData.productType || '',
     };
   }, [apiProduct, adminData]);
 
@@ -230,6 +231,12 @@ const ProductDetail = () => {
                   <Shield className="h-5 w-5" />
                   {product.warranty} Warranty
                 </span>
+                {product.productType && (
+                  <span className="flex items-center gap-2 text-primary font-bold">
+                    <Check className="h-5 w-5" />
+                    {product.productType}
+                  </span>
+                )}
               </div>
 
               <p className="text-muted-foreground text-lg mb-8 leading-relaxed">

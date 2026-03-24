@@ -8,13 +8,13 @@ import ExcelManager from '@/components/admin/ExcelManager';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Plus, LayoutDashboard, Package, Tags, ShoppingBag, ChevronRight, Download } from 'lucide-react';
+import { Plus, LayoutDashboard, Package, Tags, ShoppingBag, ChevronRight, Download, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 type View = 'dashboard' | 'productForm' | 'excelUpload';
 
 const AdminDashboard = () => {
-  const { data } = useAdmin();
+  const { data, deleteAllProducts } = useAdmin();
   const [selectedModule, setSelectedModule] = useState<AdminModule | null>(null);
   const [selectedBrand, setSelectedBrand] = useState<AdminBrand | null>(null);
   const [selectedSubBrand, setSelectedSubBrand] = useState<AdminSubBrand | null>(null);
@@ -87,7 +87,19 @@ const AdminDashboard = () => {
               <ShoppingBag className="w-3.5 h-3.5 text-amber-600" />
               <span>{data.products.length} Products</span>
             </div>
-            <div className="ml-4 border-l border-gray-200 pl-4">
+            <div className="ml-4 border-l border-gray-200 pl-4 flex gap-2">
+              <Button
+                onClick={() => {
+                  if (window.confirm('Are you sure you want to delete ALL products? This cannot be undone.')) {
+                    deleteAllProducts();
+                  }
+                }}
+                size="sm"
+                variant="outline"
+                className="text-red-700 bg-red-50 border-red-200 hover:bg-red-100 gap-1.5"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Delete All
+              </Button>
               <Button
                 onClick={() => setView('excelUpload')}
                 size="sm"

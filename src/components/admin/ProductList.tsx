@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAdmin, AdminProduct } from '@/context/AdminContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -15,6 +15,13 @@ interface ProductListProps {
 const ProductList = ({ moduleId, brandId, subBrandId, onEdit }: ProductListProps) => {
   const { data, deleteProduct } = useAdmin();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 25;
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [moduleId, brandId, subBrandId]);
 
   const handleDelete = async (id: string) => {
     setDeletingId(id);
@@ -44,11 +51,15 @@ const ProductList = ({ moduleId, brandId, subBrandId, onEdit }: ProductListProps
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between mb-2">
-        <p className="text-sm text-gray-500">{products.length} product{products.length !== 1 ? 's' : ''}</p>
+        <p className="text-sm text-gray-500">
+          Showing {Math.min(products.length, (currentPage - 1) * ITEMS_PER_PAGE + 1)} - {Math.min(products.length, currentPage * ITEMS_PER_PAGE)} of {products.length} product{products.length !== 1 ? 's' : ''}
+        </p>
       </div>
 
       <AnimatePresence>
-        {products.map(product => (
+        {products
+          .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+          .map(product => (
           <motion.div
             key={product.id}
             initial={{ opacity: 0, y: 10 }}
@@ -111,6 +122,11 @@ const ProductList = ({ moduleId, brandId, subBrandId, onEdit }: ProductListProps
                           {product.capacity}
                         </span>
                       )}
+                      {product.productType && (
+                        <span className="px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                          {product.productType}
+                        </span>
+                      )}
                       {product.price > 0 && (
                         <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                           ₹{product.price.toLocaleString()}
@@ -135,6 +151,54 @@ const ProductList = ({ moduleId, brandId, subBrandId, onEdit }: ProductListProps
           </motion.div>
         ))}
       </AnimatePresence>
+
+      {/* Pagination Controls */}
+      {products.length > ITEMS_PER_PAGE && (
+        <div className="mt-8 flex justify-center items-center gap-2 pb-6">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(prev => prev - 1)}
+          >
+            Previous
+          </Button>
+          <div className="flex items-center gap-1">
+            {Array.from({ length: Math.ceil(products.length / ITEMS_PER_PAGE) }).map((_, i) => {
+              const page = i + 1;
+              if (
+                page === 1 ||
+                page === Math.ceil(products.length / ITEMS_PER_PAGE) ||
+                (page >= currentPage - 1 && page <= currentPage + 1)
+              ) {
+                return (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? 'default' : 'ghost'}
+                    size="icon"
+                    className="h-8 w-8 text-xs"
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </Button>
+                );
+              }
+              if (page === currentPage - 2 || page === currentPage + 2) {
+                return <span key={page} className="text-gray-400 px-1 text-xs">...</span>;
+              }
+              return null;
+            })}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={currentPage === Math.ceil(products.length / ITEMS_PER_PAGE)}
+            onClick={() => setCurrentPage(prev => prev + 1)}
+          >
+            Next
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

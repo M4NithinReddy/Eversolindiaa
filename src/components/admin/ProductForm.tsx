@@ -40,6 +40,7 @@ const ProductForm = ({ moduleId, brandId, subBrandId, editProduct, onCancel, onS
   const [selectedModuleId, setSelectedModuleId] = useState(editProduct?.moduleId || moduleId);
   const [selectedBrandId, setSelectedBrandId] = useState(editProduct?.brandId || brandId);
   const [selectedSubBrandId, setSelectedSubBrandId] = useState(editProduct?.subBrandId || subBrandId || '');
+  const [productType, setProductType] = useState(editProduct?.productType || '');
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -106,6 +107,7 @@ const ProductForm = ({ moduleId, brandId, subBrandId, editProduct, onCancel, onS
       capacity: capacity.trim(),
       warranty: warranty.trim(),
       datasheet: datasheet.trim(),
+      productType: productType.trim() || undefined,
     };
 
     if (onSaveOverride) {
@@ -231,6 +233,23 @@ const ProductForm = ({ moduleId, brandId, subBrandId, editProduct, onCancel, onS
                   {filteredSubBrands.map(sb => (
                     <SelectItem key={sb.id} value={sb.id} className="text-gray-900 hover:bg-gray-50">{sb.name}</SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {(data.modules.find(m => m.id === selectedModuleId)?.name.toLowerCase().includes('inverter')) && (
+            <div>
+              <Label className="text-gray-600 text-xs mb-1.5 block">Inverter Type</Label>
+              <Select value={productType} onValueChange={setProductType}>
+                <SelectTrigger className="bg-gray-50 border-gray-300 text-gray-900">
+                  <SelectValue placeholder="Select type (Hybrid, On-grid, etc.)" />
+                </SelectTrigger>
+                <SelectContent className="bg-white border-gray-200">
+                  <SelectItem value="Hybrid" className="text-gray-900 hover:bg-gray-50">Hybrid</SelectItem>
+                  <SelectItem value="On-grid" className="text-gray-900 hover:bg-gray-50">On-grid</SelectItem>
+                  <SelectItem value="Off-grid" className="text-gray-900 hover:bg-gray-50">Off-grid</SelectItem>
+                  <SelectItem value="Micro-Inverter" className="text-gray-900 hover:bg-gray-50">Micro-Inverter</SelectItem>
                 </SelectContent>
               </Select>
             </div>

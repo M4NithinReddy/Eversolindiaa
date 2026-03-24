@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode, useCallback 
 import {
   getModules, createModuleApi, updateModuleApi, deleteModuleApi,
   getBrands,  createBrandApi,  updateBrandApi,  deleteBrandApi,
-  getProducts, createProductApi, updateProductApi, deleteProductApi, bulkCreateProductsApi
+  getProducts, createProductApi, updateProductApi, deleteProductApi, bulkCreateProductsApi, deleteAllProductsApi
 } from '@/lib/api';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -13,6 +13,7 @@ export interface ProductSpecification { key: string; value: string; }
 export interface AdminProduct {
   id: string; title: string; description: string; images: string[];
   moduleId: string; brandId: string; subBrandId?: string;
+  productType?: string;
   specifications: ProductSpecification[]; benefits: string[];
   applications: string[]; price: number; capacity: string;
   warranty: string; datasheet: string; createdAt: string;
@@ -40,6 +41,7 @@ interface AdminContextType {
   bulkAddProducts: (products: Omit<AdminProduct, 'id' | 'createdAt'>[]) => Promise<void>;
   updateProduct: (id: string, product: Omit<AdminProduct, 'id' | 'createdAt'>) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
+  deleteAllProducts: () => Promise<void>;
 }
 
 const LOCAL_KEY = 'eversol_local_v4'; // subbrand only now
@@ -182,9 +184,19 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
   const bulkAddProducts = useCallback(async (newProducts: Omit<AdminProduct, 'id' | 'createdAt'>[]) => {
     setProductsBusy(true);
     try {
-      const response = await bulkCreateProductsApi(newProducts);
-      if (response && response.data) {
-        setProducts(p => [...p, ...response.data]);
+      const BATCH_SIZE = 25;
+      const allCreated: AdminProduct[] = [];
+      
+      for (let i = 0; i < newProducts.length; i += BATCH_SIZE) {
+        const chunk = newProducts.slice(i, i + BATCH_SIZE);
+        const response = await bulkCreateProductsApi(chunk);
+        if (response && response.data) {
+          allCreated.push(...response.data);
+        }
+      }
+      
+      if (allCreated.length > 0) {
+        setProducts(p => [...p, ...allCreated]);
       } else {
         await refreshProducts();
       }
@@ -211,6 +223,14 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     finally { setProductsBusy(false); }
   }, [refreshProducts]);
 
+  const deleteAllProducts = useCallback(async () => {
+    setProductsBusy(true);
+    setProducts([]);
+    try { await deleteAllProductsApi(); }
+    catch (e) { await refreshProducts(); if (!isCorsOrNetwork(e)) throw e; }
+    finally { setProductsBusy(false); }
+  }, [refreshProducts]);
+
   const data: AdminData = { modules, brands, subBrands, products };
 
   return (
@@ -222,7 +242,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
       addModule, updateModule, deleteModule,
       addBrand,  updateBrand,  deleteBrand,
       addSubBrand, updateSubBrand, deleteSubBrand,
-      addProduct,  updateProduct,  deleteProduct, bulkAddProducts,
+      addProduct,  updateProduct,  deleteProduct, bulkAddProducts, deleteAllProducts
     }}>
       {children}
     </AdminContext.Provider>

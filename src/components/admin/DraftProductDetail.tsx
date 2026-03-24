@@ -78,6 +78,12 @@ const DraftProductDetail = ({ product, onBack, brandName, moduleName }: DraftPro
                   <p className="font-semibold text-gray-900">{product.warranty}</p>
                 </div>
               )}
+              {product.productType && (
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Inverter Type</p>
+                  <p className="font-semibold text-purple-700">{product.productType}</p>
+                </div>
+              )}
             </div>
 
             {/* Specs */}
