@@ -72,6 +72,12 @@ const DraftProductDetail = ({ product, onBack, brandName, moduleName }: DraftPro
                   <p className="font-semibold text-gray-900">{product.capacity}</p>
                 </div>
               )}
+              {product.phase && (
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Phase</p>
+                  <p className="font-semibold text-gray-900">{product.phase}</p>
+                </div>
+              )}
               {product.warranty && (
                 <div>
                   <p className="text-sm text-gray-500 mb-1">Warranty</p>

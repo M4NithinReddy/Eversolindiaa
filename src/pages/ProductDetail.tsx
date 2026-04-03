@@ -39,7 +39,8 @@ type Product = {
   applications?: string[];
   datasheet?: string;
   images360?: string[];
-  inverterType?: string;
+  productType?: string;
+  phase?: string;
 };
 
 // Products object with string keys
@@ -81,6 +82,7 @@ const ProductDetail = () => {
       applications: pData.applications || [],
       datasheet: pData.datasheet || '',
       productType: pData.productType || '',
+      phase: pData.phase || '',
     };
   }, [apiProduct, adminData]);
 
@@ -218,9 +220,15 @@ const ProductDetail = () => {
                 {product.category}
               </span>
 
-              <h1 className="text-3xl md:text-4xl font-heading font-bold text-foreground mb-4">
+              <h1 className="text-3xl md:text-4xl font-heading font-bold text-foreground mb-2">
                 {product.name}
               </h1>
+
+              {product.brand && product.brand !== 'Unknown' && (
+                <div className="text-primary font-bold text-lg mb-4">
+                  {product.brand}
+                </div>
+              )}
 
               <div className="flex items-center gap-4 text-eco font-medium mb-6">
                 <span className="flex items-center gap-2">
@@ -235,6 +243,12 @@ const ProductDetail = () => {
                   <span className="flex items-center gap-2 text-primary font-bold">
                     <Check className="h-5 w-5" />
                     {product.productType}
+                  </span>
+                )}
+                {product.phase && (
+                  <span className="flex items-center gap-2 text-blue-600 font-bold">
+                    <Zap className="h-5 w-5" />
+                    {product.phase}
                   </span>
                 )}
               </div>

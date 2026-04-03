@@ -24,6 +24,7 @@ export const handler = async (event) => {
   }
 
   try {
+    const body = JSON.parse(event.body || "{}");
     const pathId = event.pathParameters?.id || event.path?.split("/").pop(); // Works for /prod/products/{id} or /products/{id}
     const isRoot = !pathId || pathId === "products" || pathId === "getall";
 
@@ -78,7 +79,6 @@ export const handler = async (event) => {
 
     // ── UPDATE PRODUCT (PUT) ──────────────────────────────────────────────────
     if (event.httpMethod === "PUT" && pathId) {
-       const body = JSON.parse(event.body || "{}");
        const item = { ...body, id: pathId, updatedAt: new Date().toISOString() };
        await docClient.send(new PutCommand({ TableName: TABLE_NAME, Item: item }));
        return { statusCode: 200, headers, body: JSON.stringify({ data: item }) };
@@ -109,6 +109,7 @@ export const handler = async (event) => {
                 applications: p.applications || [],
                 price: p.price || 0,
                 capacity: p.capacity || "",
+                phase: p.phase || null,
                 warranty: p.warranty || "",
                 productType: p.productType || null,
                 datasheet: p.datasheet || "",
@@ -142,6 +143,7 @@ export const handler = async (event) => {
         applications: body.applications || [],
         price: body.price || 0,
         capacity: body.capacity || "",
+        phase: body.phase || null,
         warranty: body.warranty || "",
         productType: body.productType || null,
         datasheet: body.datasheet || "",

@@ -136,7 +136,7 @@ export interface ApiProduct {
   productType?: string;
   specifications: { key: string; value: string }[];
   benefits: string[]; applications: string[];
-  price: number; capacity: string; warranty: string; datasheet: string;
+  price: number; capacity: string; phase?: string; warranty: string; datasheet: string;
   createdAt: string;
 }
 

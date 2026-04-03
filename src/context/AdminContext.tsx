@@ -15,7 +15,7 @@ export interface AdminProduct {
   moduleId: string; brandId: string; subBrandId?: string;
   productType?: string;
   specifications: ProductSpecification[]; benefits: string[];
-  applications: string[]; price: number; capacity: string;
+  applications: string[]; price: number; capacity: string; phase?: string;
   warranty: string; datasheet: string; createdAt: string;
 }
 export interface AdminData {
