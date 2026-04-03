@@ -35,6 +35,7 @@ const ProductForm = ({ moduleId, brandId, subBrandId, editProduct, onCancel, onS
   const [applications, setApplications] = useState<string[]>(editProduct?.applications || ['']);
   const [price, setPrice] = useState(editProduct?.price?.toString() || '0');
   const [capacity, setCapacity] = useState(editProduct?.capacity || '');
+  const [phase, setPhase] = useState(editProduct?.phase || '');
   const [warranty, setWarranty] = useState(editProduct?.warranty || '');
   const [datasheet, setDatasheet] = useState(editProduct?.datasheet || '');
   const [selectedModuleId, setSelectedModuleId] = useState(editProduct?.moduleId || moduleId);
@@ -105,6 +106,7 @@ const ProductForm = ({ moduleId, brandId, subBrandId, editProduct, onCancel, onS
       applications: applications.filter(a => a.trim()),
       price: parseFloat(price) || 0,
       capacity: capacity.trim(),
+      phase: phase.trim() || undefined,
       warranty: warranty.trim(),
       datasheet: datasheet.trim(),
       productType: productType.trim() || undefined,
@@ -291,6 +293,15 @@ const ProductForm = ({ moduleId, brandId, subBrandId, editProduct, onCancel, onS
                 value={capacity}
                 onChange={e => setCapacity(e.target.value)}
                 placeholder="e.g., 550W"
+                className="bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400"
+              />
+            </div>
+            <div>
+              <Label className="text-gray-600 text-xs mb-1.5 block">Phase</Label>
+              <Input
+                value={phase}
+                onChange={e => setPhase(e.target.value)}
+                placeholder="e.g., Single Phase"
                 className="bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400"
               />
             </div>

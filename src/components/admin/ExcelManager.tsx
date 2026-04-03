@@ -40,32 +40,39 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
         const json = XLSX.utils.sheet_to_json<any>(ws);
 
         const drafts: AdminProduct[] = json.map((row, index) => {
-          // Parse complex fields if they are comma separated or JSON strings
+          // Normalize keys (lowercase and trim) for easier mapping
+          const normalizedRow: any = {};
+          Object.keys(row).forEach(key => {
+            normalizedRow[key.toLowerCase().trim()] = row[key];
+          });
+
+          // Parse complex fields
           let specs: any[] = [];
-          if (row.Specifications) {
+          const excelSpecs = normalizedRow.specifications || normalizedRow.specs;
+          if (excelSpecs) {
             try {
-              specs = JSON.parse(row.Specifications);
+              specs = JSON.parse(excelSpecs);
             } catch {
-              specs = [{ key: 'Info', value: row.Specifications }];
+              specs = [{ key: 'Info', value: String(excelSpecs) }];
             }
           }
 
           let benefits = [];
-          if (row.Benefits) {
-            benefits = row.Benefits.split(',').map((s: string) => s.trim());
+          const excelBenefits = normalizedRow.benefits || normalizedRow.benefit;
+          if (excelBenefits) {
+            benefits = String(excelBenefits).split(',').map((s: string) => s.trim());
           }
 
           let applications = [];
-          if (row.Applications) {
-            applications = row.Applications.split(',').map((s: string) => s.trim());
+          const excelApps = normalizedRow.applications || normalizedRow.application;
+          if (excelApps) {
+            applications = String(excelApps).split(',').map((s: string) => s.trim());
           }
 
           let moduleId = '';
           let brandId = '';
-          const excelModule = row.Category || row.category || row.Module || row.module;
-          const excelBrand = row.Brand || row.brand;
-          let rawModuleName = excelModule ? String(excelModule).trim() : '';
-          let rawBrandName = excelBrand ? String(excelBrand).trim() : '';
+          const rawModuleName = String(normalizedRow.category || normalizedRow.module || '').trim();
+          const rawBrandName = String(normalizedRow.brand || '').trim();
 
           if (rawModuleName) {
             const mod = data.modules.find(m => m.name.toLowerCase() === rawModuleName.toLowerCase());
@@ -81,22 +88,23 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
 
           return {
             id: `draft-${Date.now()}-${index}`,
-            title: row.Title || row.title || row.Name || row.name || `Imported Product ${index + 1}`,
-            description: row.Description || row.description || '',
-            images: row.Image ? [row.Image] : [],
+            title: String(normalizedRow.title || normalizedRow.name || `Imported Product ${index + 1}`).trim(),
+            description: String(normalizedRow.description || '').trim(),
+            images: normalizedRow.image ? [normalizedRow.image] : [],
             moduleId: moduleId || defaultModuleId,
             brandId: brandId || defaultBrandId,
             rawModuleName: isModuleNew ? rawModuleName : undefined,
             rawBrandName: isBrandNew ? rawBrandName : undefined,
-            subBrandId: undefined, // Add logic if needed
+            subBrandId: undefined,
             specifications: specs,
             benefits: benefits,
             applications: applications,
-            price: parseFloat(row.Price || row.price || '0') || 0,
-            capacity: row.Capacity || row.capacity || '',
-            warranty: row.Warranty || row.warranty || '',
-            productType: row.Type || row.type || row["Product Type"] || row["product type"] || '',
-            datasheet: row.Datasheet || row.datasheet || '',
+            price: parseFloat(normalizedRow.price || '0') || 0,
+            capacity: String(normalizedRow.capacity || '').trim(),
+            phase: String(normalizedRow.phase || normalizedRow["phase (single/three phase)"] || '').trim(),
+            warranty: String(normalizedRow.warranty || '').trim(),
+            productType: String(normalizedRow.type || normalizedRow["product type"] || '').trim(),
+            datasheet: String(normalizedRow.datasheet || '').trim(),
             createdAt: new Date().toISOString(),
           } as any;
         });

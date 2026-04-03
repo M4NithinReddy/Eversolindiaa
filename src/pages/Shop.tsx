@@ -91,15 +91,16 @@ const Shop = () => {
       datasheet: p.datasheet || '',
       specifications: (p.specifications || []).reduce((acc: any, s) => { acc[s.key] = s.value; return acc; }, {}),
       features: p.benefits?.length ? p.benefits : (p.applications || []),
-      inverterType: p.productType || (p.specifications || []).find(s => s.key === 'inverterType')?.value || '',
+      productType: p.productType || '',
+      phase: p.phase || '',
     };
   });
 
   const inverterProducts = mappedProducts.filter(p => p.category === 'Solar Inverters');
-  const derivedInverterTypes = Array.from(new Set(inverterProducts.map(p => p.inverterType).filter(Boolean)));
+  const derivedInverterTypes = Array.from(new Set(inverterProducts.map(p => p.productType).filter(Boolean)));
   
   const getBrandsForInverterType = (type: string) => {
-    return Array.from(new Set(inverterProducts.filter(p => p.inverterType === type).map(p => p.brand).filter(Boolean)));
+    return Array.from(new Set(inverterProducts.filter(p => p.productType === type).map(p => p.brand).filter(Boolean)));
   };
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
@@ -158,7 +159,7 @@ const Shop = () => {
       matchesBrand = product.brand && product.brand.toLowerCase() === selectedBrand.toLowerCase();
     }
     const matchesInverterType = !isInverter || !selectedInverterType ||
-      (product.inverterType === selectedInverterType);
+      (product.productType === selectedInverterType);
     const matchesInverterBrand = !isInverter || !selectedInverterBrand ||
       (product.brand && product.brand.toLowerCase() === selectedInverterBrand.toLowerCase());
 
@@ -442,23 +443,78 @@ const Shop = () => {
                           alt={product.name}
                           className="w-full h-full object-contain p-3 transition-transform duration-500 group-hover:scale-105"
                         />
-                        <span className="absolute top-4 left-4 px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-semibold">
+                        <span className="absolute top-4 left-4 px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-semibold max-w-[80%] truncate">
                           {product.category}
                         </span>
                       </div>
 
-                      <div className="p-6 flex-1">
-                        <div className="flex items-center gap-2 text-eco text-sm font-medium mb-2">
-                          <Zap className="h-4 w-4" />
-                          {product.capacity} â€¢ {product.warranty} Warranty
-                          {product.brand && <span className="ml-2 px-2 py-0.5 bg-muted text-muted-foreground text-xs rounded-full">{product.brand}</span>}
-                        </div>
-                        <h3 className="text-lg font-heading font-bold text-foreground mb-2 group-hover:text-primary transition-colors">
-                          {product.name}
-                        </h3>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          {product.benefit}
-                        </p>
+                      <div className="p-6 flex-1 flex flex-col">
+                        {product.category.toLowerCase().includes('storage') ? (
+                          <>
+                            {/* 1. Header (Title) */}
+                            <h3 className="text-lg font-heading font-bold text-foreground mb-3 group-hover:text-primary transition-colors line-clamp-2">
+                              {product.name}
+                            </h3>
+
+                            {/* 2. Specs Box */}
+                            <div className="grid grid-cols-2 gap-x-2 gap-y-2.5 text-[11px] mb-3 bg-slate-50/80 p-3 rounded-lg border border-slate-100/50">
+                               <div className="flex flex-col">
+                                 <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[9px]">Capacity</span>
+                                 <span className="font-bold text-slate-800">{product.capacity || '-'}</span>
+                               </div>
+                               <div className="flex flex-col">
+                                 <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[9px]">Voltage</span>
+                                 <span className="font-bold text-slate-800 truncate" title={product.specifications?.['Battery Nominal Voltage'] || product.specifications?.['Battery Nomi'] || product.specifications?.['Operating V'] || product.specifications?.['Operating Voltage Range'] || '-'} >{product.specifications?.['Battery Nominal Voltage'] || product.specifications?.['Battery Nomi'] || product.specifications?.['Operating V'] || product.specifications?.['Operating Voltage Range'] || '-'}</span>
+                               </div>
+                               <div className="flex flex-col">
+                                 <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[9px]">Cycle Life</span>
+                                 <span className="font-bold text-slate-800">{product.specifications?.['Cycle Life'] || '-'}</span>
+                               </div>
+                               <div className="flex flex-col">
+                                 <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[9px]">Warranty</span>
+                                 <span className="font-bold text-slate-800">{product.warranty || '-'}</span>
+                               </div>
+                            </div>
+
+                            {/* 3. Badges (Type & Cooling) */}
+                            <div className="flex flex-wrap gap-2 mb-4">
+                              {product.productType && <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] rounded-full uppercase font-bold tracking-wide">{product.productType}</span>}
+                              {product.specifications?.['Cooling'] && <span className="px-2 py-0.5 bg-cyan-50 text-cyan-700 text-[10px] rounded-full uppercase font-bold tracking-wide">{product.specifications['Cooling']}</span>}
+                            </div>
+
+                            {/* 4. Sub-info (Description & Brand) */}
+                            <div className="flex flex-wrap items-center gap-2 mb-4 mt-auto pt-2">
+                              <span className="text-sm font-medium text-gray-500 line-clamp-1 flex-1">{product.benefit || 'Energy Storage Module'}</span>
+                              {product.brand && <span className="px-2 py-0.5 bg-gray-100 text-gray-600 border border-gray-200 text-[10px] rounded-md font-bold uppercase tracking-wide">{product.brand}</span>}
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            {/* 1. Type (and phase if applicable) */}
+                            <div className="flex flex-wrap gap-2 mb-2">
+                              {product.productType && <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] rounded-full uppercase font-bold tracking-wide">{product.productType}</span>}
+                              {product.phase && <span className="px-2 py-0.5 bg-purple-50 text-purple-700 text-[10px] rounded-full uppercase font-bold tracking-wide">{product.phase}</span>}
+                            </div>
+
+                            {/* 2. Description Header */}
+                            <h3 className="text-lg font-heading font-bold text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-2">
+                              {product.benefit}
+                            </h3>
+
+                            {/* 3. Watt and Warranty */}
+                            <div className="flex flex-wrap items-center gap-2 text-eco text-sm font-medium mb-2">
+                              <span>{product.capacity} <span className="font-bold text-xs tracking-wider">KW</span></span>
+                              <span className="text-muted-foreground">•</span>
+                              <span>{product.warranty} Warranty</span>
+                            </div>
+
+                            {/* 4. Title & Brand */}
+                            <div className="flex flex-wrap items-center gap-2 mb-4 mt-auto pt-2">
+                              <span className="text-sm font-semibold text-gray-800 tracking-wide">{product.name}</span>
+                              {product.brand && <span className="px-2 py-0.5 bg-gray-100 text-gray-600 border border-gray-200 text-[10px] rounded-md font-bold uppercase tracking-wide">{product.brand}</span>}
+                            </div>
+                          </>
+                        )}
                         <div className="flex items-center justify-between gap-4">
                           <span className="text-2xl font-heading font-bold text-primary">
                             {formatPrice(product.price)}
