@@ -12,6 +12,7 @@ const navLinks = [
   { name: 'Solutions', path: '/solutions' },
   { name: 'Impact', path: '/impact' },
   { name: 'Contact', path: '/contact' },
+  // { name: 'Login', path: '/login' },
 ];
 
 export const Navbar = () => {
