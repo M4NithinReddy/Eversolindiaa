@@ -34,7 +34,7 @@ export const Footer = () => {
               <img
                 src="/images/eversol.png"
                 alt="Eversol Logo"
-                className="h-14 w-auto object-contain"
+                className="h-28 w-auto object-contain"
               />
             </Link>
             <p className="text-primary-foreground/80 mb-4 max-w-sm leading-relaxed">
@@ -98,7 +98,7 @@ export const Footer = () => {
               <li className="flex items-start gap-3">
                 <MapPin className="h-5 w-5 text-solar shrink-0 mt-0.5" />
                 <span className="text-primary-foreground/80">
-                  EVERSOL Energy Pvt. Ltd.<br />
+                  EVERSOL Energy India<br />
                   New Delhi, India
                 </span>
               </li>
@@ -124,7 +124,7 @@ export const Footer = () => {
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-primary-foreground/60 text-sm">
-              © {new Date().getFullYear()} EVERSOL Energy Pvt. Ltd. All rights reserved.
+              © {new Date().getFullYear()} EVERSOL Energy India All rights reserved.
             </p>
             <div className="flex gap-6 text-sm">
               <Link to="/privacy" className="text-primary-foreground/60 hover:text-solar transition-colors">

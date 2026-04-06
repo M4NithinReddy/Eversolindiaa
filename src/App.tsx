@@ -16,6 +16,9 @@ import About from "./pages/About";
 import Impact from "./pages/Impact";
 import Contact from "./pages/Contact";
 import AdminDashboard from "./pages/AdminDashboard";
+import LoginPortal from "./pages/LoginPortal";
+import UserDashboard from "./pages/UserDashboard";
+import PartnerDashboard from "./pages/PartnerDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +43,9 @@ const App = () => (
               <Route path="/impact" element={<Impact />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/admindashboard" element={<AdminDashboard />} />
+              <Route path="/login" element={<LoginPortal />} />
+              <Route path="/user-dashboard" element={<UserDashboard />} />
+              <Route path="/partner-dashboard" element={<PartnerDashboard />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
