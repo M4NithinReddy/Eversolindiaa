@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { Zap, ShoppingCart, Check, ArrowLeft, Phone, Shield, Award, Truck, Download, ChevronUp, ChevronDown } from 'lucide-react';
 import { Image360Viewer } from '@/components/product/Image360Viewer';
+import { Advanced360Viewer } from '@/components/product/Advanced360Viewer';
 import ProductImageGallery from '@/components/product/ProductImageGallery';
 import panelImg from '@/assets/product-solar-panel.jpg';
 import inverterImg from '@/assets/product-inverter.jpg';
@@ -13,7 +14,7 @@ import { useCart } from '@/context/CartContext';
 import { useAdmin } from '@/context/AdminContext';
 import { useQuery } from '@tanstack/react-query';
 import { getProductById } from '@/lib/api';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 
 // Product type definitions
 type ProductSpecification = {
@@ -51,6 +52,7 @@ const ProductDetail = () => {
   const { data: adminData } = useAdmin();
   const navigate = useNavigate();
   const [added, setAdded] = useState(false);
+  const [viewMode, setViewMode] = useState<'gallery' | '360'>('gallery');
 
   const { data: apiProduct, isLoading, error } = useQuery({
     queryKey: ['product', id],
@@ -59,20 +61,31 @@ const ProductDetail = () => {
   });
 
   const product = useMemo(() => {
-    const pData = Array.isArray(apiProduct) ? apiProduct[0] : apiProduct;
+    const pData = Array.isArray(apiProduct) 
+      ? apiProduct.find((p: any) => String(p.id) === String(id)) || apiProduct[0] 
+      : apiProduct;
     if (!pData) return null;
     const mod = adminData.modules.find(m => m.id === pData.moduleId);
     const br = adminData.brands.find(b => b.id === pData.brandId);
+    const categoryName = mod?.name || 'Unknown';
+
+    const getDefaultImage = (catName: string) => {
+      const cat = catName.toLowerCase();
+      if (cat.includes('inverter')) return inverterImg;
+      if (cat.includes('module') || cat.includes('panel')) return panelImg;
+      if (cat.includes('storage') || cat.includes('battery')) return batteryImg;
+      return kitImg;
+    };
     
     return {
       id: pData.id,
       name: pData.title || '',
-      category: mod?.name || 'Unknown',
+      category: categoryName,
       brand: br?.name || 'Unknown',
       capacity: pData.capacity || '',
       price: pData.price || 0,
       benefit: pData.description || '',
-      image: pData.images?.[0] || '/images/default.png',
+      image: (pData.images && pData.images.length > 0) ? pData.images[0] : getDefaultImage(categoryName),
       images: pData.images || [],
       warranty: pData.warranty || '',
       description: pData.description || '',
@@ -81,10 +94,20 @@ const ProductDetail = () => {
       benefits: pData.benefits || [],
       applications: pData.applications || [],
       datasheet: pData.datasheet || '',
+      images360: pData.images360 || [],
       productType: pData.productType || '',
       phase: pData.phase || '',
     };
   }, [apiProduct, adminData]);
+
+  // Set default view mode to 360 if available
+  useEffect(() => {
+    const hasImages360 = product?.images360 && product.images360.length > 0;
+    const hasMultipleImages = product?.images && product.images.length > 1;
+    if (hasImages360 || hasMultipleImages) {
+      setViewMode('360');
+    }
+  }, [product?.images360, product?.images]);
 
   const renderSpecifications = () => {
     if (!product || !product.specifications) return null;
@@ -194,9 +217,43 @@ const ProductDetail = () => {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
-              className="bg-card rounded-2xl p-8 border border-border"
+              className="bg-card rounded-2xl p-8 border border-border relative group"
             >
-              {product.images && product.images.length > 0 ? (
+                {(() => {
+                  const hasImages360 = product.images360 && product.images360.length > 0;
+                  const hasMultipleImages = product.images && product.images.length > 1;
+                  const canShow360 = hasImages360 || hasMultipleImages;
+
+                  if (!canShow360) return null;
+
+                  return (
+                    <div className="absolute top-4 right-4 z-10 flex gap-2">
+                    <Button
+                      size="sm"
+                      variant={viewMode === 'gallery' ? 'default' : 'outline'}
+                      onClick={() => setViewMode('gallery')}
+                      className="rounded-full shadow-sm"
+                    >
+                      Gallery
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={viewMode === '360' ? 'default' : 'outline'}
+                      onClick={() => setViewMode('360')}
+                      className="rounded-full shadow-sm"
+                    >
+                      360° View
+                    </Button>
+                  </div>
+                  );
+                })()}
+
+              {viewMode === '360' && ((product.images360 && product.images360.length > 0) || (product.images && product.images.length > 1)) ? (
+                <Advanced360Viewer 
+                  images={[product.images360 && product.images360.length > 0 ? product.images360 : product.images]} 
+                  className="w-full h-full" 
+                />
+              ) : product.images && product.images.length > 0 ? (
                 <ProductImageGallery
                   images={product.images}
                   productName={product.name}
@@ -232,8 +289,7 @@ const ProductDetail = () => {
 
               <div className="flex items-center gap-4 text-eco font-medium mb-6">
                 <span className="flex items-center gap-2">
-                  <Zap className="h-5 w-5" />
-                  {product.capacity}
+                  {product.capacity ? (product.capacity.toLowerCase().endsWith('kw') ? product.capacity : `${product.capacity} KW`) : ''}
                 </span>
                 <span className="flex items-center gap-2">
                   <Shield className="h-5 w-5" />
