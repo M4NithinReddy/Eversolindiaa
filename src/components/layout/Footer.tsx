@@ -98,14 +98,15 @@ export const Footer = () => {
               <li className="flex items-start gap-3">
                 <MapPin className="h-5 w-5 text-solar shrink-0 mt-0.5" />
                 <span className="text-primary-foreground/80">
-                  EVERSOL Energy Pvt. Ltd.<br />
-                  New Delhi, India
+                  EVERSOL Indiaa Energy<br />
+                  Vasu Complex New BEL Road,<br />
+                  Bengaluru, Karnataka 560054
                 </span>
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="h-5 w-5 text-solar shrink-0" />
-                <a href="tel:+911234567890" className="text-primary-foreground/80 hover:text-solar transition-colors">
-                  +91 123 456 7890
+                <a href="tel:+919902843835" className="text-primary-foreground/80 hover:text-solar transition-colors">
+                  +91 99028 43835
                 </a>
               </li>
               <li className="flex items-center gap-3">
@@ -124,7 +125,7 @@ export const Footer = () => {
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-primary-foreground/60 text-sm">
-              © {new Date().getFullYear()} EVERSOL Energy Pvt. Ltd. All rights reserved.
+              © {new Date().getFullYear()} EVERSOL Indiaa Energy. All rights reserved.
             </p>
             <div className="flex gap-6 text-sm">
               <Link to="/privacy" className="text-primary-foreground/60 hover:text-solar transition-colors">
