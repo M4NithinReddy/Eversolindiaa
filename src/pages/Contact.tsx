@@ -11,8 +11,8 @@ const contactInfo = [
   {
     icon: Phone,
     title: 'Phone',
-    content: '+91 123 456 7890',
-    link: 'tel:+911234567890',
+    content: '+91 99028 43835',
+    link: 'tel:+919902843835',
   },
   {
     icon: Mail,
@@ -23,8 +23,8 @@ const contactInfo = [
   {
     icon: MapPin,
     title: 'Address',
-    content: 'EVERSOL Energy Pvt. Ltd.\n123, Green Park, Sector 18\nNew Delhi - 110022, India',
-    link: 'https://maps.google.com',
+    content: 'EVERSOL Indiaa Energy\nVasu Complex New BEL Road, Raj Mahal Vilas 2nd Stage\nDollars Colony, Bengaluru, Karnataka 560054',
+    link: 'https://maps.app.goo.gl/ApbqqR7NG2gKYv937',
   },
   {
     icon: Clock,
@@ -134,7 +134,7 @@ const Contact = () => {
                   Our solar experts are available to answer your questions right now.
                 </p>
                 <Button variant="solar" asChild className="w-full">
-                  <a href="tel:+911234567890">
+                  <a href="tel:+919902843835">
                     <Phone className="h-4 w-4" />
                     Call Now
                   </a>
@@ -282,7 +282,7 @@ const Contact = () => {
               Visit Our Office
             </h2>
             <p className="text-muted-foreground">
-              Our headquarters is located in the heart of New Delhi
+              Our headquarters is located in the heart of Bengaluru
             </p>
           </motion.div>
 
@@ -294,14 +294,14 @@ const Contact = () => {
             className="rounded-2xl overflow-hidden border border-border h-96"
           >
             <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d224345.83923192776!2d77.06889754725782!3d28.52758200617607!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390cfd5b347eb62d%3A0x52c2b7494e204dce!2sNew%20Delhi%2C%20Delhi!5e0!3m2!1sen!2sin!4v1690000000000!5m2!1sen!2sin"
+              src="https://maps.google.com/maps?q=Vasu+Complex,New+BEL+Road,Raj+Mahal+Vilas+2nd+Stage,Dollars+Colony,Bengaluru,Karnataka+560054&output=embed&z=16"
               width="100%"
               height="100%"
               style={{ border: 0 }}
               allowFullScreen
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-              title="EVERSOL Office Location"
+              title="EVERSOL Office Location - Vasu Complex, New BEL Road, Bengaluru"
             />
           </motion.div>
         </div>
@@ -321,9 +321,9 @@ const Contact = () => {
               Ready to make the switch?
             </h3>
             <Button variant="hero" size="lg" asChild>
-              <a href="tel:+911234567890">
+              <a href="tel:+919902843835">
                 <Phone className="h-5 w-5" />
-                Call +91 123 456 7890
+                Call +91 99028 43835
               </a>
             </Button>
           </motion.div>
