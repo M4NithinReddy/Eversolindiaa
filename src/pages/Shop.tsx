@@ -147,17 +147,12 @@ const Shop = () => {
       product.category.toLowerCase().includes(searchQuery.toLowerCase());
 
     // Category specific filters
-    const isSolarModule = selectedCategory === 'Solar Modules';
-    const isSolarStorage = selectedCategory === 'Solar Storage';
     const isInverter = selectedCategory === 'Solar Inverters';
 
-    // Brand filtering
-    let matchesBrand = true;
-    if (isSolarModule && selectedBrand) {
-      matchesBrand = product.brand && product.brand.toLowerCase() === selectedBrand.toLowerCase();
-    } else if (isSolarStorage && selectedBrand) {
-      matchesBrand = product.brand && product.brand.toLowerCase() === selectedBrand.toLowerCase();
-    }
+    // Brand filtering — applies to all categories
+    const matchesBrand = !selectedBrand ||
+      (product.brand && product.brand.toLowerCase() === selectedBrand.toLowerCase());
+
     const matchesInverterType = !isInverter || !selectedInverterType ||
       (product.productType === selectedInverterType);
     const matchesInverterBrand = !isInverter || !selectedInverterBrand ||
@@ -217,6 +212,7 @@ const Shop = () => {
                         variant={selectedCategory === category ? 'default' : 'outline'}
                         size="sm"
                         onClick={() => {
+                          const isChangingCategory = selectedCategory !== category;
                           setSelectedCategory(category);
                           // Toggle brand dropdown for categories with brands
                           if (getBrandsForCategory(category).length > 0) {
@@ -227,10 +223,12 @@ const Shop = () => {
                           // Keep existing inverter filter toggle
                           setIsInverterFiltersOpen(category === 'Solar Inverters' ? !isInverterFiltersOpen : false);
                           
-                          // Reset filters when changing category
-                          setSelectedBrand(null);
-                          setSelectedInverterType(null);
-                          setSelectedInverterBrand(null);
+                          // Reset filters only when changing category
+                          if (isChangingCategory) {
+                            setSelectedBrand(null);
+                            setSelectedInverterType(null);
+                            setSelectedInverterBrand(null);
+                          }
                         }}
                         className={`rounded-full ${getBrandsForCategory(category).length > 0 ? 'pr-8' : ''}`}
                       >

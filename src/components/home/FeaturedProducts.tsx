@@ -2,60 +2,38 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Zap, ShoppingCart } from 'lucide-react';
 import { motion } from 'framer-motion';
-import panelImg from '@/assets/product-solar-panel.jpg';
-import inverterImg from '@/assets/product-inverter.jpg';
-import batteryImg from '@/assets/product-battery.jpg';
-import kitImg from '@/assets/product-rooftop-kit.jpg';
-
-const products = [
-  {
-    id: 1,
-    name: 'EVERSOL Pro 550W Panel',
-    category: 'Solar Panels',
-    capacity: '550W',
-    price: '₹15,999',
-    benefit: 'Highest efficiency monocrystalline cells',
-    image: panelImg,
-  },
-  {
-    id: 2,
-    name: 'EVERSOL PowerMax Inverter',
-    category: 'Solar Inverters',
-    capacity: '5kW',
-    price: '₹45,999',
-    benefit: 'Smart MPPT technology with app control',
-    image: inverterImg,
-  },
-  {
-    id: 3,
-    name: 'EVERSOL LithiumStore',
-    category: 'Solar Batteries',
-    capacity: '10kWh',
-    price: '₹1,25,999',
-    benefit: '6000+ cycle life lithium battery',
-    image: batteryImg,
-  },
-  {
-    id: 4,
-    name: 'EVERSOL Complete Kit',
-    category: 'Rooftop Kits',
-    capacity: '3kW',
-    price: '₹1,89,999',
-    benefit: 'All-inclusive home solar solution',
-    image: kitImg,
-  },
-];
+import { useAdmin } from '@/context/AdminContext';
 
 export const FeaturedProducts = () => {
+  const { data, productsLoading } = useAdmin();
+  const { modules, products } = data;
+
+  // Pick exactly exactly 4 dynamic products strictly from the database modules
+  const featuredProducts = modules.map((module) => {
+    // Find first product that belongs to this specific module/category
+    const product = products.find(p => p.moduleId === module.id);
+    
+    return {
+      id: product?.id || `empty-${module.id}`,
+      name: product?.title || 'Coming Soon',
+      category: module.name,
+      capacity: product?.capacity || '-',
+      price: product ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(product.price || 0) : '-',
+      benefit: product?.description || 'Stay tuned for premium products in this category.',
+      image: product?.images && product.images.length > 0 ? product.images[0] : '/images/default.png',
+      hasProduct: !!product
+    };
+  }).slice(0, 4);
+
   return (
     <section className="py-24 bg-background">
       <div className="container mx-auto px-4">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-16"
+           initial={{ opacity: 0, y: 20 }}
+           whileInView={{ opacity: 1, y: 0 }}
+           viewport={{ once: true }}
+           transition={{ duration: 0.6 }}
+           className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-16"
         >
           <div>
             <span className="inline-block px-4 py-2 rounded-full bg-solar/10 text-solar-dark font-semibold text-sm mb-4">
@@ -73,52 +51,68 @@ export const FeaturedProducts = () => {
           </Button>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {products.map((product, index) => (
-            <motion.div
-              key={product.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="group bg-card rounded-2xl overflow-hidden border border-border hover:border-primary/30 transition-all duration-300 card-hover"
-            >
-              <div className="aspect-square p-2 bg-solar relative overflow-hidden">
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
-                />
-                <span className="absolute top-4 left-4 px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-semibold">
-                  {product.category}
-                </span>
-              </div>
-
-              <div className="p-6">
-                <div className="flex items-center gap-2 text-eco text-sm font-medium mb-2">
-                  <Zap className="h-4 w-4" />
-                  {product.capacity}
-                </div>
-                <h3 className="text-lg font-heading font-bold text-foreground mb-2 group-hover:text-primary transition-colors">
-                  {product.name}
-                </h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  {product.benefit}
-                </p>
-                <div className="flex items-center justify-between">
-                  <span className="text-2xl font-heading font-bold text-primary">
-                    {product.price}
+        {productsLoading ? (
+           <div className="flex justify-center items-center py-12 min-h-[300px]">
+             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+           </div>
+        ) : featuredProducts.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {featuredProducts.map((product, index) => (
+              <motion.div
+                key={product.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="group flex flex-col bg-card rounded-2xl overflow-hidden border border-border hover:border-primary/30 transition-all duration-300 card-hover"
+              >
+                <div className="aspect-square p-2 bg-solar relative overflow-hidden shrink-0">
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <span className="absolute top-4 left-4 px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-semibold">
+                    {product.category}
                   </span>
-                  <Button variant="solar" size="sm" asChild>
-                    <Link to={`/product/${product.id}`}>
-                      <ShoppingCart className="h-4 w-4" />
-                    </Link>
-                  </Button>
                 </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+
+                <div className="p-6 flex flex-col grow">
+                  <div className="flex items-center gap-2 text-eco text-sm font-medium mb-2">
+                    <Zap className="h-4 w-4" />
+                    {product.capacity}
+                  </div>
+                  <h3 className="text-lg font-heading font-bold text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-2">
+                    {product.name}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                    {product.benefit}
+                  </p>
+                  <div className="flex items-center justify-between mt-auto pt-4">
+                    <span className="text-2xl font-heading font-bold text-primary">
+                      {product.price}
+                    </span>
+                    {product.hasProduct ? (
+                      <Button variant="solar" size="sm" asChild>
+                        <Link to={`/product/${product.id}`}>
+                          <ShoppingCart className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                    ) : (
+                      <Button variant="solar" size="sm" disabled>
+                        <ShoppingCart className="h-4 w-4" opacity={0.5} />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center text-muted-foreground py-12 border border-dashed rounded-xl">
+            No featured products available at the moment. Add products to modules via admin to see them here!
+          </div>
+        )}
       </div>
     </section>
   );
