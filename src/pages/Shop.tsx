@@ -74,18 +74,27 @@ const Shop = () => {
     return mod ? data.brands.filter(b => b.moduleId === mod.id) : [];
   };
 
+  const getDefaultImage = (categoryName: string) => {
+    const cat = categoryName.toLowerCase();
+    if (cat.includes('inverter')) return inverterImg;
+    if (cat.includes('module') || cat.includes('panel')) return panelImg;
+    if (cat.includes('storage') || cat.includes('battery')) return batteryImg;
+    return kitImg;
+  };
+
   const mappedProducts = data.products.map(p => {
     const mod = data.modules.find(m => m.id === p.moduleId);
     const br = data.brands.find(b => b.id === p.brandId);
+    const categoryName = mod?.name || 'Unknown';
     return {
       id: p.id,
       name: p.title || '',
-      category: mod?.name || 'Unknown',
+      category: categoryName,
       brand: br?.name || 'Unknown',
       capacity: p.capacity || '',
       price: p.price || 0,
       benefit: p.description || '',
-      image: p.images?.[0] || '/images/default.png',
+      image: (p.images && p.images.length > 0) ? p.images[0] : getDefaultImage(categoryName),
       images: p.images || [],
       warranty: p.warranty || '',
       datasheet: p.datasheet || '',
@@ -141,10 +150,20 @@ const Shop = () => {
     // Category filter
     const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
 
-    // Search filter
-    const matchesSearch = searchQuery === '' ||
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchQuery.toLowerCase());
+    // Search filter - search across all relevant product fields
+    const q = searchQuery.toLowerCase().trim();
+    const specValues = Object.values(product.specifications || {}).map(v => String(v).toLowerCase());
+    const matchesSearch = q === '' ||
+      product.name.toLowerCase().includes(q) ||
+      product.category.toLowerCase().includes(q) ||
+      (product.brand || '').toLowerCase().includes(q) ||
+      (product.productType || '').toLowerCase().includes(q) ||
+      (product.phase || '').toLowerCase().includes(q) ||
+      (product.capacity || '').toLowerCase().includes(q) ||
+      (product.benefit || '').toLowerCase().includes(q) ||
+      (product.warranty || '').toLowerCase().includes(q) ||
+      specValues.some(v => v.includes(q)) ||
+      (product.features || []).some((f: string) => f.toLowerCase().includes(q));
 
     // Category specific filters
     const isSolarModule = selectedCategory === 'Solar Modules';

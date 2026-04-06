@@ -12,6 +12,7 @@ const navLinks = [
   { name: 'Solutions', path: '/solutions' },
   { name: 'Impact', path: '/impact' },
   { name: 'Contact', path: '/contact' },
+  // { name: 'Login', path: '/login' },
 ];
 
 export const Navbar = () => {
@@ -60,7 +61,7 @@ export const Navbar = () => {
       <div className="container mx-auto px-4">
         <nav className="flex items-center justify-between h-20">
           {/* Logo */}
-          <Link to="/" className="flex items-center h-16">
+          <Link to="/" className="flex items-center h-20">
             <img
               src="/images/eversol.png"
               alt="Eversol Logo"

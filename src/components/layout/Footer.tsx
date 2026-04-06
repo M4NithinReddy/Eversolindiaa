@@ -2,22 +2,12 @@ import { Link } from 'react-router-dom';
 import { Sun, Mail, Phone, MapPin, Facebook, Twitter, Linkedin, Instagram } from 'lucide-react';
 
 const footerLinks = {
-  products: [
-    { name: 'Solar Panels', path: '/shop?category=panels' },
-    { name: 'Solar Inverters', path: '/shop?category=inverters' },
-    { name: 'Solar Batteries', path: '/shop?category=batteries' },
-    { name: 'Rooftop Kits', path: '/shop?category=kits' },
-  ],
-  solutions: [
-    { name: 'Residential', path: '/solutions#residential' },
-    { name: 'Commercial', path: '/solutions#commercial' },
-    { name: 'Industrial', path: '/solutions#industrial' },
-    { name: 'Government', path: '/solutions#government' },
-  ],
-  company: [
-    { name: 'About Us', path: '/about' },
-    { name: 'Our Impact', path: '/impact' },
-    { name: 'Careers', path: '/about#careers' },
+  quickLinks: [
+    { name: 'Home', path: '/' },
+    { name: 'About', path: '/about' },
+    { name: 'Products', path: '/shop' },
+    { name: 'Solutions', path: '/solutions' },
+    { name: 'Impact', path: '/impact' },
     { name: 'Contact', path: '/contact' },
   ],
 };
@@ -34,7 +24,7 @@ export const Footer = () => {
               <img
                 src="/images/eversol.png"
                 alt="Eversol Logo"
-                className="h-14 w-auto object-contain"
+                className="h-28 w-auto object-contain"
               />
             </Link>
             <p className="text-primary-foreground/80 mb-4 max-w-sm leading-relaxed">
@@ -57,11 +47,11 @@ export const Footer = () => {
             </div>
           </div>
 
-          {/* Products */}
+          {/* Quick Links Column 1 */}
           <div>
-            <h4 className="font-heading font-bold text-lg mb-6 text-solar">Products</h4>
+            <h4 className="font-heading font-bold text-lg mb-6 text-solar">Quick Links</h4>
             <ul className="space-y-3">
-              {footerLinks.products.map((link) => (
+              {footerLinks.quickLinks.slice(0, 3).map((link) => (
                 <li key={link.path}>
                   <Link
                     to={link.path}
@@ -74,11 +64,11 @@ export const Footer = () => {
             </ul>
           </div>
 
-          {/* Solutions */}
-          <div>
-            <h4 className="font-heading font-bold text-lg mb-6 text-solar">Solutions</h4>
+          {/* Quick Links Column 2 */}
+          <div className="flex flex-col">
+            <div className="hidden lg:block h-7 mb-6" aria-hidden="true"></div>
             <ul className="space-y-3">
-              {footerLinks.solutions.map((link) => (
+              {footerLinks.quickLinks.slice(3).map((link) => (
                 <li key={link.path}>
                   <Link
                     to={link.path}
