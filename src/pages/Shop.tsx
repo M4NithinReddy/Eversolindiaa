@@ -102,6 +102,7 @@ const Shop = () => {
       features: p.benefits?.length ? p.benefits : (p.applications || []),
       productType: p.productType || '',
       phase: p.phase || '',
+      isOutOfStock: !!p.isOutOfStock,
     };
   });
 
@@ -458,11 +459,26 @@ const Shop = () => {
                         <img
                           src={product.image}
                           alt={product.name}
-                          className="w-full h-full object-contain p-3 transition-transform duration-500 group-hover:scale-105"
+                          className={`w-full h-full object-contain p-3 transition-transform duration-500 group-hover:scale-105 ${product.isOutOfStock ? 'grayscale opacity-50' : ''}`}
                         />
                         <span className="absolute top-4 left-4 px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-semibold max-w-[80%] truncate">
                           {product.category}
                         </span>
+                        {product.isOutOfStock && (
+                          <>
+                            <div className="absolute inset-0 bg-white/20 backdrop-blur-[1px] z-10" />
+                            <div className="absolute inset-0 flex flex-col items-center justify-center z-20 p-6">
+                              <img 
+                                src="/images/out-of-stock-illustration.png" 
+                                alt="Out of stock" 
+                                className="w-1/2 h-auto object-contain drop-shadow-xl mb-2" 
+                              />
+                              <div className="bg-red-600 text-white text-[10px] font-bold px-3 py-1 rounded shadow-lg uppercase tracking-widest border border-white/20">
+                                Currently Out of Stock
+                              </div>
+                            </div>
+                          </>
+                        )}
                       </div>
 
                       <div className="p-6 flex-1 flex flex-col">

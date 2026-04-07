@@ -42,6 +42,7 @@ type Product = {
   images360?: string[];
   productType?: string;
   phase?: string;
+  isOutOfStock?: boolean;
 };
 
 // Products object with string keys
@@ -97,6 +98,7 @@ const ProductDetail = () => {
       images360: pData.images360 || [],
       productType: pData.productType || '',
       phase: pData.phase || '',
+      isOutOfStock: !!pData.isOutOfStock,
     };
   }, [apiProduct, adminData]);
 
@@ -262,8 +264,24 @@ const ProductDetail = () => {
                 <img
                   src={product.image}
                   alt={product.name}
-                  className="w-full h-auto object-contain max-h-96 mx-auto"
+                  className={`w-full h-auto object-contain max-h-96 mx-auto ${product.isOutOfStock ? 'grayscale opacity-50' : ''}`}
                 />
+              )}
+
+              {product.isOutOfStock && (
+                <>
+                  <div className="absolute inset-0 bg-white/20 backdrop-blur-[1px] z-10 rounded-2xl" />
+                  <div className="absolute inset-0 flex flex-col items-center justify-center z-20 p-12 pointer-events-none">
+                    <img 
+                      src="/images/out-of-stock-illustration.png" 
+                      alt="Out of stock" 
+                      className="w-1/3 h-auto object-contain drop-shadow-2xl mb-4" 
+                    />
+                    <div className="bg-red-600 text-white text-sm font-bold px-6 py-2 rounded-lg shadow-2xl uppercase tracking-[0.2em] border-2 border-white/30 transition-transform hover:scale-105">
+                      Temporarily Sold Out
+                    </div>
+                  </div>
+                </>
               )}
             </motion.div>
 
@@ -331,9 +349,16 @@ const ProductDetail = () => {
                   size="xl"
                   className={`flex-1 transition-all duration-300 ${added ? 'bg-green-500 hover:bg-green-600' : ''}`}
                   onClick={handleAddToCart}
+                  disabled={product.isOutOfStock}
                 >
-                  {added ? <Check className="h-5 w-5" /> : <ShoppingCart className="h-5 w-5" />}
-                  {added ? 'Added to Cart!' : 'Add to Cart'}
+                  {product.isOutOfStock ? (
+                     <>OUT OF STOCK</>
+                  ) : (
+                    <>
+                      {added ? <Check className="h-5 w-5" /> : <ShoppingCart className="h-5 w-5" />}
+                      {added ? 'Added to Cart!' : 'Add to Cart'}
+                    </>
+                  )}
                 </Button>
                 {product.datasheet && (
                   <Button

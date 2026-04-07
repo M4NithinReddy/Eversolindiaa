@@ -42,6 +42,7 @@ const ProductForm = ({ moduleId, brandId, subBrandId, editProduct, onCancel, onS
   const [selectedBrandId, setSelectedBrandId] = useState(editProduct?.brandId || brandId);
   const [selectedSubBrandId, setSelectedSubBrandId] = useState(editProduct?.subBrandId || subBrandId || '');
   const [productType, setProductType] = useState(editProduct?.productType || '');
+  const [isOutOfStock, setIsOutOfStock] = useState(editProduct?.isOutOfStock || false);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -110,6 +111,7 @@ const ProductForm = ({ moduleId, brandId, subBrandId, editProduct, onCancel, onS
       warranty: warranty.trim(),
       datasheet: datasheet.trim(),
       productType: productType.trim() || undefined,
+      isOutOfStock,
     };
 
     if (onSaveOverride) {
@@ -323,6 +325,18 @@ const ProductForm = ({ moduleId, brandId, subBrandId, editProduct, onCancel, onS
               placeholder="https://..."
               className="bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400"
             />
+          </div>
+          <div className="flex items-center gap-2 pt-2">
+            <input
+              type="checkbox"
+              id="isOutOfStock"
+              checked={isOutOfStock}
+              onChange={(e) => setIsOutOfStock(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+            />
+            <Label htmlFor="isOutOfStock" className="text-gray-700 font-medium cursor-pointer">
+              Mark as Out of Stock (shows "Out of Stock" badge on website)
+            </Label>
           </div>
         </CardContent>
       </Card>

@@ -138,6 +138,7 @@ export interface ApiProduct {
   benefits: string[]; applications: string[];
   price: number; capacity: string; phase?: string; warranty: string; datasheet: string;
   images360?: string[];
+  isOutOfStock?: boolean;
   createdAt: string;
 }
 
