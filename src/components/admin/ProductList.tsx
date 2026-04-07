@@ -13,7 +13,7 @@ interface ProductListProps {
 }
 
 const ProductList = ({ moduleId, brandId, subBrandId, onEdit }: ProductListProps) => {
-  const { data, deleteProduct } = useAdmin();
+  const { data, deleteProduct, updateProduct } = useAdmin();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 25;
@@ -93,26 +93,48 @@ const ProductList = ({ moduleId, brandId, subBrandId, onEdit }: ProductListProps
                           {getSubBrandName(product.subBrandId) && ` · ${getSubBrandName(product.subBrandId)}`}
                         </p>
                       </div>
-                      <div className="flex gap-1 shrink-0">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-8 w-8 text-gray-400 hover:text-gray-700 hover:bg-gray-100"
-                          onClick={() => onEdit(product)}
-                        >
-                          <Pencil className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-8 w-8 text-gray-400 hover:text-red-500 hover:bg-red-50"
-                          onClick={() => handleDelete(product.id)}
-                          disabled={deletingId === product.id}
-                        >
-                          {deletingId === product.id
-                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            : <Trash2 className="w-3.5 h-3.5" />}
-                        </Button>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex gap-1 shrink-0">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8 text-gray-400 hover:text-gray-700 hover:bg-gray-100"
+                            onClick={() => onEdit(product)}
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8 text-gray-400 hover:text-red-500 hover:bg-red-50"
+                            onClick={() => handleDelete(product.id)}
+                            disabled={deletingId === product.id}
+                          >
+                            {deletingId === product.id
+                              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              : <Trash2 className="w-3.5 h-3.5" />}
+                          </Button>
+                        </div>
+
+                        {/* Stock Toggle */}
+                        <div className="flex items-center gap-2 px-2 py-1 rounded bg-gray-50 border border-gray-100 h-8">
+                          <input
+                            type="checkbox"
+                            id={`stock-${product.id}`}
+                            checked={product.isOutOfStock || false}
+                            onChange={async (e) => {
+                              const { id, createdAt, ...rest } = product;
+                              await updateProduct(id, { ...rest, isOutOfStock: e.target.checked });
+                            }}
+                            className="h-3.5 w-3.5 rounded border-gray-300 text-orange-500 focus:ring-orange-500 cursor-pointer"
+                          />
+                          <label 
+                            htmlFor={`stock-${product.id}`} 
+                            className={`text-[10px] font-bold uppercase tracking-wider cursor-pointer whitespace-nowrap ${product.isOutOfStock ? 'text-red-500' : 'text-emerald-600'}`}
+                          >
+                            {product.isOutOfStock ? 'Out of Stock' : 'In Stock'}
+                          </label>
+                        </div>
                       </div>
                     </div>
                     <p className="text-xs text-gray-400 mt-1 line-clamp-2">{product.description || 'No description'}</p>

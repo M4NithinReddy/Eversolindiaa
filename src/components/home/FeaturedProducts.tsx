@@ -21,7 +21,8 @@ export const FeaturedProducts = () => {
       price: product ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(product.price || 0) : '-',
       benefit: product?.description || 'Stay tuned for premium products in this category.',
       image: product?.images && product.images.length > 0 ? product.images[0] : '/images/default.png',
-      hasProduct: !!product
+      hasProduct: !!product,
+      isOutOfStock: !!product?.isOutOfStock
     };
   }).slice(0, 4);
 
@@ -70,11 +71,26 @@ export const FeaturedProducts = () => {
                   <img
                     src={product.image}
                     alt={product.name}
-                    className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
+                    className={`w-full h-full object-contain transition-transform duration-500 group-hover:scale-105 ${product.isOutOfStock ? 'grayscale opacity-50' : ''}`}
                   />
                   <span className="absolute top-4 left-4 px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-semibold">
                     {product.category}
                   </span>
+                  {product.isOutOfStock && (
+                    <>
+                      <div className="absolute inset-0 bg-white/20 backdrop-blur-[1px] z-10" />
+                      <div className="absolute inset-0 flex flex-col items-center justify-center z-10 p-4">
+                        <img 
+                          src="/images/out-of-stock-illustration.png" 
+                          alt="Out of stock" 
+                          className="w-2/3 h-auto object-contain drop-shadow-xl mb-1" 
+                        />
+                        <span className="bg-red-600 text-white text-[8px] font-bold px-2 py-0.5 shadow-lg uppercase tracking-widest border border-white/20">
+                          Sold Out
+                        </span>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <div className="p-6 flex flex-col grow">
