@@ -149,8 +149,12 @@ export async function getProducts(): Promise<ApiProduct[]> {
 }
 
 export async function getProductById(id: string): Promise<ApiProduct> {
-  const res = await fetch(`${GET_PRODS_BASE}/${id}`);
-  return parseResponse<ApiProduct>(res);
+  const url = `${GET_PRODS_BASE}?all=true`;
+  const res = await fetch(url);
+  const products = await parseResponse<ApiProduct[]>(res);
+  const product = products.find(p => String(p.id) === String(id));
+  if (!product) throw new Error("Product not found");
+  return product;
 }
 
 export async function createProductApi(product: Omit<ApiProduct, 'id' | 'createdAt'>): Promise<ApiProduct> {
