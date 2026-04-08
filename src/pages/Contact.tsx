@@ -23,7 +23,7 @@ const contactInfo = [
   {
     icon: MapPin,
     title: 'Address',
-    content: 'EVERSOL Indiaa Energy\nVasu Complex New BEL Road, Raj Mahal Vilas 2nd Stage\nDollars Colony, Bengaluru, Karnataka 560054',
+    content: 'EVERSOL INDIA \nVasu Complex New BEL Road, Raj Mahal Vilas 2nd Stage\nDollars Colony, Bengaluru, Karnataka 560054',
     link: 'https://maps.app.goo.gl/ApbqqR7NG2gKYv937',
   },
   {
