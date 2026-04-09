@@ -5,13 +5,14 @@ import BrandManager from '@/components/admin/BrandManager';
 import ProductForm from '@/components/admin/ProductForm';
 import ProductList from '@/components/admin/ProductList';
 import ExcelManager from '@/components/admin/ExcelManager';
+import DraftProductDetail from '@/components/admin/DraftProductDetail';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Plus, LayoutDashboard, Package, Tags, ShoppingBag, ChevronRight, Download, Trash2 } from 'lucide-react';
+import { Plus, LayoutDashboard, Package, Tags, ShoppingBag, ChevronRight, Download, Trash2, Eye } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-type View = 'dashboard' | 'productForm' | 'excelUpload';
+type View = 'dashboard' | 'productForm' | 'excelUpload' | 'productView';
 
 const AdminDashboard = () => {
   const { data, deleteAllProducts } = useAdmin();
@@ -19,6 +20,7 @@ const AdminDashboard = () => {
   const [selectedBrand, setSelectedBrand] = useState<AdminBrand | null>(null);
   const [selectedSubBrand, setSelectedSubBrand] = useState<AdminSubBrand | null>(null);
   const [view, setView] = useState<View>('dashboard');
+  const [selectedProduct, setSelectedProduct] = useState<AdminProduct | null>(null);
   const [editProduct, setEditProduct] = useState<AdminProduct | null>(null);
 
   const handleSelectModule = (mod: AdminModule) => {
@@ -50,13 +52,20 @@ const AdminDashboard = () => {
     setView('excelUpload');
   };
 
+  const handleViewProduct = (product: AdminProduct) => {
+    setSelectedProduct(product);
+    setView('productView');
+  };
+
   const handleProductSaved = () => {
     setEditProduct(null);
+    setSelectedProduct(null);
     setView('dashboard');
   };
 
   const handleProductCancel = () => {
     setEditProduct(null);
+    setSelectedProduct(null);
     setView('dashboard');
   };
 
@@ -156,6 +165,13 @@ const AdminDashboard = () => {
               />
             ) : view === 'excelUpload' ? (
               <ExcelManager onCancel={() => setView('dashboard')} />
+            ) : view === 'productView' && selectedProduct ? (
+              <DraftProductDetail 
+                product={selectedProduct} 
+                onBack={() => setView('dashboard')}
+                moduleName={data.modules.find(m => m.id === selectedProduct.moduleId)?.name}
+                brandName={data.brands.find(b => b.id === selectedProduct.brandId)?.name}
+              />
             ) : (
               <>
                 {/* Breadcrumb */}
@@ -188,15 +204,15 @@ const AdminDashboard = () => {
                       {selectedBrand
                         ? `${selectedBrand.name} Products`
                         : selectedModule
-                        ? `${selectedModule.name}`
-                        : 'All Products'}
+                          ? `${selectedModule.name}`
+                          : 'All Products'}
                     </h2>
                     <p className="text-sm text-gray-500 mt-1">
                       {selectedBrand
                         ? `Manage products under ${selectedBrand.name}`
                         : selectedModule
-                        ? 'Select a brand to view its products'
-                        : 'Select a module from the sidebar to begin'}
+                          ? 'Select a brand to view its products'
+                          : 'Select a module from the sidebar to begin'}
                     </p>
                   </div>
                   <Button
@@ -213,6 +229,7 @@ const AdminDashboard = () => {
                   brandId={selectedBrand?.id}
                   subBrandId={selectedSubBrand?.id}
                   onEdit={handleEditProduct}
+                  onView={handleViewProduct}
                 />
               </>
             )}
