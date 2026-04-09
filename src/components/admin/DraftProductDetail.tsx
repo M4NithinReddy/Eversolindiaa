@@ -10,6 +10,14 @@ interface DraftProductDetailProps {
 }
 
 const DraftProductDetail = ({ product, onBack, brandName, moduleName }: DraftProductDetailProps) => {
+  const availableStock = product.specifications?.find(s => s.key === 'Available Stock')?.value;
+  const getSpecHighlight = (key: string, value: string) => {
+    if (key === 'Available Stock' && value.toLowerCase() === 'yes') return 'text-emerald-600 font-semibold';
+    if (key.startsWith('Module Efficiency')) return 'text-blue-700 font-semibold';
+    if (key.startsWith('Cell Type')) return 'text-purple-700 font-semibold';
+    return 'text-gray-900';
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
       <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
@@ -96,11 +104,19 @@ const DraftProductDetail = ({ product, onBack, brandName, moduleName }: DraftPro
             {product.specifications && product.specifications.length > 0 && (
               <div>
                 <h3 className="text-lg font-bold text-gray-900 mb-3">Specifications</h3>
-                <div className="space-y-2">
-                  {product.specifications.map((spec, idx) => (
-                    <div key={idx} className="grid grid-cols-3 gap-2 py-2 border-b border-gray-50 text-sm">
-                      <span className="font-medium text-gray-600 col-span-1">{spec.key}</span>
-                      <span className="text-gray-900 col-span-2">{spec.value}</span>
+                {availableStock && (
+                  <div className="mb-3 inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold border border-emerald-200">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+                    Available Stock: {availableStock}
+                  </div>
+                )}
+                <div className="space-y-1 rounded-lg border border-gray-100 overflow-hidden">
+                  {product.specifications
+                    .filter(s => s.key !== 'Available Stock')
+                    .map((spec, idx) => (
+                    <div key={idx} className={`flex justify-between items-start gap-4 px-4 py-2.5 text-sm ${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}>
+                      <span className="font-medium text-gray-600 shrink-0 min-w-0" style={{maxWidth: '55%'}}>{spec.key}</span>
+                      <span className={`text-right min-w-0 ${getSpecHighlight(spec.key, spec.value)}`}>{spec.value}</span>
                     </div>
                   ))}
                 </div>
