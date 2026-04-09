@@ -52,6 +52,12 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
               const normalizedV = v.toLowerCase().trim();
               if (normalizedRow[normalizedV] !== undefined && normalizedRow[normalizedV] !== null && normalizedRow[normalizedV] !== '') {
                 return normalizedRow[normalizedV];
+          // Helper to get value from possible keys
+          const getVal = (keys: string[]) => {
+            for (const k of keys) {
+              const normalizedKey = k.toLowerCase().trim();
+              if (normalizedRow[normalizedKey] !== undefined && normalizedRow[normalizedKey] !== null && String(normalizedRow[normalizedKey]).trim() !== '') {
+                return normalizedRow[normalizedKey];
               }
             }
             return undefined;
@@ -98,17 +104,86 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
               if (Array.isArray(parsed)) specs.push(...parsed);
             } catch {
               specs.push({ key: 'Additional Info', value: String(excelSpecs) });
+          // 1. Identify standard fields
+          const title = String(getVal(['model name', 'title', 'name', 'model', 'product name']) || `Imported Product ${index + 1}`).trim();
+          const description = String(getVal(['description', 'features', 'about', 'info']) || '').trim();
+          const price = parseFloat(getVal(['total price', 'price', 'mrp', 'cost']) || '0') || 0;
+          const capacity = String(getVal(['capacity', 'capacity (kwh/ah)', 'size', 'power']) || '').trim();
+          const warranty = String(getVal(['warranty', 'guarantee']) || '').trim();
+          const productType = String(getVal(['type', 'product type', 'inverter type', 'battery type', 'battery type (lithium/l']) || '').trim();
+          const phase = String(getVal(['phase', 'phase (single/three phase)']) || '').trim();
+          const datasheet = String(getVal(['datasheet', 'manual', 'pdf']) || '').trim();
+          
+          // 2. Map Brands & Modules
+          let moduleId = '';
+          let brandId = '';
+          const rawModuleName = String(getVal(['product name', 'category', 'module', 'module name']) || '').trim();
+          const rawBrandName = String(getVal(['brand', 'brand name']) || '').trim();
+
+          if (rawModuleName) {
+            const mod = data.modules.find(m => m.name.toLowerCase() === rawModuleName.toLowerCase());
+            if (mod) moduleId = mod.id;
+          }
+          if (rawBrandName) {
+            const brand = data.brands.find(b => b.name.toLowerCase() === rawBrandName.toLowerCase());
+            if (brand) brandId = brand.id;
+          }
+
+          const isModuleNew = rawModuleName && !moduleId;
+          const isBrandNew = rawBrandName && !brandId;
+
+          // 3. Collect ALL other columns into specifications
+          const usedKeys = [
+            'model name', 'product name', 'title', 'name', 'model',
+            'description', 'features', 'about', 'info',
+            'price', 'mrp', 'cost', 'total price',
+            'capacity', 'capacity (kwh/ah)', 'size', 'power',
+            'warranty', 'guarantee',
+            'type', 'product type', 'inverter type', 'battery type', 'battery type (lithium/l',
+            'phase', 'phase (single/three phase)',
+            'datasheet', 'manual', 'pdf',
+            'category', 'module', 'module name',
+            'brand', 'brand name',
+            'image', 'images', 'img', 'subbrandid', 'subbrand', 'sub-brand'
+          ];
+
+          const specs: { key: string; value: string }[] = [];
+          
+          // Add extra fields as specs
+          Object.keys(row).forEach(originalKey => {
+            const k = originalKey.toLowerCase().trim();
+            if (!usedKeys.includes(k) && row[originalKey] !== undefined && row[originalKey] !== null && String(row[originalKey]).trim() !== '') {
+              specs.push({ key: originalKey, value: String(row[originalKey]).trim() });
+            }
+          });
+
+          // Also check for 'specifications' or 'specs' JSON column
+          const excelSpecs = normalizedRow.specifications || normalizedRow.specs;
+          if (excelSpecs) {
+            try {
+              const parsedSpecs = JSON.parse(excelSpecs);
+              if (Array.isArray(parsedSpecs)) {
+                specs.push(...parsedSpecs);
+              }
+            } catch {
+              if (typeof excelSpecs === 'string' && excelSpecs.includes(':')) {
+                 excelSpecs.split(',').forEach(s => {
+                    const [k, v] = s.split(':');
+                    if (k && v) specs.push({ key: k.trim(), value: v.trim() });
+                 });
+              }
             }
           }
 
+          // 4. Benefits & Applications
           let benefits = [];
-          const excelBenefits = normalizedRow.benefits || normalizedRow.benefit;
+          const excelBenefits = normalizedRow.benefits || normalizedRow.benefit || normalizedRow.features;
           if (excelBenefits) {
             benefits = String(excelBenefits).split(',').map((s: string) => s.trim());
           }
 
           let applications = [];
-          const excelApps = normalizedRow.applications || normalizedRow.application;
+          const excelApps = normalizedRow.applications || normalizedRow.application || normalizedRow['compatible inverters'];
           if (excelApps) {
             applications = String(excelApps).split(',').map((s: string) => s.trim());
           }
@@ -137,6 +212,10 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
             id: `draft-${Date.now()}-${index}`,
             title,
             description: String(normalizedRow.description || '').trim(),
+          return {
+            id: `draft-${Date.now()}-${index}`,
+            title,
+            description,
             images: normalizedRow.image ? [normalizedRow.image] : [],
             moduleId: moduleId || defaultModuleId,
             brandId: brandId || defaultBrandId,
@@ -153,6 +232,12 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
             productType: String(normalizedRow.type || normalizedRow["product type"] || '').trim(),
             datasheet: String(normalizedRow.datasheet || normalizedRow['data sheet'] || '').trim(),
             isOutOfStock,
+            price: price,
+            capacity: capacity,
+            phase: phase,
+            warranty: warranty,
+            productType: productType,
+            datasheet: datasheet,
             createdAt: new Date().toISOString(),
           } as any;
         });
@@ -573,6 +658,12 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
                               {draft.price > 0 ? `₹${draft.price.toLocaleString()}` : 'On Request'}
                             </span>
                           </div>
+                        
+                        <div className="flex items-center justify-center gap-2 py-2 mb-4">
+                           <span className="text-gray-500 font-medium">Price:</span>
+                           <span className="text-2xl font-bold text-emerald-600">
+                             {draft.price > 0 ? `₹${draft.price.toLocaleString()}` : 'On Request'}
+                           </span>
                         </div>
 
                         <div className="grid grid-cols-2 gap-2 mt-auto">
