@@ -39,43 +39,68 @@ export const ExcelUpload = ({ onSuccess, onCancel, brandId, moduleId }: ExcelUpl
 
       // Transform raw Excel rows into product objects
       const products: Omit<AdminProduct, 'id' | 'createdAt'>[] = jsonData.map((row, index) => {
-        if (!row.title) {
-          throw new Error(`Row ${index + 2}: Title is required.`);
-        }
+        // Normalize keys
+        const normalizedRow: any = {};
+        Object.keys(row).forEach(key => {
+          normalizedRow[key.toLowerCase().trim()] = row[key];
+        });
 
-        // Parse fields. If benefits/applications/specs are comma-separated strings, we split them.
-        const parseStringArray = (val: string | undefined) => 
-          val ? String(val).split(',').map(s => s.trim()).filter(Boolean) : [];
-
-        // Simple specification parsing "key:value, key2:value2"
-        const parseSpecifications = (val: string | undefined) => {
-          if (!val) return [];
-          return String(val).split(',').map(s => {
-            const [key, ...rest] = s.split(':');
-            return { key: key?.trim() || '', value: rest.join(':')?.trim() || '' };
-          }).filter(s => s.key && s.value);
+        const getVal = (keys: string[]) => {
+          for (const k of keys) {
+            const normalizedKey = k.toLowerCase().trim();
+            if (normalizedRow[normalizedKey] !== undefined && normalizedRow[normalizedKey] !== null && String(normalizedRow[normalizedKey]).trim() !== '') {
+              return normalizedRow[normalizedKey];
+            }
+          }
+          return undefined;
         };
 
+        const usedKeys = [
+          'model name', 'product name', 'title', 'name', 'model',
+          'description', 'features', 'about', 'info',
+          'price', 'mrp', 'cost', 'total price',
+          'capacity', 'capacity (kwh/ah)', 'size', 'power',
+          'warranty', 'guarantee',
+          'type', 'product type', 'inverter type', 'battery type', 'battery type (lithium/l',
+          'phase', 'phase (single/three phase)',
+          'datasheet', 'manual', 'pdf',
+          'category', 'module', 'module name',
+          'brand', 'brand name',
+          'image', 'images', 'img', 'subbrandid', 'subbrand', 'sub-brand',
+          'benefits', 'benefit', 'applications', 'application', 'specifications', 'specs'
+        ];
+
+        const title = String(getVal(['model name', 'title', 'name', 'model', 'product name']) || `Imported Product ${index + 1}`).trim();
+        const moduleIdVal = String(getVal(['product name', 'moduleId', 'category', 'module']) || moduleId || '');
+        const brandIdVal = String(getVal(['brandId', 'brand']) || brandId || '');
+
+        const specs: { key: string; value: string }[] = [];
+        Object.keys(row).forEach(originalKey => {
+          const k = originalKey.toLowerCase().trim();
+          if (!usedKeys.includes(k) && row[originalKey] !== undefined && row[originalKey] !== null && String(row[originalKey]).trim() !== '') {
+            specs.push({ key: originalKey, value: String(row[originalKey]).trim() });
+          }
+        });
+
         return {
-          title: String(row.title || ''),
-          description: String(row.description || ''),
-          images: [], // Images usually cannot be uploaded via generic Excel, or URLs can be provided
-          moduleId: String(row.moduleId || moduleId || ''),
-          brandId: String(row.brandId || brandId || ''),
-          subBrandId: row.subBrandId ? String(row.subBrandId) : undefined,
-          price: parseFloat(row.price) || 0,
-          capacity: String(row.capacity || ''),
-          warranty: String(row.warranty || ''),
-          datasheet: String(row.datasheet || ''),
-          benefits: parseStringArray(row.benefits),
-          applications: parseStringArray(row.applications),
-          specifications: parseSpecifications(row.specifications),
+          title,
+          description: String(getVal(['description', 'about', 'info']) || ''),
+          images: [],
+          moduleId: moduleIdVal,
+          brandId: brandIdVal,
+          subBrandId: normalizedRow.subbrandid ? String(normalizedRow.subbrandid) : undefined,
+          price: parseFloat(getVal(['total price', 'price', 'mrp', 'cost']) || '0') || 0,
+          capacity: String(getVal(['capacity', 'capacity (kwh/ah)']) || ''),
+          warranty: String(getVal(['warranty', 'guarantee']) || ''),
+          datasheet: String(getVal(['datasheet', 'manual', 'pdf']) || ''),
+          benefits: String(getVal(['benefits', 'benefit', 'features']) || '').split(',').map(s => s.trim()).filter(Boolean),
+          applications: String(getVal(['applications', 'application', 'compatible inverters']) || '').split(',').map(s => s.trim()).filter(Boolean),
+          specifications: specs,
         };
       });
 
       // Now pass this array to your API for bulk insertion.
       // E.g., bulkCreateProductsApi(products)
-      // Since it's not directly in AdminContext yet, you might need to add bulkAddProducts to context
       // Or simply iterate:
       
       // For demonstration if bulk API is not in context:
