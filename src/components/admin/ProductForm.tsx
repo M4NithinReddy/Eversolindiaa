@@ -290,11 +290,11 @@ const ProductForm = ({ moduleId, brandId, subBrandId, editProduct, onCancel, onS
               />
             </div>
             <div>
-              <Label className="text-gray-600 text-xs mb-1.5 block">Capacity</Label>
+              <Label className="text-gray-600 text-xs mb-1.5 block">System Size</Label>
               <Input
                 value={capacity}
                 onChange={e => setCapacity(e.target.value)}
-                placeholder="e.g., 550W"
+                placeholder="e.g., 5kW"
                 className="bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400"
               />
             </div>
