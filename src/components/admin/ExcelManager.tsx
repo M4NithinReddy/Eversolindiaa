@@ -210,6 +210,7 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
 
           return {
             id: `draft-${Date.now()}-${index}`,
+            title: String(normalizedRow.title || normalizedRow.name || `VOLT RAKSHA`).trim(),
             title,
             description: String(normalizedRow.description || '').trim(),
           return {
