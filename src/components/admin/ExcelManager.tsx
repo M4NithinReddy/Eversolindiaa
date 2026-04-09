@@ -3,7 +3,7 @@ import * as XLSX from 'xlsx';
 import { useAdmin, AdminProduct, ProductSpecification } from '@/context/AdminContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Upload, X, Save, FileSpreadsheet, Pencil, Eye, ImageIcon } from 'lucide-react';
+import { Upload, X, Save, FileSpreadsheet, Pencil, Eye, ImageIcon, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ProductForm from './ProductForm';
 import DraftProductDetail from './DraftProductDetail';
@@ -175,6 +175,27 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
             }
           }
 
+          // Add specific columns from user Excel to specs if they exist
+          const extraSpecs = [
+            { key: 'Included Module Brand', value: normalizedRow['included module brand'] },
+            { key: 'Included Inverter Brand', value: normalizedRow['included inverter brand'] },
+            { key: 'Structure Type', value: normalizedRow['structure type'] },
+            { key: 'Area Required', value: normalizedRow['area required (sq.ft)'] || normalizedRow['area required'] },
+            { key: 'Subsidy Eligible', value: normalizedRow['subsidy eligible (yes/no)'] || normalizedRow['subsidy eligible'] || normalizedRow['subsidy el'] },
+            { key: 'Installation Included', value: normalizedRow['installation included (yes/no)'] || normalizedRow['installation included'] || normalizedRow['installation warranty'] },
+            { key: 'Meters', value: normalizedRow['meters'] },
+            { key: 'System Size', value: normalizedRow['system size (kw)'] || normalizedRow['system size'] }
+          ];
+
+          extraSpecs.forEach(spec => {
+            if (spec.value !== undefined && spec.value !== null && spec.value !== '') {
+              // Only add if not already in specs
+              if (!specs.find(s => s.key === spec.key)) {
+                specs.push({ key: spec.key, value: String(spec.value) });
+              }
+            }
+          });
+
           // 4. Benefits & Applications
           let benefits = [];
           const excelBenefits = normalizedRow.benefits || normalizedRow.benefit || normalizedRow.features;
@@ -187,6 +208,12 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
           if (excelApps) {
             applications = String(excelApps).split(',').map((s: string) => s.trim());
           }
+
+          let rawModuleName = String(normalizedRow.category || normalizedRow.module || '').trim();
+          if (rawModuleName.toLowerCase() === 'solar modules' || !rawModuleName) {
+            rawModuleName = 'Eversol Roof Top Kit';
+          }
+          const rawBrandName = String(normalizedRow['brand name'] || normalizedRow.brand || '').trim();
 
           let moduleId = '';
           let brandId = '';
@@ -203,6 +230,16 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
           const isModuleNew = rawModuleName && !moduleId;
           const isBrandNew = rawBrandName && !brandId;
 
+          // Try to extract phase
+          let phase = String(normalizedRow.phase || normalizedRow["phase (single/three phase)"] || '').trim();
+          const systemSizeKw = String(normalizedRow['system size (kw)'] || normalizedRow['system size'] || '').trim();
+          
+          // If capacity doesn't have phase, but we have a separate phase column, combine them or use phase field
+          // The AdminProduct has a separate 'phase' field, so we'll use that.
+          
+          return {
+            id: `draft-${Date.now()}-${index}`,
+            title: String(normalizedRow['product name'] || normalizedRow.title || normalizedRow.name || `Imported Product ${index + 1}`).trim(),
           const price = parseFloat(getVal(['price']) || '0') || 0;
           const capacity = String(getVal(['wattage (w)', 'capacity']) || '').trim();
           const warranty = String(getVal(['warranty (product)', 'warranty (produc)', 'warranty']) || '').trim();
@@ -226,6 +263,10 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
             specifications: specs,
             benefits: benefits,
             applications: applications,
+            price: parseFloat(String(normalizedRow['total price'] || normalizedRow.price || '0').replace(/[^0-9.]/g, '')) || 0,
+            capacity: systemSizeKw,
+            phase: phase,
+            warranty: String(normalizedRow['installation warranty'] || normalizedRow.warranty || '').trim(),
             price,
             capacity,
             phase: String(normalizedRow.phase || normalizedRow["phase (single/three phase)"] || '').trim(),
@@ -375,6 +416,43 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
           <p className="text-sm text-gray-500">Upload bulk products from an Excel spreadsheet.</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => {
+        const sampleData: any[] = [
+          { title: "Solar on grid System", brand: "EVERSOL DCR 3kW 545X6", systemSize: "3", phase: "1Phase", price: 132000, warranty: "30Years Module, 10years In...", module: "Eversol Roof Top Kit", specs: [["Included Module Brand", "SOLEX/WAAREE/PANASON"], ["Included Inverter Brand", "INVOLTICS / SOLPLANET/GOOD"], ["Structure Type", "GI / Aluminam"], ["Area Required", "200"], ["Subsidy Eligible (Yes/No)", "YES"], ["Installation Included (Yes/No)", "At Actual"], ["Meters", "At Actual"]] },
+          { title: "Solar on grid System", brand: "EVERSOL DCR 3.5kW 590X6", systemSize: "3.5", phase: "1Phase", price: 159000, warranty: "30Years Module, 10years In...", module: "Eversol Roof Top Kit", specs: [["Included Module Brand", "SOLEX/WAAREE/PANASON"], ["Included Inverter Brand", "INVOLTICS / SOLPLANET/GOOD"], ["Structure Type", "GI / Aluminam"], ["Area Required", "200"], ["Subsidy Eligible (Yes/No)", "YES"], ["Installation Included (Yes/No)", "At Actual"], ["Meters", "At Actual"]] },
+          { title: "Solar on grid System", brand: "EVERSOL DCR 5kW 545X9", systemSize: "5", phase: "1Phase", price: 199000, warranty: "30Years Module, 10years In...", module: "Eversol Roof Top Kit", specs: [["Included Module Brand", "SOLEX/WAAREE/PANASON"], ["Included Inverter Brand", "INVOLTICS / SOLPLANET/GOOD"], ["Structure Type", "GI / Aluminam"], ["Area Required", "400"], ["Subsidy Eligible (Yes/No)", "YES"], ["Installation Included (Yes/No)", "At Actual"], ["Meters", "At Actual"]] },
+          { title: "Solar on grid System", brand: "EVERSOL DCR 5kW 390X9", systemSize: "5", phase: "3Phase", price: 225000, warranty: "30Years Module, 10years In...", module: "Eversol Roof Top Kit", specs: [["Included Module Brand", "SOLEX/WAAREE/PANASON"], ["Included Inverter Brand", "INVOLTICS / SOLPLANET/GOOD"], ["Structure Type", "GI / Aluminam"], ["Area Required", "400"], ["Subsidy Eligible (Yes/No)", "YES"], ["Installation Included (Yes/No)", "At Actual"], ["Meters", "At Actual"]] },
+          { title: "Solar on grid System", brand: "EVERSOL NON DCR 3kW 615X", systemSize: "3", phase: "1Phase", price: 102000, warranty: "30Years Module, 10years In...", module: "Eversol Roof Top Kit", specs: [["Included Module Brand", "SOLEX/WAAREE/PANASON"], ["Included Inverter Brand", "INVOLTICS / SOLPLANET/GOOD"], ["Structure Type", "GI / Aluminam"], ["Area Required", "200"], ["Subsidy Eligible (Yes/No)", "NO"], ["Installation Included (Yes/No)", "At Actual"], ["Meters", "At Actual"]] },
+          { title: "Solar on grid System", brand: "EVERSOL NON DCR 4kW 615X", systemSize: "4", phase: "1Phase", price: 140000, warranty: "30Years Module, 10years In...", module: "Eversol Roof Top Kit", specs: [["Included Module Brand", "SOLEX/WAAREE/PANASON"], ["Included Inverter Brand", "INVOLTICS / SOLPLANET/GOOD"], ["Structure Type", "GI / Aluminam"], ["Area Required", "400"], ["Subsidy Eligible (Yes/No)", "NO"], ["Installation Included (Yes/No)", "At Actual"], ["Meters", "At Actual"]] },
+          { title: "Solar on grid System", brand: "EVERSOL NON DCR 5kW 615x", systemSize: "5", phase: "1Phase", price: 159000, warranty: "30Years Module, 10years In...", module: "Eversol Roof Top Kit", specs: [["Included Module Brand", "SOLEX/WAAREE/PANASON"], ["Included Inverter Brand", "INVOLTICS / SOLPLANET/GOOD"], ["Structure Type", "GI / Aluminam"], ["Area Required", "400"], ["Subsidy Eligible (Yes/No)", "NO"], ["Installation Included (Yes/No)", "At Actual"], ["Meters", "At Actual"]] },
+          { title: "Solar on grid System", brand: "EVERSOL NON DCR 5kW 615x", systemSize: "5", phase: "3Phase", price: 180000, warranty: "30Years Module, 10years In...", module: "Eversol Roof Top Kit", specs: [["Included Module Brand", "SOLEX/WAAREE/PANASON"], ["Included Inverter Brand", "INVOLTICS / SOLPLANET/GOOD"], ["Structure Type", "GI / Aluminam"], ["Area Required", "400"], ["Subsidy Eligible (Yes/No)", "NO"], ["Installation Included (Yes/No)", "At Actual"], ["Meters", "At Actual"]] },
+          { title: "Solar on grid System", brand: "EVERSOL NON DCR 6kW 615X", systemSize: "6", phase: "3Phase", price: 205000, warranty: "30Years Module, 10years In...", module: "Eversol Roof Top Kit", specs: [["Included Module Brand", "SOLEX/WAAREE/PANASON"], ["Included Inverter Brand", "INVOLTICS / SOLPLANET/GOOD"], ["Structure Type", "GI / Aluminam"], ["Area Required", "400"], ["Subsidy Eligible (Yes/No)", "NO"], ["Installation Included (Yes/No)", "At Actual"], ["Meters", "At Actual"]] },
+          { title: "Solar on grid System", brand: "EVERSOL NON DCR 8kW 615X", systemSize: "8", phase: "3Phase", price: 252000, warranty: "30Years Module, 10years In...", module: "Eversol Roof Top Kit", specs: [["Included Module Brand", "SOLEX/WAAREE/PANASON"], ["Included Inverter Brand", "INVOLTICS / SOLPLANET/GOOD"], ["Structure Type", "GI / Aluminam"], ["Area Required", "600"], ["Subsidy Eligible (Yes/No)", "NO"], ["Installation Included (Yes/No)", "At Actual"], ["Meters", "At Actual"]] },
+          { title: "Solar on grid System", brand: "EVERSOL NON DCR 10kW 615", systemSize: "10", phase: "3Phase", price: 285000, warranty: "30Years Module, 10years In...", module: "Eversol Roof Top Kit", specs: [["Included Module Brand", "SOLEX/WAAREE/PANASON"], ["Included Inverter Brand", "INVOLTICS / SOLPLANET/GOOD"], ["Structure Type", "GI / Aluminam"], ["Area Required", "800"], ["Subsidy Eligible (Yes/No)", "NO"], ["Installation Included (Yes/No)", "At Actual"], ["Meters", "At Actual"]] },
+        ];
+
+            const drafts: AdminProduct[] = sampleData.map((d, index) => ({
+              id: `sample-${index}`,
+              title: d.title,
+              description: "High-quality Solar On-Grid System with premium components including Module, Inverter, DCDB, ACDB, Earthing Kit, and GI Structure.",
+              images: [],
+              moduleId: defaultModuleId,
+              brandId: defaultBrandId,
+              rawModuleName: d.module,
+              rawBrandName: d.brand,
+              specifications: d.specs.map(([k, v]: any) => ({ key: k, value: v })),
+              benefits: ["Eco-friendly energy", "Reduce electricity bills", "Low maintenance"],
+              applications: ["Residential", "Commercial", "Industrial"],
+              price: d.price,
+              capacity: d.systemSize,
+              phase: d.phase,
+              warranty: d.warranty,
+              createdAt: new Date().toISOString(),
+            } as any));
+            setDraftProducts(drafts);
+          }} className="bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 gap-2">
+            <Plus className="w-4 h-4" /> Load Screenshot Data
+          </Button>
           <Button variant="outline" onClick={onCancel}>Cancel</Button>
           {draftProducts.length > 0 && (
             <Button onClick={handleSaveAll} className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2">
@@ -647,6 +725,10 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
                         <p className="text-sm text-gray-500 line-clamp-2 mb-4 flex-1">
                           {draft.description || 'No description'}
                         </p>
+                        
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs border-y border-gray-100 py-3 mb-4">
+                           <div>
+                            <span className="text-gray-500 block">System Size</span>
 
                         <div className="grid grid-cols-2 gap-2 text-xs border-y border-gray-100 py-3 mb-4">
                           <div>
@@ -658,6 +740,26 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
                             <span className="font-medium text-emerald-600">
                               {draft.price > 0 ? `₹${draft.price.toLocaleString()}` : 'On Request'}
                             </span>
+                           </div>
+                           {draft.phase && (
+                             <div>
+                              <span className="text-gray-500 block">Phase</span>
+                              <span className="font-medium text-gray-900 line-clamp-1">{draft.phase}</span>
+                             </div>
+                           )}
+                           {draft.warranty && (
+                             <div>
+                              <span className="text-gray-500 block">Warranty</span>
+                              <span className="font-medium text-gray-900 line-clamp-1 truncate" title={draft.warranty}>{draft.warranty}</span>
+                             </div>
+                           )}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 mt-auto">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="w-full gap-2 text-gray-600 border-gray-200 hover:bg-gray-50"
                           </div>
                         
                         <div className="flex items-center justify-center gap-2 py-2 mb-4">
@@ -673,8 +775,11 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
                             className="w-full gap-2 text-gray-600"
                             onClick={() => setViewingDraftId(draft.id)}
                           >
-                            <Eye className="w-4 h-4" /> View
+                            <Eye className="w-4 h-4" /> View Details
                           </Button>
+                          <Button 
+                            variant="default" 
+                            size="sm"
                           <Button
                             variant="default"
                             className="w-full gap-2 bg-gray-900 hover:bg-gray-800"
