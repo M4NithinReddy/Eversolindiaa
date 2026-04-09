@@ -247,6 +247,7 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
 
           return {
             id: `draft-${Date.now()}-${index}`,
+            title: String(normalizedRow['product name'] || normalizedRow.title || normalizedRow.name || `Imported Product ${index + 1}`).trim(),
             title: String(normalizedRow.title || normalizedRow.name || `VOLT RAKSHA`).trim(),
             title,
             description: String(normalizedRow.description || '').trim(),
@@ -264,6 +265,9 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
             benefits: benefits,
             applications: applications,
             price: parseFloat(String(normalizedRow['total price'] || normalizedRow.price || '0').replace(/[^0-9.]/g, '')) || 0,
+            capacity: String(normalizedRow['system size (kw)'] || normalizedRow['system size'] || normalizedRow.capacity || '').trim(),
+            phase: String(normalizedRow.phase || normalizedRow["phase (single/three phase)"] || '').trim(),
+            warranty: String(normalizedRow['installation warranty'] || normalizedRow.warranty || '').trim(),
             capacity: systemSizeKw,
             phase: phase,
             warranty: String(normalizedRow['installation warranty'] || normalizedRow.warranty || '').trim(),
@@ -779,6 +783,7 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
                           </Button>
                           <Button 
                             variant="default" 
+                            size="sm"                            className="w-full gap-2 bg-gray-900 hover:bg-gray-800"
                             size="sm"
                           <Button
                             variant="default"
