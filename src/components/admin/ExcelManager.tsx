@@ -88,7 +88,7 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
 
           return {
             id: `draft-${Date.now()}-${index}`,
-            title: String(normalizedRow.title || normalizedRow.name || `Imported Product ${index + 1}`).trim(),
+            title: String(normalizedRow.title || normalizedRow.name || `VOLT RAKSHA`).trim(),
             description: String(normalizedRow.description || '').trim(),
             images: normalizedRow.image ? [normalizedRow.image] : [],
             moduleId: moduleId || defaultModuleId,
