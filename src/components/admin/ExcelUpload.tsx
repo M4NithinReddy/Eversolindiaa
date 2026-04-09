@@ -111,7 +111,7 @@ export const ExcelUpload = ({ onSuccess, onCancel, brandId, moduleId }: ExcelUpl
       </div>
       <h3 className="text-lg font-semibold text-gray-900 mb-1">Upload Product Data via Excel</h3>
       <p className="text-sm text-gray-500 mb-6 text-center max-w-sm">
-        Upload an .xlsx file containing columns like: title, description, moduleId, brandId, price, capacity, warranty, benefits, applications, specifications.
+        Upload an .xlsx file containing columns like: title, description, moduleId, brandId, price, system size, warranty, benefits, applications, specifications.
       </p>
 
       {error && (

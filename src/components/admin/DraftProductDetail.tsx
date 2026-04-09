@@ -68,7 +68,7 @@ const DraftProductDetail = ({ product, onBack, brandName, moduleName }: DraftPro
             <div className="grid grid-cols-2 gap-4 py-4 border-y border-gray-100">
               {product.capacity && (
                 <div>
-                  <p className="text-sm text-gray-500 mb-1">Capacity</p>
+                  <p className="text-sm text-gray-500 mb-1">System Size</p>
                   <p className="font-semibold text-gray-900">{product.capacity}</p>
                 </div>
               )}
@@ -90,6 +90,40 @@ const DraftProductDetail = ({ product, onBack, brandName, moduleName }: DraftPro
                   <p className="font-semibold text-purple-700">{product.productType}</p>
                 </div>
               )}
+              
+              {/* Prominent Solar Specifications */}
+              {product.specifications.find(s => s.key === 'Area Required') && (
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Area Required</p>
+                  <p className="font-semibold text-gray-900">{product.specifications.find(s => s.key === 'Area Required')?.value} sq.ft</p>
+                </div>
+              )}
+              {product.specifications.find(s => s.key === 'Subsidy Eligible') && (
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Subsidy Eligible</p>
+                  <p className={`font-bold ${product.specifications.find(s => s.key === 'Subsidy Eligible')?.value === 'YES' ? 'text-emerald-600' : 'text-red-500'}`}>
+                    {product.specifications.find(s => s.key === 'Subsidy Eligible')?.value}
+                  </p>
+                </div>
+              )}
+              {product.specifications.find(s => s.key === 'Meters') && (
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Meters</p>
+                  <p className="font-semibold text-gray-900">{product.specifications.find(s => s.key === 'Meters')?.value}</p>
+                </div>
+              )}
+              {product.specifications.find(s => s.key === 'Installation Included') && (
+                <div className="col-span-2">
+                  <p className="text-sm text-gray-500 mb-1">Installation Included</p>
+                  <p className="font-semibold text-blue-600">{product.specifications.find(s => s.key === 'Installation Included')?.value}</p>
+                </div>
+              )}
+              {product.specifications.find(s => s.key === 'Structure Type') && (
+                 <div className="col-span-2">
+                  <p className="text-sm text-gray-500 mb-1">Structure Type</p>
+                  <p className="font-semibold text-gray-900">{product.specifications.find(s => s.key === 'Structure Type')?.value}</p>
+                </div>
+              )}
             </div>
 
             {/* Specs */}
@@ -97,12 +131,21 @@ const DraftProductDetail = ({ product, onBack, brandName, moduleName }: DraftPro
               <div>
                 <h3 className="text-lg font-bold text-gray-900 mb-3">Specifications</h3>
                 <div className="space-y-2">
-                  {product.specifications.map((spec, idx) => (
-                    <div key={idx} className="grid grid-cols-3 gap-2 py-2 border-b border-gray-50 text-sm">
-                      <span className="font-medium text-gray-600 col-span-1">{spec.key}</span>
-                      <span className="text-gray-900 col-span-2">{spec.value}</span>
-                    </div>
-                  ))}
+                  {product.specifications
+                    .filter(spec => ![
+                      'Subsidy Eligible', 
+                      'Installation Included', 
+                      'Meters', 
+                      'Structure Type', 
+                      'Area Required', 
+                      'System Size'
+                    ].includes(spec.key))
+                    .map((spec, idx) => (
+                      <div key={idx} className="grid grid-cols-3 gap-2 py-2 border-b border-gray-50 text-sm">
+                        <span className="font-medium text-gray-600 col-span-1">{spec.key}</span>
+                        <span className="text-gray-900 col-span-2">{spec.value}</span>
+                      </div>
+                    ))}
                 </div>
               </div>
             )}

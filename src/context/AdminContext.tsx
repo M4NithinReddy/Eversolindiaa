@@ -73,14 +73,21 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => { localStorage.setItem(LOCAL_KEY, JSON.stringify({ subBrands })); }, [subBrands]);
 
-  const refreshModules  = useCallback(async () => { try { setModules(await getModules()); }   catch { /* */ } }, []);
+  const refreshModules  = useCallback(async () => { 
+    try { 
+      const rawModules = await getModules();
+      setModules(rawModules.map(m => m.name.toLowerCase() === 'solar modules' ? { ...m, name: 'Eversol Roof Top Kit' } : m)); 
+    } catch { /* */ } 
+  }, []);
   const refreshBrands   = useCallback(async () => { try { setBrands(await getBrands()); }     catch { /* */ } }, []);
   const refreshProducts = useCallback(async () => { try { setProducts(await getProducts()); } catch { /* */ } }, []);
 
   // Fetch on mount
   useEffect(() => {
     setModulesLoading(true);
-    getModules().then(setModules).catch(e => setModulesError(e.message)).finally(() => setModulesLoading(false));
+    getModules().then(raw => {
+      setModules(raw.map(m => m.name.toLowerCase() === 'solar modules' ? { ...m, name: 'Eversol Roof Top Kit' } : m));
+    }).catch(e => setModulesError(e.message)).finally(() => setModulesLoading(false));
   }, []);
   useEffect(() => {
     setBrandsLoading(true);
