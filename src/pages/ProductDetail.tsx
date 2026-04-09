@@ -62,8 +62,8 @@ const ProductDetail = () => {
   });
 
   const product = useMemo(() => {
-    const pData = Array.isArray(apiProduct) 
-      ? apiProduct.find((p: any) => String(p.id) === String(id)) || apiProduct[0] 
+    const pData = Array.isArray(apiProduct)
+      ? apiProduct.find((p: any) => String(p.id) === String(id)) || apiProduct[0]
       : apiProduct;
     if (!pData) return null;
     const mod = adminData.modules.find(m => m.id === pData.moduleId);
@@ -77,7 +77,7 @@ const ProductDetail = () => {
       if (cat.includes('storage') || cat.includes('battery')) return batteryImg;
       return kitImg;
     };
-    
+
     return {
       id: pData.id,
       name: pData.title || '',
@@ -111,17 +111,41 @@ const ProductDetail = () => {
     }
   }, [product?.images360, product?.images]);
 
+  const availableStock = useMemo(() => {
+    if (!product || !product.specifications) return null;
+    if (Array.isArray(product.specifications)) {
+      const stockSpec = product.specifications.find(s => {
+        if (typeof s === 'object' && 'label' in s) return String(s.label) === 'Available Stock';
+        return false;
+      });
+      return stockSpec && 'value' in stockSpec ? String(stockSpec.value) : null;
+    }
+    return product.specifications['Available Stock'] ? String(product.specifications['Available Stock']) : null;
+  }, [product]);
+
+  const getSpecColor = (key: string, value: string) => {
+    if (key === 'Available Stock' && String(value).toLowerCase() === 'yes') return 'text-eco font-semibold';
+    if (key.startsWith('Module Efficiency')) return 'text-blue-600 font-semibold';
+    if (key.startsWith('Cell Type')) return 'text-purple-700 font-semibold';
+    return '';
+  };
+
   const renderSpecifications = () => {
     if (!product || !product.specifications) return null;
 
     // Handle array format
     if (Array.isArray(product.specifications)) {
-      return product.specifications.map((spec, index) => (
-        <div key={index} className="flex justify-between py-2 border-b">
-          <span className="text-muted-foreground">
+      return product.specifications
+        .filter(s => typeof s === 'object' && 'label' in s && String(s.label) !== 'Available Stock')
+        .map((spec, index) => (
+        <div key={index} className="flex justify-between items-start gap-4 py-2 border-b">
+          <span className="text-muted-foreground shrink-0" style={{maxWidth: '55%'}}>
             {typeof spec === 'object' && 'label' in spec ? spec.label : ''}
           </span>
-          <span className="font-medium text-right">
+          <span className={`font-medium text-right ${getSpecColor(
+            typeof spec === 'object' && 'label' in spec ? String(spec.label) : '',
+            typeof spec === 'object' && 'value' in spec ? String(spec.value) : ''
+          )}`}>
             {typeof spec === 'object' && 'value' in spec ? String(spec.value) : ''}
           </span>
         </div>
@@ -129,10 +153,14 @@ const ProductDetail = () => {
     }
 
     // Handle object format
-    return Object.entries(product.specifications).map(([key, value]) => (
-      <div key={key} className="flex justify-between py-2 border-b">
-        <span className="text-muted-foreground">{key}</span>
-        <span className="font-medium text-right">{String(value)}</span>
+    return Object.entries(product.specifications)
+      .filter(([key]) => key !== 'Available Stock')
+      .map(([key, value]) => (
+      <div key={key} className="flex justify-between items-start gap-4 py-2 border-b">
+        <span className="text-muted-foreground shrink-0" style={{maxWidth: '55%'}}>{key}</span>
+        <span className={`font-medium text-right ${getSpecColor(key, String(value))}`}>
+          {String(value)}
+        </span>
       </div>
     ));
   };
@@ -221,15 +249,15 @@ const ProductDetail = () => {
               transition={{ duration: 0.6 }}
               className="bg-card rounded-2xl p-8 border border-border relative group"
             >
-                {(() => {
-                  const hasImages360 = product.images360 && product.images360.length > 0;
-                  const hasMultipleImages = product.images && product.images.length > 1;
-                  const canShow360 = hasImages360 || hasMultipleImages;
+              {(() => {
+                const hasImages360 = product.images360 && product.images360.length > 0;
+                const hasMultipleImages = product.images && product.images.length > 1;
+                const canShow360 = hasImages360 || hasMultipleImages;
 
-                  if (!canShow360) return null;
+                if (!canShow360) return null;
 
-                  return (
-                    <div className="absolute top-4 right-4 z-10 flex gap-2">
+                return (
+                  <div className="absolute top-4 right-4 z-10 flex gap-2">
                     <Button
                       size="sm"
                       variant={viewMode === 'gallery' ? 'default' : 'outline'}
@@ -247,13 +275,13 @@ const ProductDetail = () => {
                       360° View
                     </Button>
                   </div>
-                  );
-                })()}
+                );
+              })()}
 
               {viewMode === '360' && ((product.images360 && product.images360.length > 0) || (product.images && product.images.length > 1)) ? (
-                <Advanced360Viewer 
-                  images={[product.images360 && product.images360.length > 0 ? product.images360 : product.images]} 
-                  className="w-full h-full" 
+                <Advanced360Viewer
+                  images={[product.images360 && product.images360.length > 0 ? product.images360 : product.images]}
+                  className="w-full h-full"
                 />
               ) : product.images && product.images.length > 0 ? (
                 <ProductImageGallery
@@ -272,10 +300,10 @@ const ProductDetail = () => {
                 <>
                   <div className="absolute inset-0 bg-white/20 backdrop-blur-[1px] z-10 rounded-2xl" />
                   <div className="absolute inset-0 flex flex-col items-center justify-center z-20 p-12 pointer-events-none">
-                    <img 
-                      src="/images/out-of-stock-illustration.png" 
-                      alt="Out of stock" 
-                      className="w-1/3 h-auto object-contain drop-shadow-2xl mb-4" 
+                    <img
+                      src="/images/out-of-stock-illustration.png"
+                      alt="Out of stock"
+                      className="w-1/3 h-auto object-contain drop-shadow-2xl mb-4"
                     />
                     <div className="bg-red-600 text-white text-sm font-bold px-6 py-2 rounded-lg shadow-2xl uppercase tracking-[0.2em] border-2 border-white/30 transition-transform hover:scale-105">
                       Temporarily Sold Out
@@ -352,7 +380,7 @@ const ProductDetail = () => {
                   disabled={product.isOutOfStock}
                 >
                   {product.isOutOfStock ? (
-                     <>OUT OF STOCK</>
+                    <>OUT OF STOCK</>
                   ) : (
                     <>
                       {added ? <Check className="h-5 w-5" /> : <ShoppingCart className="h-5 w-5" />}
@@ -410,6 +438,12 @@ const ProductDetail = () => {
               <h2 className="text-2xl font-heading font-bold text-foreground mb-6">
                 Technical Specifications
               </h2>
+              {availableStock && (
+                <div className="mb-6 inline-flex items-center gap-2 px-4 py-2 bg-eco/10 text-eco rounded-full text-sm font-bold border border-eco/20">
+                  <span className="w-2.5 h-2.5 rounded-full bg-eco animate-pulse inline-block"></span>
+                  Available Stock: {availableStock}
+                </div>
+              )}
               {renderSpecifications()}
             </motion.div>
 
