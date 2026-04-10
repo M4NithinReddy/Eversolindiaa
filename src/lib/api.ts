@@ -6,6 +6,7 @@ const IMG_BASE        = 'https://yf5ifvprf2.execute-api.ap-south-1.amazonaws.com
 const GET_PRODS_BASE  = 'https://jj43j7i7m6.execute-api.ap-south-1.amazonaws.com/prod/getall';
 const POST_PRODS_BASE = 'https://llbjgne219.execute-api.ap-south-1.amazonaws.com/dev/products';
 const EDIT_PRODS_BASE = 'https://b5flw79dm3.execute-api.ap-south-1.amazonaws.com/prod/products';
+const UNIFIED_INGEST_BASE = 'https://llbjgne219.execute-api.ap-south-1.amazonaws.com/dev/unified-ingest'; // Placeholder URL
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 export interface ApiModule {
@@ -197,6 +198,15 @@ export async function deleteAllProductsApi(): Promise<void> {
 
 export async function bulkCreateProductsApi(products: Omit<ApiProduct, 'id' | 'createdAt'>[]): Promise<{ created: number; data: ApiProduct[] }> {
   const res = await fetch(`${POST_PRODS_BASE}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ products }),
+  });
+  return parseResponse<{ created: number; data: ApiProduct[] }>(res);
+}
+
+export async function unifiedExcelPostApi(products: any[]): Promise<{ created: number; data: ApiProduct[] }> {
+  const res = await fetch(`${UNIFIED_INGEST_BASE}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ products }),

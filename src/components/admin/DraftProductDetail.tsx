@@ -171,7 +171,8 @@ const DraftProductDetail = ({ product, onBack, brandName, moduleName }: DraftPro
                   ))}
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
             {/* Benefits & Apps */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">

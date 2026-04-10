@@ -2,7 +2,8 @@ import { createContext, useContext, useState, useEffect, ReactNode, useCallback 
 import {
   getModules, createModuleApi, updateModuleApi, deleteModuleApi,
   getBrands,  createBrandApi,  updateBrandApi,  deleteBrandApi,
-  getProducts, createProductApi, updateProductApi, deleteProductApi, bulkCreateProductsApi, deleteAllProductsApi
+  getProducts, createProductApi, updateProductApi, deleteProductApi, bulkCreateProductsApi, deleteAllProductsApi,
+  unifiedExcelPostApi
 } from '@/lib/api';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -39,6 +40,7 @@ interface AdminContextType {
   deleteSubBrand: (id: string) => void;
   addProduct:    (product: Omit<AdminProduct, 'id' | 'createdAt'>) => Promise<void>;
   bulkAddProducts: (products: Omit<AdminProduct, 'id' | 'createdAt'>[]) => Promise<void>;
+  unifiedBulkAddProducts: (products: any[]) => Promise<void>;
   updateProduct: (id: string, product: Omit<AdminProduct, 'id' | 'createdAt'>) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
   deleteAllProducts: () => Promise<void>;
@@ -214,6 +216,22 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [refreshProducts]);
 
+  const unifiedBulkAddProducts = useCallback(async (newProducts: any[]) => {
+    setProductsBusy(true);
+    try {
+      const response = await unifiedExcelPostApi(newProducts);
+      if (response && response.data) {
+        setProducts(p => [...p, ...response.data]);
+        // Also refresh modules and brands since they might have been created
+        await Promise.all([refreshModules(), refreshBrands()]);
+      }
+    } catch (e) {
+      if (isCorsOrNetwork(e)) await refreshProducts(); else throw e;
+    } finally {
+      setProductsBusy(false);
+    }
+  }, [refreshModules, refreshBrands, refreshProducts]);
+
   const updateProduct = useCallback(async (id: string, product: Omit<AdminProduct, 'id' | 'createdAt'>) => {
     setProductsBusy(true);
     setProducts(p => p.map(pr => pr.id === id ? { ...pr, ...product } : pr));
@@ -249,7 +267,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
       addModule, updateModule, deleteModule,
       addBrand,  updateBrand,  deleteBrand,
       addSubBrand, updateSubBrand, deleteSubBrand,
-      addProduct,  updateProduct,  deleteProduct, bulkAddProducts, deleteAllProducts
+      addProduct,  updateProduct,  deleteProduct, bulkAddProducts, unifiedBulkAddProducts, deleteAllProducts
     }}>
       {children}
     </AdminContext.Provider>
