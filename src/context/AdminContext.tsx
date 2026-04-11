@@ -18,6 +18,19 @@ export interface AdminProduct {
   specifications: ProductSpecification[]; benefits: string[];
   applications: string[]; price: number; capacity: string; phase?: string;
   warranty: string; datasheet: string; isOutOfStock?: boolean; createdAt: string;
+  // New flat schema fields (from updated DynamoDB table)
+  brandName?: string;
+  category?: string;
+  battery_type?: string; capacity_kwh_ah?: string; battery_nominal_voltage_v?: string;
+  operating_voltage?: string; cycle_life?: string; cooling?: string; compatible_inverters?: string;
+  model?: string;
+  model_number?: string; wattage_w?: string; cell_type?: string; module_efficiency?: string;
+  no_of_cells?: string; available_stock?: string; mono_bifacial?: string;
+  system_size_kw?: string; included_module_brand?: string; included_inverter_brand?: string;
+  structure_type?: string; area_required_sqft?: string; subsidy_eligible?: string;
+  installation_included?: string; meters?: string; total_price?: string;
+  model_name?: string; product_type?: string; features?: string[];
+  extraFields?: Record<string, string>;
 }
 export interface AdminData {
   modules: AdminModule[]; brands: AdminBrand[];
@@ -54,6 +67,40 @@ function loadLocal(): { subBrands: AdminSubBrand[] } {
 function generateId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 9); }
 function isCorsOrNetwork(e: unknown) { return e instanceof TypeError; }
 
+/**
+ * Normalize a raw API product to always have safe array defaults.
+ * Bridges old schema (images[], specifications[]) and new flat schema.
+ * IMPORTANT: moduleId/brandId/isOutOfStock may be stored inside extraFields.
+ */
+function normalizeProduct(raw: any): AdminProduct {
+  // Pull moduleId/brandId/isOutOfStock from extraFields if not at top level
+  const moduleId    = raw.moduleId    || raw.extraFields?.moduleId    || '';
+  const brandId     = raw.brandId     || raw.extraFields?.brandId     || '';
+  const isOutOfStock = raw.isOutOfStock !== undefined
+    ? Boolean(raw.isOutOfStock)
+    : (raw.extraFields?.isOutOfStock === 'true' || raw.extraFields?.isOutOfStock === true);
+
+  return {
+    ...raw,
+    id            : raw.id           ?? '',
+    title         : raw.title        ?? 'Untitled',
+    description   : raw.description  ?? '',
+    images        : Array.isArray(raw.images)         ? raw.images         : [],
+    moduleId,
+    brandId,
+    specifications: Array.isArray(raw.specifications) ? raw.specifications : [],
+    benefits      : Array.isArray(raw.benefits)       ? raw.benefits       :
+                    (typeof raw.benefits === 'string' && raw.benefits.trim() ? [raw.benefits] : []),
+    applications  : Array.isArray(raw.applications)   ? raw.applications   : [],
+    price         : typeof raw.price === 'number' ? raw.price : (parseFloat(String(raw.price ?? '0')) || 0),
+    capacity      : raw.capacity     ?? '',
+    warranty      : raw.warranty     ?? '',
+    datasheet     : raw.datasheet    ?? '',
+    isOutOfStock,
+    createdAt     : raw.createdAt    ?? new Date().toISOString(),
+  };
+}
+
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
 export const AdminProvider = ({ children }: { children: ReactNode }) => {
@@ -82,7 +129,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     } catch { /* */ } 
   }, []);
   const refreshBrands   = useCallback(async () => { try { setBrands(await getBrands()); }     catch { /* */ } }, []);
-  const refreshProducts = useCallback(async () => { try { setProducts(await getProducts()); } catch { /* */ } }, []);
+  const refreshProducts = useCallback(async () => { try { setProducts((await getProducts()).map(normalizeProduct)); } catch { /* */ } }, []);
 
   // Fetch on mount
   useEffect(() => {
@@ -97,7 +144,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
   }, []);
   useEffect(() => {
     setProductsLoading(true);
-    getProducts().then(setProducts).catch(e => setProductsError(e.message)).finally(() => setProductsLoading(false));
+    getProducts().then(ps => setProducts(ps.map(normalizeProduct))).catch(e => setProductsError(e.message)).finally(() => setProductsLoading(false));
   }, []);
 
   // ── Module CRUD ────────────────────────────────────────────────────────────
@@ -182,7 +229,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     setProductsBusy(true);
     try {
       const created = await createProductApi(product);
-      setProducts(p => [...p, created]);
+      setProducts(p => [...p, normalizeProduct(created)]);
     } catch (e) {
       if (isCorsOrNetwork(e)) await refreshProducts(); else throw e;
     } finally {
@@ -200,7 +247,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
         const chunk = newProducts.slice(i, i + BATCH_SIZE);
         const response = await bulkCreateProductsApi(chunk);
         if (response && response.data) {
-          allCreated.push(...response.data);
+          allCreated.push(...response.data.map(normalizeProduct));
         }
       }
       

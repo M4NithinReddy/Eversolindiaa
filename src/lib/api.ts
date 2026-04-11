@@ -6,7 +6,7 @@ const IMG_BASE        = 'https://yf5ifvprf2.execute-api.ap-south-1.amazonaws.com
 const GET_PRODS_BASE  = 'https://jj43j7i7m6.execute-api.ap-south-1.amazonaws.com/prod/getall';
 const POST_PRODS_BASE = 'https://llbjgne219.execute-api.ap-south-1.amazonaws.com/dev/products';
 const EDIT_PRODS_BASE = 'https://b5flw79dm3.execute-api.ap-south-1.amazonaws.com/prod/products';
-const UNIFIED_INGEST_BASE = 'https://llbjgne219.execute-api.ap-south-1.amazonaws.com/dev/unified-ingest'; // Placeholder URL
+// POST_PRODS_BASE already supports bulk via { products: [...] } — reused below
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 export interface ApiModule {
@@ -206,7 +206,7 @@ export async function bulkCreateProductsApi(products: Omit<ApiProduct, 'id' | 'c
 }
 
 export async function unifiedExcelPostApi(products: any[]): Promise<{ created: number; data: ApiProduct[] }> {
-  const res = await fetch(`${UNIFIED_INGEST_BASE}`, {
+  const res = await fetch(`${POST_PRODS_BASE}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ products }),
