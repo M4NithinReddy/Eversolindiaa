@@ -83,25 +83,83 @@ const Shop = () => {
   };
 
   const mappedProducts = data.products.map(p => {
-    const mod = data.modules.find(m => m.id === p.moduleId);
-    const br = data.brands.find(b => b.id === p.brandId);
-    const categoryName = mod?.name || 'Unknown';
+    // CRITICAL: moduleId/brandId may be buried in extraFields in the new schema
+    const pAny = p as any;
+    const resolvedModuleId = p.moduleId || pAny.extraFields?.moduleId || '';
+    const resolvedBrandId  = p.brandId  || pAny.extraFields?.brandId  || '';
+
+    // Support BOTH old schema (moduleId/brandId lookup) AND new flat schema (category/brandName)
+    const mod = data.modules.find(m => m.id === resolvedModuleId);
+    const br  = data.brands.find(b => b.id === resolvedBrandId);
+
+    // Resolve category: prefer module lookup, fall back to flat 'category' field
+    const categoryName = mod?.name || pAny.category || 'General';
+    // Resolve brand: prefer brand lookup, fall back to flat 'brandName' field
+    const brandName    = br?.name  || pAny.brandName || '';
+
+    // Resolve image: uploaded image or category default
+    const image = (p.images && p.images.length > 0) ? p.images[0] : getDefaultImage(categoryName);
+
+    // Build specifications: merge flat spec fields + array of {key,value}
+    const flatSpecMap: Record<string, string> = {};
+    const flatFields: Array<[string, any]> = [
+      ['MONO/BIFACIAL',           (p as any).mono_bifacial],
+      ['Model Number',             (p as any).model_number],
+      ['Wattage (W)',              (p as any).wattage_w],
+      ['Cell Type',                (p as any).cell_type],
+      ['Module Efficiency (%)',    (p as any).module_efficiency],
+      ['No. of Cells',             (p as any).no_of_cells],
+      ['Available Stock',          (p as any).available_stock],
+      ['Battery Type',             (p as any).battery_type],
+      ['Capacity (kWh/Ah)',        (p as any).capacity_kwh_ah],
+      ['Battery Nominal Voltage',  (p as any).battery_nominal_voltage_v],
+      ['Operating Voltage',        (p as any).operating_voltage],
+      ['Cycle Life',               (p as any).cycle_life],
+      ['Cooling',                  (p as any).cooling],
+      ['Compatible Inverters',     (p as any).compatible_inverters],
+      ['System Size (kW)',         (p as any).system_size_kw],
+      ['Included Module Brand',    (p as any).included_module_brand],
+      ['Included Inverter Brand',  (p as any).included_inverter_brand],
+      ['Structure Type',           (p as any).structure_type],
+      ['Area Required (sq.ft)',    (p as any).area_required_sqft],
+      ['Subsidy Eligible',         (p as any).subsidy_eligible],
+      ['Installation Included',    (p as any).installation_included],
+      ['Meters',                   (p as any).meters],
+      ['Total Price',              (p as any).total_price],
+    ];
+    flatFields.forEach(([k, v]) => { if (v !== undefined && v !== null && String(v).trim() !== '') flatSpecMap[k] = String(v); });
+    const arraySpecs = (p.specifications || []).reduce((acc: any, s) => { acc[s.key] = s.value; return acc; }, {});
+    const specifications = { ...flatSpecMap, ...arraySpecs };
+
+    // Resolve capacity from multiple fallbacks
+    const capacity = p.capacity || (p as any).capacity_kwh_ah || (p as any).wattage_w || (p as any).system_size_kw || '';
+
+    // Resolve productType
+    const productType = p.productType || (p as any).product_type || (p as any).battery_type || '';
+
+    // Resolve features/benefits (handle comma-string from new schema)
+    const rawBenefits = (p as any).benefits;
+    let features: string[] = [];
+    if (Array.isArray(p.benefits) && p.benefits.length > 0) features = p.benefits;
+    else if (typeof rawBenefits === 'string' && rawBenefits.trim()) features = rawBenefits.split(',').map((s: string) => s.trim()).filter(Boolean);
+    else if (Array.isArray(p.applications) && p.applications.length > 0) features = p.applications;
+
     return {
-      id: p.id,
-      name: p.title || '',
-      category: categoryName,
-      brand: br?.name || 'Unknown',
-      capacity: p.capacity || '',
-      price: p.price || 0,
-      benefit: p.description || '',
-      image: (p.images && p.images.length > 0) ? p.images[0] : getDefaultImage(categoryName),
-      images: p.images || [],
-      warranty: p.warranty || '',
-      datasheet: p.datasheet || '',
-      specifications: (p.specifications || []).reduce((acc: any, s) => { acc[s.key] = s.value; return acc; }, {}),
-      features: p.benefits?.length ? p.benefits : (p.applications || []),
-      productType: p.productType || '',
-      phase: p.phase || '',
+      id          : p.id,
+      name        : p.title || '',
+      category    : categoryName,
+      brand       : brandName,
+      capacity,
+      price       : p.price || 0,
+      benefit     : p.description || '',
+      image,
+      images      : p.images || [],
+      warranty    : p.warranty || '',
+      datasheet   : p.datasheet || '',
+      specifications,
+      features,
+      productType,
+      phase       : p.phase || '',
       isOutOfStock: !!p.isOutOfStock,
     };
   });

@@ -66,9 +66,16 @@ const ProductDetail = () => {
       ? apiProduct.find((p: any) => String(p.id) === String(id)) || apiProduct[0]
       : apiProduct;
     if (!pData) return null;
-    const mod = adminData.modules.find(m => m.id === pData.moduleId);
-    const br = adminData.brands.find(b => b.id === pData.brandId);
-    const categoryName = mod?.name || 'Unknown';
+
+    // CRITICAL: moduleId/brandId may be buried in extraFields in the new schema
+    const resolvedModuleId = pData.moduleId || pData.extraFields?.moduleId || '';
+    const resolvedBrandId  = pData.brandId  || pData.extraFields?.brandId  || '';
+
+    // Support both old schema (moduleId lookup) and new flat schema (category field)
+    const mod = adminData.modules.find(m => m.id === resolvedModuleId);
+    const br  = adminData.brands.find(b => b.id === resolvedBrandId);
+    const categoryName = mod?.name || pData.category || 'Unknown';
+    const brandName    = br?.name  || pData.brandName || 'Unknown';
 
     const getDefaultImage = (catName: string) => {
       const cat = catName.toLowerCase();
@@ -78,26 +85,72 @@ const ProductDetail = () => {
       return kitImg;
     };
 
+    // Merge flat spec fields into specifications object
+    const flatSpecMap: Record<string, string> = {};
+    const flatFields: Array<[string, any]> = [
+      ['MONO/BIFACIAL',          pData.mono_bifacial],
+      ['Model Number',            pData.model_number],
+      ['Wattage (W)',             pData.wattage_w],
+      ['Cell Type',               pData.cell_type],
+      ['Module Efficiency (%)',   pData.module_efficiency],
+      ['No. of Cells',            pData.no_of_cells],
+      ['Available Stock',         pData.available_stock],
+      ['Battery Type',            pData.battery_type],
+      ['Capacity (kWh/Ah)',       pData.capacity_kwh_ah],
+      ['Battery Nominal Voltage', pData.battery_nominal_voltage_v],
+      ['Operating Voltage',       pData.operating_voltage],
+      ['Cycle Life',              pData.cycle_life],
+      ['Cooling',                 pData.cooling],
+      ['Compatible Inverters',    pData.compatible_inverters],
+      ['System Size (kW)',        pData.system_size_kw],
+      ['Included Module Brand',   pData.included_module_brand],
+      ['Included Inverter Brand', pData.included_inverter_brand],
+      ['Structure Type',          pData.structure_type],
+      ['Area Required (sq.ft)',   pData.area_required_sqft],
+      ['Subsidy Eligible',        pData.subsidy_eligible],
+      ['Installation Included',   pData.installation_included],
+      ['Meters',                  pData.meters],
+      ['Total Price',             pData.total_price],
+    ];
+    flatFields.forEach(([k, v]) => { if (v !== undefined && v !== null && String(v).trim() !== '') flatSpecMap[k] = String(v); });
+    const arraySpecs = (pData.specifications || []).reduce((acc: any, s: any) => { acc[s.key] = s.value; return acc; }, {});
+    const specifications = { ...flatSpecMap, ...arraySpecs };
+
+    // Resolve benefits — handle array or comma-separated string
+    const rawBenefits = pData.benefits;
+    let benefits: string[] = [];
+    if (Array.isArray(rawBenefits) && rawBenefits.length > 0) benefits = rawBenefits;
+    else if (typeof rawBenefits === 'string' && rawBenefits.trim()) benefits = rawBenefits.split(',').map((s: string) => s.trim()).filter(Boolean);
+
+    // Resolve applications — handle array or comma-separated string
+    const rawApps = pData.applications;
+    let applications: string[] = [];
+    if (Array.isArray(rawApps) && rawApps.length > 0) applications = rawApps;
+    else if (typeof rawApps === 'string' && rawApps.trim()) applications = rawApps.split(',').map((s: string) => s.trim()).filter(Boolean);
+
+    // Resolve capacity
+    const capacity = pData.capacity || pData.capacity_kwh_ah || pData.wattage_w || pData.system_size_kw || '';
+
     return {
-      id: pData.id,
-      name: pData.title || '',
-      category: categoryName,
-      brand: br?.name || 'Unknown',
-      capacity: pData.capacity || '',
-      price: pData.price || 0,
-      benefit: pData.description || '',
-      image: (pData.images && pData.images.length > 0) ? pData.images[0] : getDefaultImage(categoryName),
-      images: pData.images || [],
-      warranty: pData.warranty || '',
-      description: pData.description || '',
-      specifications: (pData.specifications || []).reduce((acc: any, s) => { acc[s.key] = s.value; return acc; }, {}),
-      features: pData.benefits || [],
-      benefits: pData.benefits || [],
-      applications: pData.applications || [],
-      datasheet: pData.datasheet || '',
-      images360: pData.images360 || [],
-      productType: pData.productType || '',
-      phase: pData.phase || '',
+      id          : pData.id,
+      name        : pData.title || '',
+      category    : categoryName,
+      brand       : brandName,
+      capacity,
+      price       : pData.price || 0,
+      benefit     : pData.description || '',
+      image       : (pData.images && pData.images.length > 0) ? pData.images[0] : getDefaultImage(categoryName),
+      images      : pData.images || [],
+      warranty    : pData.warranty || '',
+      description : pData.description || '',
+      specifications,
+      features    : benefits.length > 0 ? benefits : applications,
+      benefits,
+      applications,
+      datasheet   : pData.datasheet || '',
+      images360   : pData.images360 || [],
+      productType : pData.productType || pData.product_type || '',
+      phase       : pData.phase || '',
       isOutOfStock: !!pData.isOutOfStock,
     };
   }, [apiProduct, adminData]);
@@ -460,12 +513,16 @@ const ProductDetail = () => {
                   Key Benefits
                 </h2>
                 <ul className="space-y-3">
-                  {product.benefits.map((benefit, index) => (
-                    <li key={index} className="flex items-start gap-3">
-                      <Check className="h-5 w-5 text-eco shrink-0 mt-0.5" />
-                      <span className="text-muted-foreground">{benefit}</span>
-                    </li>
-                  ))}
+                  {(product.benefits ?? []).length > 0 ? (
+                    (product.benefits ?? []).map((benefit, index) => (
+                      <li key={index} className="flex items-start gap-3">
+                        <Check className="h-5 w-5 text-eco shrink-0 mt-0.5" />
+                        <span className="text-muted-foreground">{benefit}</span>
+                      </li>
+                    ))
+                  ) : (
+                    <li className="text-muted-foreground italic">No benefits listed</li>
+                  )}
                 </ul>
               </motion.div>
 
@@ -480,12 +537,16 @@ const ProductDetail = () => {
                   Applications
                 </h2>
                 <ul className="space-y-3">
-                  {product.applications.map((app, index) => (
-                    <li key={index} className="flex items-start gap-3">
-                      <Zap className="h-5 w-5 text-solar shrink-0 mt-0.5" />
-                      <span className="text-muted-foreground">{app}</span>
-                    </li>
-                  ))}
+                  {(product.applications ?? []).length > 0 ? (
+                    (product.applications ?? []).map((app, index) => (
+                      <li key={index} className="flex items-start gap-3">
+                        <Zap className="h-5 w-5 text-solar shrink-0 mt-0.5" />
+                        <span className="text-muted-foreground">{app}</span>
+                      </li>
+                    ))
+                  ) : (
+                    <li className="text-muted-foreground italic">No applications listed</li>
+                  )}
                 </ul>
               </motion.div>
             </div>

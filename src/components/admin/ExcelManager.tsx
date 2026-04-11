@@ -13,12 +13,13 @@ interface ExcelManagerProps {
 }
 
 const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
-  const { data, bulkAddProducts, addModule, addBrand } = useAdmin();
+  const { data, addProduct, addModule, addBrand } = useAdmin();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [draftProducts, setDraftProducts] = useState<AdminProduct[]>([]);
   const [editingDraftId, setEditingDraftId] = useState<string | null>(null);
   const [viewingDraftId, setViewingDraftId] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [saveProgress, setSaveProgress] = useState<{ done: number; total: number } | null>(null);
 
   // Fallbacks if data doesn't have modules/brands
   const defaultModuleId = data.modules.length > 0 ? data.modules[0].id : '';
@@ -193,15 +194,99 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
     if (draftProducts.length === 0) return;
 
     setIsUploading(true);
-    try {
-      await unifiedBulkAddProducts(draftProducts);
-      alert(`Successfully imported ${draftProducts.length} products!`);
+    const total = draftProducts.length;
+    setSaveProgress({ done: 0, total });
+    let successCount = 0;
+    const errors: string[] = [];
+
+    // Cache newly created module/brand IDs within this import session
+    // so we don't create duplicates for multiple products from the same sheet
+    const moduleIdCache: Record<string, string> = {}; // rawName.lower -> id
+    const brandIdCache: Record<string, string> = {};  // rawName.lower|moduleId -> id
+
+    for (let i = 0; i < draftProducts.length; i++) {
+      const draft = draftProducts[i] as any;
+      try {
+        let resolvedModuleId: string = draft.moduleId || '';
+        let resolvedBrandId: string = draft.brandId || '';
+
+        // ── Auto-create Module if it's new ──────────────────────────────────
+        if (draft.rawModuleName) {
+          const key = draft.rawModuleName.toLowerCase();
+          if (moduleIdCache[key]) {
+            resolvedModuleId = moduleIdCache[key];
+          } else {
+            // Double-check in live data (might have been added earlier)
+            const existing = data.modules.find(
+              m => m.name.toLowerCase() === key
+            );
+            if (existing) {
+              resolvedModuleId = existing.id;
+            } else {
+              const created = await addModule(draft.rawModuleName);
+              resolvedModuleId = created.id;
+            }
+            moduleIdCache[key] = resolvedModuleId;
+          }
+        }
+
+        // ── Auto-create Brand if it's new ────────────────────────────────────
+        if (draft.rawBrandName) {
+          const key = `${draft.rawBrandName.toLowerCase()}|${resolvedModuleId}`;
+          if (brandIdCache[key]) {
+            resolvedBrandId = brandIdCache[key];
+          } else {
+            const existing = data.brands.find(
+              b =>
+                b.name.toLowerCase() === draft.rawBrandName.toLowerCase() &&
+                b.moduleId === resolvedModuleId
+            );
+            if (existing) {
+              resolvedBrandId = existing.id;
+            } else {
+              const created = await addBrand(draft.rawBrandName, resolvedModuleId);
+              resolvedBrandId = created.id;
+            }
+            brandIdCache[key] = resolvedBrandId;
+          }
+        }
+
+        // ── Save the product with resolved IDs ───────────────────────────────
+        await addProduct({
+          title: draft.title || 'Untitled',
+          description: draft.description || '',
+          images: draft.images || [],
+          moduleId: resolvedModuleId,
+          brandId: resolvedBrandId,
+          subBrandId: draft.subBrandId,
+          specifications: draft.specifications || [],
+          benefits: draft.benefits || [],
+          applications: draft.applications || [],
+          price: draft.price || 0,
+          capacity: draft.capacity || '',
+          phase: draft.phase,
+          warranty: draft.warranty || '',
+          datasheet: draft.datasheet || '',
+          productType: draft.productType,
+          isOutOfStock: draft.isOutOfStock || false,
+        });
+        successCount++;
+      } catch (err: any) {
+        console.error(`Failed to save product "${draft.title}":`, err);
+        errors.push(draft.title);
+      }
+      setSaveProgress({ done: i + 1, total });
+    }
+
+    setIsUploading(false);
+    setSaveProgress(null);
+
+    if (errors.length === 0) {
+      alert(`✅ Successfully imported all ${successCount} products!`);
       onCancel();
-    } catch (error) {
-      console.error("Bulk import failed:", error);
-      alert("Failed to import products. Please check the console for details.");
-    } finally {
-      setIsUploading(false);
+    } else {
+      alert(`⚠️ Imported ${successCount} of ${total} products.\nFailed: ${errors.join(', ')}`);
+      if (successCount > 0) onCancel();
     }
   };
 
@@ -306,8 +391,12 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
           </Button>
           <Button variant="outline" onClick={onCancel}>Cancel</Button>
           {draftProducts.length > 0 && (
-            <Button onClick={handleSaveAll} className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2">
-              <Save className="w-4 h-4" /> Import {draftProducts.length} Products
+            <Button onClick={handleSaveAll} disabled={isUploading} className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2">
+              <Save className="w-4 h-4" />
+              {saveProgress
+                ? `Saving ${saveProgress.done} / ${saveProgress.total}…`
+                : `Import ${draftProducts.length} Products`
+              }
             </Button>
           )}
           {draftProducts.length === 0 && (

@@ -73,9 +73,9 @@ const ProductList = ({ moduleId, brandId, subBrandId, onEdit, onView }: ProductL
                   <div className="flex gap-4">
                     {/* Image */}
                     <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-100 shrink-0 flex items-center justify-center">
-                      {product.images.length > 0 ? (
+                      {(product.images ?? []).length > 0 ? (
                         <img
-                          src={product.images[0]}
+                          src={(product.images ?? [])[0]}
                           alt={product.title}
                           className="w-full h-full object-cover"
                         />
@@ -170,20 +170,20 @@ const ProductList = ({ moduleId, brandId, subBrandId, onEdit, onView }: ProductL
                             {product.warranty}
                           </span>
                         )}
-                        {product.specifications.length > 0 && (
+                        {(product.specifications ?? []).length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-1">
-                            {product.specifications.slice(0, 3).map((spec, i) => (
+                            {(product.specifications ?? []).slice(0, 3).map((spec, i) => (
                               <span key={i} className="px-1.5 py-0.5 rounded bg-gray-100 text-[10px] text-gray-500 border border-gray-200">
                                 {spec.key}: {spec.value}
                               </span>
                             ))}
-                            {product.specifications.length > 3 && (
-                              <span className="text-[10px] text-gray-400">+{product.specifications.length - 3} more</span>
+                            {(product.specifications ?? []).length > 3 && (
+                              <span className="text-[10px] text-gray-400">+{(product.specifications ?? []).length - 3} more</span>
                             )}
                           </div>
                         )}
-                        {product.images.length > 0 && (
-                          <span className="text-gray-400 text-[10px]">{product.images.length} images</span>
+                        {(product.images ?? []).length > 0 && (
+                          <span className="text-gray-400 text-[10px]">{(product.images ?? []).length} images</span>
                         )}
                       </div>
                     </div>
