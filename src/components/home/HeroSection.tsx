@@ -2,8 +2,10 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, ShoppingBag, FileText } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useAdmin } from '@/context/AdminContext';
 
 export const HeroSection = () => {
+  const { data } = useAdmin();
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gray-900">
       {/* Background Image */}
@@ -88,16 +90,16 @@ export const HeroSection = () => {
             className="grid grid-cols-3 gap-8 mt-16 pt-8 border-t border-primary-foreground/20"
           >
             <div>
-              <div className="text-3xl md:text-4xl font-heading font-bold text-solar">500+</div>
-              <div className="text-primary-foreground/70 text-sm mt-1">MW Installed</div>
+              <div className="text-3xl md:text-4xl font-heading font-bold text-solar">{data.catalogStats.brands}+</div>
+              <div className="text-primary-foreground/70 text-sm mt-1">Global Brands</div>
+            </div>
+            <div>
+              <div className="text-3xl md:text-4xl font-heading font-bold text-solar">{data.catalogStats.products}+</div>
+              <div className="text-primary-foreground/70 text-sm mt-1">Premium Products</div>
             </div>
             <div>
               <div className="text-3xl md:text-4xl font-heading font-bold text-solar">10K+</div>
               <div className="text-primary-foreground/70 text-sm mt-1">Happy Customers</div>
-            </div>
-            <div>
-              <div className="text-3xl md:text-4xl font-heading font-bold text-solar">25+</div>
-              <div className="text-primary-foreground/70 text-sm mt-1">Years Warranty</div>
             </div>
           </motion.div>
         </div>

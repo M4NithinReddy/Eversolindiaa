@@ -22,6 +22,8 @@ const AdminDashboard = () => {
   const [view, setView] = useState<View>('dashboard');
   const [selectedProduct, setSelectedProduct] = useState<AdminProduct | null>(null);
   const [editProduct, setEditProduct] = useState<AdminProduct | null>(null);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const handleSelectModule = (mod: AdminModule) => {
     setSelectedModule(mod);
@@ -69,6 +71,15 @@ const AdminDashboard = () => {
     setView('dashboard');
   };
 
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    if (!window.confirm(`Are you sure you want to delete ${selectedIds.size} selected product${selectedIds.size !== 1 ? 's' : ''}? This cannot be undone.`)) return;
+    
+    await deleteSelectedProducts(Array.from(selectedIds));
+    setSelectedIds(new Set());
+    setSelectionMode(false);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Top Bar */}
@@ -86,15 +97,15 @@ const AdminDashboard = () => {
           <div className="flex items-center gap-4 text-xs text-gray-600">
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200">
               <Package className="w-3.5 h-3.5 text-emerald-600" />
-              <span>{data.modules.length} Modules</span>
+              <span>{data.catalogStats.modules} Modules</span>
             </div>
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200">
               <Tags className="w-3.5 h-3.5 text-blue-600" />
-              <span>{data.brands.length} Brands</span>
+              <span>{data.catalogStats.brands} Brands</span>
             </div>
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200">
               <ShoppingBag className="w-3.5 h-3.5 text-amber-600" />
-              <span>{data.products.length} Products</span>
+              <span>{data.catalogStats.products} Products</span>
             </div>
             <div className="ml-4 border-l border-gray-200 pl-4 flex gap-2">
               <Button
@@ -166,8 +177,8 @@ const AdminDashboard = () => {
             ) : view === 'excelUpload' ? (
               <ExcelManager onCancel={() => setView('dashboard')} />
             ) : view === 'productView' && selectedProduct ? (
-              <DraftProductDetail 
-                product={selectedProduct} 
+              <DraftProductDetail
+                product={selectedProduct}
                 onBack={() => setView('dashboard')}
                 moduleName={data.modules.find(m => m.id === selectedProduct.moduleId)?.name}
                 brandName={data.brands.find(b => b.id === selectedProduct.brandId)?.name}
@@ -215,12 +226,31 @@ const AdminDashboard = () => {
                           : 'Select a module from the sidebar to begin'}
                     </p>
                   </div>
-                  <Button
-                    onClick={handleAddProduct}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
-                  >
-                    <Plus className="w-4 h-4" /> Add Product
-                  </Button>
+                  <div className="flex items-center gap-3">
+                    <Button
+                      onClick={handleAddProduct}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
+                    >
+                      <Plus className="w-4 h-4" /> Add Product
+                    </Button>
+                    
+                    {selectedModule && (
+                      <Button
+                        onClick={() => {
+                          if (selectionMode && selectedIds.size > 0) {
+                            handleBulkDelete();
+                          } else {
+                            setSelectionMode(!selectionMode);
+                          }
+                        }}
+                        variant={selectionMode ? (selectedIds.size > 0 ? "destructive" : "default") : "outline"}
+                        className={selectionMode ? (selectedIds.size > 0 ? "bg-red-600 hover:bg-red-700 text-white gap-2" : "bg-emerald-600 hover:bg-emerald-700 text-white gap-2") : "text-red-700 bg-red-50 border-red-200 hover:bg-red-100 gap-2"}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        {selectedIds.size > 0 ? `Delete (${selectedIds.size})` : (selectionMode ? "Cancel" : "Delete")}
+                      </Button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Content */}
@@ -230,6 +260,10 @@ const AdminDashboard = () => {
                   subBrandId={selectedSubBrand?.id}
                   onEdit={handleEditProduct}
                   onView={handleViewProduct}
+                  selectionMode={selectionMode}
+                  onSelectionComplete={() => setSelectionMode(false)}
+                  selectedIds={selectedIds}
+                  onSelectionChange={setSelectedIds}
                 />
               </>
             )}

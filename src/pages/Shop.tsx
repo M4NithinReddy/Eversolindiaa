@@ -150,7 +150,7 @@ const Shop = () => {
     const flatSpecMap: Record<string, string> = {};
     const flatFields: Array<[string, any]> = [
       ['MONO/BIFACIAL',           (p as any).mono_bifacial],
-      ['Model Number',             (p as any).model_number],
+      ['Model / Type',               (p as any).model_number],
       ['Wattage (W)',              (p as any).wattage_w],
       ['Cell Type',                (p as any).cell_type],
       ['Module Efficiency (%)',    (p as any).module_efficiency],
@@ -195,6 +195,7 @@ const Shop = () => {
       name        : p.title || '',
       category    : categoryName,
       brand       : brandName,
+      isSolarPanel: categoryName.toLowerCase().includes('panel') || categoryName.toLowerCase().includes('module'),
       capacity,
       price       : p.price || 0,
       benefit     : p.description || '',
@@ -273,6 +274,9 @@ const Shop = () => {
     // Category specific filters
     const isInverter = selectedCategory === 'Solar Inverters';
 
+    // Module validation: only show products linked to current modules
+    const matchesModuleLink = data.modules.some(m => m.id === (product.id ? data.products.find(p => p.id === product.id)?.moduleId : ''));
+    
     // Brand filtering — applies to all categories
     const matchesBrand = !selectedBrand ||
       (product.brand && product.brand.toLowerCase() === selectedBrand.toLowerCase());
@@ -552,7 +556,7 @@ const Shop = () => {
           <div className="py-16 bg-background">
             <div className="container mx-auto px-4">
               <div className="mb-8">
-                  Showing {Math.min(filteredProducts.length, (currentPage - 1) * ITEMS_PER_PAGE + 1)} - {Math.min(filteredProducts.length, currentPage * ITEMS_PER_PAGE)} of {filteredProducts.length} products
+                  Showing {Math.min(filteredProducts.length, (currentPage - 1) * ITEMS_PER_PAGE + 1)} - {Math.min(filteredProducts.length, currentPage * ITEMS_PER_PAGE)} of {data.catalogStats.products} products
               </div>
 
               <div className={viewMode === 'grid'
@@ -600,8 +604,13 @@ const Shop = () => {
                       <div className="p-6 flex-1 flex flex-col">
                         {product.category.toLowerCase().includes('storage') ? (
                           <>
-                            {/* 1. Header (Title) */}
-                            <h3 className="text-lg font-heading font-bold text-foreground mb-3 group-hover:text-primary transition-colors line-clamp-2">
+                            {/* 1. Header (Brand) */}
+                            {product.brand && (
+                              <div className="text-xl font-black text-primary mb-1 uppercase tracking-tighter leading-none">
+                                {product.brand}
+                              </div>
+                            )}
+                            <h3 className="text-sm font-medium text-muted-foreground mb-4 group-hover:text-foreground transition-colors line-clamp-1">
                               {product.name}
                             </h3>
 
@@ -633,8 +642,7 @@ const Shop = () => {
 
                             {/* 4. Sub-info (Description & Brand) */}
                             <div className="flex flex-wrap items-center gap-2 mb-4 mt-auto pt-2">
-                              <span className="text-sm font-medium text-gray-500 line-clamp-1 flex-1">{product.benefit || 'Energy Storage Module'}</span>
-                              {product.brand && <span className="px-2 py-0.5 bg-gray-100 text-gray-600 border border-gray-200 text-[10px] rounded-md font-bold uppercase tracking-wide">{product.brand}</span>}
+                              <span className="text-sm font-medium text-gray-400 line-clamp-1 flex-1 italic">{product.benefit || 'Energy Storage Module'}</span>
                             </div>
                           </>
                         ) : (
@@ -645,22 +653,26 @@ const Shop = () => {
                               {product.phase && <span className="px-2 py-0.5 bg-purple-50 text-purple-700 text-[10px] rounded-full uppercase font-bold tracking-wide">{product.phase}</span>}
                             </div>
 
-                            {/* 2. Description Header */}
-                            <h3 className="text-lg font-heading font-bold text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-2">
+                            {/* 2. Brand Header */}
+                            {product.brand && (
+                              <div className="text-xl font-black text-primary mb-1 uppercase tracking-tighter leading-none">
+                                {product.brand}
+                              </div>
+                            )}
+                            <h3 className="text-sm font-medium text-muted-foreground mb-4 group-hover:text-foreground transition-colors line-clamp-1">
                               {product.benefit}
                             </h3>
 
                             {/* 3. Watt and Warranty */}
                             <div className="flex flex-wrap items-center gap-2 text-eco text-sm font-medium mb-2">
-                              <span>{product.capacity} <span className="font-bold text-xs tracking-wider">KW</span></span>
+                              <span>{product.capacity}</span>
                               <span className="text-muted-foreground">•</span>
-                              <span>{product.warranty} Warranty</span>
+                              <span>{product.warranty} Warranty{(product as any).isSolarPanel ? ' (product)' : ''}</span>
                             </div>
 
                             {/* 4. Title & Brand */}
                             <div className="flex flex-wrap items-center gap-2 mb-4 mt-auto pt-2">
-                              <span className="text-sm font-semibold text-gray-800 tracking-wide">{product.name}</span>
-                              {product.brand && <span className="px-2 py-0.5 bg-gray-100 text-gray-600 border border-gray-200 text-[10px] rounded-md font-bold uppercase tracking-wide">{product.brand}</span>}
+                              <span className="text-sm font-medium text-gray-400 tracking-wide italic">{product.name}</span>
                             </div>
                           </>
                         )}
