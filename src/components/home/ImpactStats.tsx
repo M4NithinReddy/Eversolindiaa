@@ -1,37 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
-import { Leaf, Sun, Users, Building } from 'lucide-react';
-
-const stats = [
-  {
-    icon: Sun,
-    value: 500,
-    suffix: 'MW+',
-    label: 'Solar Capacity Installed',
-    color: 'solar',
-  },
-  {
-    icon: Leaf,
-    value: 250000,
-    suffix: '',
-    label: 'Tons CO₂ Reduced',
-    color: 'eco',
-  },
-  {
-    icon: Users,
-    value: 10000,
-    suffix: '+',
-    label: 'Happy Customers',
-    color: 'solar',
-  },
-  {
-    icon: Building,
-    value: 500,
-    suffix: '+',
-    label: 'Commercial Projects',
-    color: 'eco',
-  },
-];
+import { Leaf, Sun, Users, ShoppingBag, Tags, Building } from 'lucide-react';
+import { useAdmin } from '@/context/AdminContext';
 
 const AnimatedCounter = ({ value, suffix }: { value: number; suffix: string }) => {
   const [count, setCount] = useState(0);
@@ -73,6 +43,38 @@ const AnimatedCounter = ({ value, suffix }: { value: number; suffix: string }) =
 };
 
 export const ImpactStats = () => {
+  const { data } = useAdmin();
+  const stats = [
+    {
+      icon: Sun,
+      value: 500,
+      suffix: 'MW+',
+      label: 'Solar Capacity Installed',
+      color: 'solar',
+    },
+    {
+      icon: ShoppingBag,
+      value: data.catalogStats.products,
+      suffix: '+',
+      label: 'Premium Products Listed',
+      color: 'eco',
+    },
+    {
+      icon: Users,
+      value: 10000,
+      suffix: '+',
+      label: 'Happy Customers',
+      color: 'solar',
+    },
+    {
+      icon: Tags,
+      value: data.catalogStats.brands,
+      suffix: '+',
+      label: 'Global Brands Partnered',
+      color: 'eco',
+    },
+  ];
+
   return (
     <section className="py-24 bg-primary relative overflow-hidden">
       {/* Background Pattern */}

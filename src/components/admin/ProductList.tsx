@@ -11,18 +11,23 @@ interface ProductListProps {
   subBrandId?: string;
   onEdit: (product: AdminProduct) => void;
   onView?: (product: AdminProduct) => void;
+  selectionMode?: boolean;
+  onSelectionComplete?: () => void;
+  selectedIds: Set<string>;
+  onSelectionChange: (ids: Set<string>) => void;
 }
 
-const ProductList = ({ moduleId, brandId, subBrandId, onEdit, onView }: ProductListProps) => {
-  const { data, deleteProduct, updateProduct } = useAdmin();
+const ProductList = ({ moduleId, brandId, subBrandId, onEdit, onView, selectionMode, onSelectionComplete, selectedIds, onSelectionChange }: ProductListProps) => {
+  const { data, deleteProduct, updateProduct, deleteSelectedProducts } = useAdmin();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 25;
 
-  // Reset page when filters change
+  // Reset page and selection when filters change or mode changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [moduleId, brandId, subBrandId]);
+    onSelectionChange(new Set());
+  }, [moduleId, brandId, subBrandId, selectionMode]);
 
   const handleDelete = async (id: string) => {
     setDeletingId(id);
@@ -34,6 +39,21 @@ const ProductList = ({ moduleId, brandId, subBrandId, onEdit, onView }: ProductL
   if (moduleId) products = products.filter(p => p.moduleId === moduleId);
   if (brandId) products = products.filter(p => p.brandId === brandId);
   if (subBrandId) products = products.filter(p => p.subBrandId === subBrandId);
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === products.length) {
+      onSelectionChange(new Set());
+    } else {
+      onSelectionChange(new Set(products.map(p => p.id)));
+    }
+  };
+
+  const toggleSelectOne = (id: string) => {
+    const next = new Set(selectedIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    onSelectionChange(next);
+  };
 
   const getModuleName = (id: string) => data.modules.find(m => m.id === id)?.name || '—';
   const getBrandName = (id: string) => data.brands.find(b => b.id === id)?.name || '—';
@@ -52,9 +72,25 @@ const ProductList = ({ moduleId, brandId, subBrandId, onEdit, onView }: ProductL
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between mb-2">
-        <p className="text-sm text-gray-500">
-          Showing {Math.min(products.length, (currentPage - 1) * ITEMS_PER_PAGE + 1)} - {Math.min(products.length, currentPage * ITEMS_PER_PAGE)} of {products.length} product{products.length !== 1 ? 's' : ''}
-        </p>
+        <div className="flex items-center gap-4">
+          {selectionMode && products.length > 0 && (
+            <div className="flex items-center gap-2 px-1 animate-in fade-in slide-in-from-left-2 transition-all">
+              <input
+                type="checkbox"
+                id="select-all"
+                checked={selectedIds.size === products.length && products.length > 0}
+                onChange={toggleSelectAll}
+                className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+              />
+              <label htmlFor="select-all" className="text-sm font-medium text-gray-700 cursor-pointer select-none">
+                Select All
+              </label>
+            </div>
+          )}
+          <p className="text-sm text-gray-500">
+            Showing {Math.min(products.length, (currentPage - 1) * ITEMS_PER_PAGE + 1)} - {Math.min(products.length, currentPage * ITEMS_PER_PAGE)} of {products.length} product{products.length !== 1 ? 's' : ''}
+          </p>
+        </div>
       </div>
 
       <AnimatePresence>
@@ -63,12 +99,22 @@ const ProductList = ({ moduleId, brandId, subBrandId, onEdit, onView }: ProductL
           .map(product => (
             <motion.div
               key={product.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, x: -20 }}
+              initial={{ opacity: 0.5, x: 0 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center gap-3"
               layout
             >
-              <Card className="bg-white border-gray-200 hover:border-gray-300 hover:shadow-md transition-all duration-200">
+              {selectionMode && (
+                <div className="flex items-center justify-center shrink-0 animate-in fade-in slide-in-from-left-2">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(product.id)}
+                    onChange={() => toggleSelectOne(product.id)}
+                    className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                  />
+                </div>
+              )}
+              <Card className={`flex-1 bg-white border-gray-200 hover:border-gray-300 hover:shadow-md transition-all duration-200 ${selectedIds.has(product.id) ? 'border-emerald-200 bg-emerald-50/20' : ''}`}>
                 <CardContent className="p-4">
                   <div className="flex gap-4">
                     {/* Image */}

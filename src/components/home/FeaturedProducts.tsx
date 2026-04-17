@@ -12,6 +12,7 @@ export const FeaturedProducts = () => {
   const featuredProducts = modules.map((module) => {
     // Find first product that belongs to this specific module/category
     const product = products.find(p => p.moduleId === module.id);
+    const brand = product ? data.brands.find(b => b.id === product.brandId)?.name : '';
     
     return {
       id: product?.id || `empty-${module.id}`,
@@ -21,6 +22,7 @@ export const FeaturedProducts = () => {
       price: product ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(product.price || 0) : '-',
       benefit: product?.description || 'Stay tuned for premium products in this category.',
       image: product?.images && product.images.length > 0 ? product.images[0] : '/images/default.png',
+      brand: brand || 'Eversol',
       hasProduct: !!product,
       isOutOfStock: !!product?.isOutOfStock
     };
@@ -98,7 +100,12 @@ export const FeaturedProducts = () => {
                     <Zap className="h-4 w-4" />
                     {product.capacity}
                   </div>
-                  <h3 className="text-lg font-heading font-bold text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-2">
+                  {product.hasProduct && (
+                    <div className="text-xl font-black text-primary mb-1 uppercase tracking-tighter leading-none">
+                      {product.brand}
+                    </div>
+                  )}
+                  <h3 className="text-sm font-medium text-muted-foreground mb-4 group-hover:text-foreground transition-colors line-clamp-1">
                     {product.name}
                   </h3>
                   <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
