@@ -13,7 +13,7 @@ export const FeaturedProducts = () => {
     // Find first product that belongs to this specific module/category
     const product = products.find(p => p.moduleId === module.id);
     const brand = product ? data.brands.find(b => b.id === product.brandId)?.name : '';
-    
+
     return {
       id: product?.id || `empty-${module.id}`,
       name: product?.title || 'Coming Soon',
@@ -32,11 +32,11 @@ export const FeaturedProducts = () => {
     <section className="py-24 bg-background">
       <div className="container mx-auto px-4">
         <motion.div
-           initial={{ opacity: 0, y: 20 }}
-           whileInView={{ opacity: 1, y: 0 }}
-           viewport={{ once: true }}
-           transition={{ duration: 0.6 }}
-           className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-16"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-16"
         >
           <div>
             <span className="inline-block px-4 py-2 rounded-full bg-solar/10 text-solar-dark font-semibold text-sm mb-4">
@@ -55,9 +55,9 @@ export const FeaturedProducts = () => {
         </motion.div>
 
         {productsLoading ? (
-           <div className="flex justify-center items-center py-12 min-h-[300px]">
-             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-           </div>
+          <div className="flex justify-center items-center py-12 min-h-[300px]">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
         ) : featuredProducts.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {featuredProducts.map((product, index) => (
@@ -82,10 +82,10 @@ export const FeaturedProducts = () => {
                     <>
                       <div className="absolute inset-0 bg-white/20 backdrop-blur-[1px] z-10" />
                       <div className="absolute inset-0 flex flex-col items-center justify-center z-10 p-4">
-                        <img 
-                          src="/images/out-of-stock-illustration.png" 
-                          alt="Out of stock" 
-                          className="w-2/3 h-auto object-contain drop-shadow-xl mb-1" 
+                        <img
+                          src="/images/out-of-stock-illustration.png"
+                          alt="Out of stock"
+                          className="w-2/3 h-auto object-contain drop-shadow-xl mb-1"
                         />
                         <span className="bg-red-600 text-white text-[8px] font-bold px-2 py-0.5 shadow-lg uppercase tracking-widest border border-white/20">
                           Sold Out
