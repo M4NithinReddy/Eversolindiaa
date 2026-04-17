@@ -71,7 +71,53 @@ const Shop = () => {
   
   const getBrandsForCategory = (categoryName: string) => {
     const mod = data.modules.find(m => m.name === categoryName);
-    return mod ? data.brands.filter(b => b.moduleId === mod.id) : [];
+    if (!mod) return [];
+    
+    const brands = data.brands.filter(b => b.moduleId === mod.id);
+    
+    // 1. Custom sort for "Solar Modules ( Panels )"
+    if (categoryName.toLowerCase().includes('module') || categoryName.toLowerCase().includes('panel')) {
+      const excelOrder = ['SOLEX', 'WAAREE', 'PANASONIC', 'AXITEC'];
+      return [...brands].sort((a, b) => {
+        const indexA = excelOrder.indexOf(a.name.toUpperCase());
+        const indexB = excelOrder.indexOf(b.name.toUpperCase());
+        
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+        if (indexA !== -1) return -1;
+        if (indexB !== -1) return 1;
+        return a.name.localeCompare(b.name);
+      });
+    }
+    
+    // 2. Custom sort for product brands (DCR first, then by Kw value)
+    return [...brands].sort((a, b) => {
+      const nameA = a.name.toUpperCase();
+      const nameB = b.name.toUpperCase();
+      
+      const isNonDcrA = nameA.includes('NON DCR');
+      const isNonDcrB = nameB.includes('NON DCR');
+      
+      // DCR comes before NON DCR
+      if (isNonDcrA !== isNonDcrB) {
+        return isNonDcrA ? 1 : -1;
+      }
+      
+      // Extract Kw value
+      const getKw = (name: string) => {
+        const match = name.match(/(\d+)Kw/i) || name.match(/K(\d+)w/i);
+        return match ? parseInt(match[1]) : 0;
+      };
+      
+      const kwA = getKw(nameA);
+      const kwB = getKw(nameB);
+      
+      if (kwA !== kwB) {
+        return kwA - kwB;
+      }
+      
+      // Fallback to alphabetical
+      return nameA.localeCompare(nameB);
+    });
   };
 
   const getDefaultImage = (categoryName: string) => {
@@ -237,6 +283,18 @@ const Shop = () => {
       (product.brand && product.brand.toLowerCase() === selectedInverterBrand.toLowerCase());
 
     return matchesCategory && matchesSearch && matchesBrand && matchesInverterType && matchesInverterBrand;
+  }).sort((a, b) => {
+    // Custom sort for Solar On Grid/Hybrid (Solplanet and Involtics) by capacity
+    if (selectedCategory === 'Solar On Grid' || selectedCategory === 'Solar Hybrid') {
+      const isTargetA = a.brand?.toUpperCase() === 'SOLPLANET' || a.brand?.toUpperCase() === 'INVOLTICS';
+      const isTargetB = b.brand?.toUpperCase() === 'SOLPLANET' || b.brand?.toUpperCase() === 'INVOLTICS';
+      
+      if (isTargetA && isTargetB) {
+        const getCap = (c: string) => parseFloat(String(c).match(/(\d+(\.\d+)?)/)?.[0] || '0');
+        return getCap(a.capacity) - getCap(b.capacity);
+      }
+    }
+    return 0;
   });
 
   const formatPrice = (price: number) => {
