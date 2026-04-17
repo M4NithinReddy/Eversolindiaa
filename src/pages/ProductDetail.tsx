@@ -2,7 +2,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { Zap, ShoppingCart, Check, ArrowLeft, Phone, Shield, Award, Truck, Download, ChevronUp, ChevronDown } from 'lucide-react';
+import { Zap, ShoppingCart, Check, ArrowLeft, Phone, Shield, ShieldCheck, Award, Truck, Download, ChevronUp, ChevronDown, Package } from 'lucide-react';
 import { Image360Viewer } from '@/components/product/Image360Viewer';
 import { Advanced360Viewer } from '@/components/product/Advanced360Viewer';
 import ProductImageGallery from '@/components/product/ProductImageGallery';
@@ -69,13 +69,13 @@ const ProductDetail = () => {
 
     // CRITICAL: moduleId/brandId may be buried in extraFields in the new schema
     const resolvedModuleId = pData.moduleId || pData.extraFields?.moduleId || '';
-    const resolvedBrandId  = pData.brandId  || pData.extraFields?.brandId  || '';
+    const resolvedBrandId = pData.brandId || pData.extraFields?.brandId || '';
 
     // Support both old schema (moduleId lookup) and new flat schema (category field)
     const mod = adminData.modules.find(m => m.id === resolvedModuleId);
-    const br  = adminData.brands.find(b => b.id === resolvedBrandId);
+    const br = adminData.brands.find(b => b.id === resolvedBrandId);
     const categoryName = mod?.name || pData.category || 'Unknown';
-    const brandName    = br?.name  || pData.brandName || 'Unknown';
+    const brandName = br?.name || pData.brandName || 'Unknown';
 
     const getDefaultImage = (catName: string) => {
       const cat = catName.toLowerCase();
@@ -88,69 +88,83 @@ const ProductDetail = () => {
     // Merge flat spec fields into specifications object
     const flatSpecMap: Record<string, string> = {};
     const flatFields: Array<[string, any]> = [
-      ['MONO/BIFACIAL',          pData.mono_bifacial],
-      ['Model Number',            pData.model_number],
-      ['Wattage (W)',             pData.wattage_w],
-      ['Cell Type',               pData.cell_type],
-      ['Module Efficiency (%)',   pData.module_efficiency],
-      ['No. of Cells',            pData.no_of_cells],
-      ['Available Stock',         pData.available_stock],
-      ['Battery Type',            pData.battery_type],
-      ['Capacity (kWh/Ah)',       pData.capacity_kwh_ah],
+      ['MONO/BIFACIAL', pData.mono_bifacial],
+      ['Model Number', pData.model_number],
+      ['Wattage (W)', pData.wattage_w],
+      ['Cell Type', pData.cell_type],
+      ['Module Efficiency (%)', pData.module_efficiency],
+      ['No. of Cells', pData.no_of_cells],
+      ['Available Stock', pData.available_stock],
+      ['Battery Type', pData.battery_type],
+      ['Capacity (kWh/Ah)', pData.capacity_kwh_ah],
       ['Battery Nominal Voltage', pData.battery_nominal_voltage_v],
-      ['Operating Voltage',       pData.operating_voltage],
-      ['Cycle Life',              pData.cycle_life],
-      ['Cooling',                 pData.cooling],
-      ['Compatible Inverters',    pData.compatible_inverters],
-      ['System Size (kW)',        pData.system_size_kw],
-      ['Included Module Brand',   pData.included_module_brand],
+      ['Operating Voltage', pData.operating_voltage],
+      ['Cycle Life', pData.cycle_life],
+      ['Cooling', pData.cooling],
+      ['Compatible Inverters', pData.compatible_inverters],
+      ['System Size (kW)', pData.system_size_kw],
+      ['Included Module Brand', pData.included_module_brand],
       ['Included Inverter Brand', pData.included_inverter_brand],
-      ['Structure Type',          pData.structure_type],
-      ['Area Required (sq.ft)',   pData.area_required_sqft],
-      ['Subsidy Eligible',        pData.subsidy_eligible],
-      ['Installation Included',   pData.installation_included],
-      ['Meters',                  pData.meters],
-      ['Total Price',             pData.total_price],
+      ['Structure Type', pData.structure_type],
+      ['Area Required (sq.ft)', pData.area_required_sqft],
+      ['Subsidy Eligible', pData.subsidy_eligible],
+      ['Installation Included', pData.installation_included],
+      ['Meters', pData.meters],
+      ['Total Price', pData.total_price],
     ];
     flatFields.forEach(([k, v]) => { if (v !== undefined && v !== null && String(v).trim() !== '') flatSpecMap[k] = String(v); });
     const arraySpecs = (pData.specifications || []).reduce((acc: any, s: any) => { acc[s.key] = s.value; return acc; }, {});
+    
+    // Extract potential benefits/applications from arraySpecs and remove from table
+    const specBenefits = arraySpecs['Key Benefits'] || arraySpecs['Key Benifits'] || '';
+    const specApps = arraySpecs['Applications'] || '';
+    delete arraySpecs['Key Benefits'];
+    delete arraySpecs['Key Benifits'];
+    delete arraySpecs['Applications'];
+
     const specifications = { ...flatSpecMap, ...arraySpecs };
 
-    // Resolve benefits — handle array or comma-separated string
-    const rawBenefits = pData.benefits;
-    let benefits: string[] = [];
-    if (Array.isArray(rawBenefits) && rawBenefits.length > 0) benefits = rawBenefits;
-    else if (typeof rawBenefits === 'string' && rawBenefits.trim()) benefits = rawBenefits.split(',').map((s: string) => s.trim()).filter(Boolean);
+    // Helper to split by multiple delimiters (* and ,)
+    const splitItems = (raw: any): string[] => {
+      if (Array.isArray(raw) && raw.length > 0) return raw;
+      if (typeof raw === 'string' && raw.trim()) {
+        // Split by * or , and filter
+        return raw.split(/[,\*]/).map((s: string) => s.trim()).filter(Boolean);
+      }
+      return [];
+    };
 
-    // Resolve applications — handle array or comma-separated string
-    const rawApps = pData.applications;
-    let applications: string[] = [];
-    if (Array.isArray(rawApps) && rawApps.length > 0) applications = rawApps;
-    else if (typeof rawApps === 'string' && rawApps.trim()) applications = rawApps.split(',').map((s: string) => s.trim()).filter(Boolean);
+    // Resolve benefits
+    let benefits = splitItems(pData.benefits);
+    if (benefits.length === 0) benefits = splitItems(specBenefits);
+
+    // Resolve applications
+    let applications = splitItems(pData.applications);
+    if (applications.length === 0) applications = splitItems(specApps);
 
     // Resolve capacity
     const capacity = pData.capacity || pData.capacity_kwh_ah || pData.wattage_w || pData.system_size_kw || '';
 
     return {
-      id          : pData.id,
-      name        : pData.title || '',
-      category    : categoryName,
-      brand       : brandName,
+      id: pData.id,
+      name: pData.title || '',
+      category: categoryName,
+      brand: brandName,
       capacity,
-      price       : pData.price || 0,
-      benefit     : pData.description || '',
-      image       : (pData.images && pData.images.length > 0) ? pData.images[0] : getDefaultImage(categoryName),
-      images      : pData.images || [],
-      warranty    : pData.warranty || '',
-      description : pData.description || '',
+      price: pData.price || 0,
+      benefit: pData.description || '',
+      image: (pData.images && pData.images.length > 0) ? pData.images[0] : getDefaultImage(categoryName),
+      images: pData.images || [],
+      warranty: pData.warranty || '',
+      description: pData.description || '',
       specifications,
-      features    : benefits.length > 0 ? benefits : applications,
+      features: benefits.length > 0 ? benefits : applications,
       benefits,
       applications,
-      datasheet   : pData.datasheet || '',
-      images360   : pData.images360 || [],
-      productType : pData.productType || pData.product_type || '',
-      phase       : pData.phase || '',
+      datasheet: pData.datasheet || '',
+      images360: pData.images360 || [],
+      productType: pData.productType || pData.product_type || '',
+      phase: pData.phase || '',
       isOutOfStock: !!pData.isOutOfStock,
     };
   }, [apiProduct, adminData]);
@@ -186,36 +200,38 @@ const ProductDetail = () => {
   const renderSpecifications = () => {
     if (!product || !product.specifications) return null;
 
+    const excludedKeys = ['Available Stock', 'Key Benefits', 'Key Benifits', 'Applications'];
+
     // Handle array format
     if (Array.isArray(product.specifications)) {
       return product.specifications
-        .filter(s => typeof s === 'object' && 'label' in s && String(s.label) !== 'Available Stock')
+        .filter(s => typeof s === 'object' && 'label' in s && !excludedKeys.includes(String(s.label)))
         .map((spec, index) => (
-        <div key={index} className="flex justify-between items-start gap-4 py-2 border-b">
-          <span className="text-muted-foreground shrink-0" style={{maxWidth: '55%'}}>
-            {typeof spec === 'object' && 'label' in spec ? spec.label : ''}
-          </span>
-          <span className={`font-medium text-right ${getSpecColor(
-            typeof spec === 'object' && 'label' in spec ? String(spec.label) : '',
-            typeof spec === 'object' && 'value' in spec ? String(spec.value) : ''
-          )}`}>
-            {typeof spec === 'object' && 'value' in spec ? String(spec.value) : ''}
-          </span>
-        </div>
-      ));
+          <div key={index} className="flex justify-between items-start gap-4 py-2 border-b">
+            <span className="text-muted-foreground shrink-0" style={{ maxWidth: '55%' }}>
+              {typeof spec === 'object' && 'label' in spec ? spec.label : ''}
+            </span>
+            <span className={`font-medium text-right ${getSpecColor(
+              typeof spec === 'object' && 'label' in spec ? String(spec.label) : '',
+              typeof spec === 'object' && 'value' in spec ? String(spec.value) : ''
+            )}`}>
+              {typeof spec === 'object' && 'value' in spec ? String(spec.value) : ''}
+            </span>
+          </div>
+        ));
     }
 
     // Handle object format
     return Object.entries(product.specifications)
-      .filter(([key]) => key !== 'Available Stock')
+      .filter(([key]) => !excludedKeys.includes(key))
       .map(([key, value]) => (
-      <div key={key} className="flex justify-between items-start gap-4 py-2 border-b">
-        <span className="text-muted-foreground shrink-0" style={{maxWidth: '55%'}}>{key}</span>
-        <span className={`font-medium text-right ${getSpecColor(key, String(value))}`}>
-          {String(value)}
-        </span>
-      </div>
-    ));
+        <div key={key} className="flex justify-between items-start gap-4 py-2 border-b">
+          <span className="text-muted-foreground shrink-0" style={{ maxWidth: '55%' }}>{key}</span>
+          <span className={`font-medium text-right ${getSpecColor(key, String(value))}`}>
+            {String(value)}
+          </span>
+        </div>
+      ));
   };
 
   const handleAddToCart = () => {
@@ -463,16 +479,16 @@ const ProductDetail = () => {
               {/* Trust Badges */}
               <div className="grid grid-cols-3 gap-4 pt-8 border-t border-border">
                 <div className="text-center">
-                  <Shield className="h-8 w-8 text-eco mx-auto mb-2" />
+                  <ShieldCheck className="h-8 w-8 text-eco mx-auto mb-2" />
                   <span className="text-sm text-muted-foreground">Genuine Product</span>
                 </div>
                 <div className="text-center">
-                  <Truck className="h-8 w-8 text-solar mx-auto mb-2" />
-                  <span className="text-sm text-muted-foreground">Free Delivery</span>
+                  <Package className="h-8 w-8 text-solar mx-auto mb-2" />
+                  <span className="text-sm text-muted-foreground">Paid Delivery</span>
                 </div>
                 <div className="text-center">
                   <Award className="h-8 w-8 text-primary mx-auto mb-2" />
-                  <span className="text-sm text-muted-foreground">BIS Certified</span>
+                  <span className="text-sm text-muted-foreground">BIS Certified Product</span>
                 </div>
               </div>
             </motion.div>
