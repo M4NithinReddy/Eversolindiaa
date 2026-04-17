@@ -75,15 +75,23 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
           let moduleId = '';
           let brandId = '';
 
+          // Match existing module
           if (rawModuleName) {
             const mod = data.modules.find(m => m.name.toLowerCase() === rawModuleName.toLowerCase());
             if (mod) moduleId = mod.id;
           }
-          if (rawBrandName) {
-            const brand = data.brands.find(b => b.name.toLowerCase() === rawBrandName.toLowerCase());
+          
+          // Match existing brand ONLY within the same module
+          if (rawBrandName && moduleId) {
+            const brand = data.brands.find(b => 
+              b.name.toLowerCase() === rawBrandName.toLowerCase() && 
+              b.moduleId === moduleId
+            );
             if (brand) brandId = brand.id;
           }
 
+          // We always want to pass the raw names if present, 
+          // handleSaveAll will use them to ensure everything is created/matched correctly.
           const isModuleNew = rawModuleName && !moduleId;
           const isBrandNew = rawBrandName && !brandId;
 
@@ -98,7 +106,8 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
             'datasheet', 'manual', 'pdf', 'data sheet',
             'category', 'module', 'module name', 'product',
             'brand', 'brand name', 'available stock', 'stock',
-            'image', 'images', 'img'
+            'image', 'images', 'img',
+            'benefits', 'key benefits', 'key benifits', 'applications', 'application'
           ];
 
           const specs: ProductSpecification[] = [];
@@ -143,15 +152,15 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
           }
 
           let benefits: string[] = [];
-          const excelBenefits = getVal(['benefits', 'benefit', 'features']);
+          const excelBenefits = getVal(['benefits', 'benefit', 'features', 'key benefits', 'key benifits']);
           if (excelBenefits) {
-            benefits = String(excelBenefits).split(',').map(s => s.trim());
+            benefits = String(excelBenefits).split(/[,\*]/).map(s => s.trim()).filter(Boolean);
           }
 
           let applications: string[] = [];
           const excelApps = getVal(['applications', 'application', 'compatible inverters']);
           if (excelApps) {
-            applications = String(excelApps).split(',').map(s => s.trim());
+            applications = String(excelApps).split(/[,\*]/).map(s => s.trim()).filter(Boolean);
           }
 
           return {
@@ -161,8 +170,8 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
             images: normalizedRow.image ? [normalizedRow.image] : (normalizedRow.images ? String(normalizedRow.images).split(',') : []),
             moduleId: moduleId || defaultModuleId,
             brandId: brandId || defaultBrandId,
-            rawModuleName: isModuleNew ? rawModuleName : undefined,
-            rawBrandName: isBrandNew ? rawBrandName : undefined,
+            rawModuleName: rawModuleName || undefined,
+            rawBrandName: rawBrandName || undefined,
             specifications: specs,
             benefits,
             applications,
@@ -367,24 +376,37 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
           { title: "Solar on grid System", brand: "EVERSOL NON DCR 10kW 615", systemSize: "10", phase: "3Phase", price: 285000, warranty: "30Years Module, 10years In...", module: "Eversol Roof Top Kit", specs: [["Included Module Brand", "SOLEX/WAAREE/PANASON"], ["Included Inverter Brand", "INVOLTICS / SOLPLANET/GOOD"], ["Structure Type", "GI / Aluminam"], ["Area Required", "800"], ["Subsidy Eligible (Yes/No)", "NO"], ["Installation Included (Yes/No)", "At Actual"], ["Meters", "At Actual"]] },
         ];
 
-            const drafts: AdminProduct[] = sampleData.map((d, index) => ({
-              id: `sample-${index}`,
-              title: d.title,
-              description: "High-quality Solar On-Grid System with premium components including Module, Inverter, DCDB, ACDB, Earthing Kit, and GI Structure.",
-              images: [],
-              moduleId: defaultModuleId,
-              brandId: defaultBrandId,
-              rawModuleName: d.module,
-              rawBrandName: d.brand,
-              specifications: d.specs.map(([k, v]: any) => ({ key: k, value: v })),
-              benefits: ["Eco-friendly energy", "Reduce electricity bills", "Low maintenance"],
-              applications: ["Residential", "Commercial", "Industrial"],
-              price: d.price,
-              capacity: d.systemSize,
-              phase: d.phase,
-              warranty: d.warranty,
-              createdAt: new Date().toISOString(),
-            } as any));
+            const drafts: AdminProduct[] = sampleData.map((d, index) => {
+              let moduleId = '';
+              let brandId = '';
+              if (d.module) {
+                const mod = data.modules.find(m => m.name.toLowerCase() === d.module.toLowerCase());
+                if (mod) moduleId = mod.id;
+              }
+              if (d.brand && moduleId) {
+                const brand = data.brands.find(b => b.name.toLowerCase() === d.brand.toLowerCase() && b.moduleId === moduleId);
+                if (brand) brandId = brand.id;
+              }
+
+              return {
+                id: `sample-${index}`,
+                title: d.title,
+                description: "High-quality Solar On-Grid System with premium components including Module, Inverter, DCDB, ACDB, Earthing Kit, and GI Structure.",
+                images: [],
+                moduleId: moduleId || defaultModuleId,
+                brandId: brandId || defaultBrandId,
+                rawModuleName: d.module,
+                rawBrandName: d.brand,
+                specifications: d.specs.map(([k, v]: any) => ({ key: k, value: v })),
+                benefits: ["Eco-friendly energy", "Reduce electricity bills", "Low maintenance"],
+                applications: ["Residential", "Commercial", "Industrial"],
+                price: d.price,
+                capacity: d.systemSize,
+                phase: d.phase,
+                warranty: d.warranty,
+                createdAt: new Date().toISOString(),
+              } as any;
+            });
             setDraftProducts(drafts);
           }} className="bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 gap-2">
             <Plus className="w-4 h-4" /> Load Screenshot Data
@@ -568,13 +590,24 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
                   const capacity = String(normalizedRow['wattage (w)'] || '').trim();
                   const warranty = String(normalizedRow['warranty (product)'] || '').trim();
 
+                  let moduleId = '';
+                  let brandId = '';
+                  if (rawModuleName) {
+                    const mod = data.modules.find(m => m.name.toLowerCase() === rawModuleName.toLowerCase());
+                    if (mod) moduleId = mod.id;
+                  }
+                  if (rawBrandName && moduleId) {
+                    const brand = data.brands.find(b => b.name.toLowerCase() === rawBrandName.toLowerCase() && b.moduleId === moduleId);
+                    if (brand) brandId = brand.id;
+                  }
+
                   return {
                     id: `draft-sample-${index}`,
                     title,
                     description: `${title} by ${rawBrandName}. High-efficiency ${normalizedRow['cell type']} module.`,
                     images: [],
-                    moduleId: defaultModuleId,
-                    brandId: defaultBrandId,
+                    moduleId: moduleId || defaultModuleId,
+                    brandId: brandId || defaultBrandId,
                     rawModuleName,
                     rawBrandName,
                     specifications: specs,
