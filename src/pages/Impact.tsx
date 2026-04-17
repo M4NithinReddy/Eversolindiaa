@@ -50,6 +50,21 @@ const AnimatedCounter = ({ value, format }: { value: number; format: string }) =
   return <span ref={ref}>{formatNumber(count)}</span>;
 };
 
+const HighVoltageIcon = ({ className = "h-5 w-5" }) => (
+  <svg 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={className}
+  >
+    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+    <path d="M14 8l-4 6h5l-4 6" fill="currentColor" stroke="none" />
+  </svg>
+);
+
 const Impact = () => {
   return (
     <Layout>
@@ -155,17 +170,17 @@ const Impact = () => {
                 >
                   <div className="flex items-center gap-4 mb-6">
                     <div className="p-3 bg-solar/10 rounded-xl">
-                      <Zap className="h-6 w-6 text-solar-dark" />
+                      <HighVoltageIcon className="h-6 w-6 text-solar-dark" />
                     </div>
                     <h4 className="text-xl font-bold">Capacity Needed</h4>
                   </div>
                   <ul className="space-y-4 text-muted-foreground">
                     <li className="flex gap-3">
-                      <Check className="h-5 w-5 text-primary shrink-0" />
+                      <span className="text-primary text-lg leading-none select-none shrink-0">✳</span>
                       <span>Calculated as per load requirement / quantum of electricity bill</span>
                     </li>
                     <li className="flex gap-3">
-                      <Check className="h-5 w-5 text-primary shrink-0" />
+                      <span className="text-primary text-lg leading-none select-none shrink-0">✳</span>
                       <span>Varies from state to state for the same electricity bill</span>
                     </li>
                   </ul>
@@ -186,14 +201,14 @@ const Impact = () => {
                   </div>
                   <ul className="space-y-4 text-muted-foreground">
                     <li className="flex gap-3">
-                      <Check className="h-5 w-5 text-primary shrink-0" />
+                      <span className="text-primary text-lg leading-none select-none shrink-0">✳</span>
                       <div>
                         <span className="font-semibold text-foreground">Shadow free space available:</span>
                         <br />Typically, 1 kW system requires 60-70 sq ft
                       </div>
                     </li>
                     <li className="flex gap-3">
-                      <Check className="h-5 w-5 text-primary shrink-0" />
+                      <span className="text-primary text-lg leading-none select-none shrink-0">✳</span>
                       <div>
                         <span className="font-semibold text-foreground">Sanctioned load:</span>
                         <br />A limit on capacity varies from state to state
@@ -267,7 +282,7 @@ const Impact = () => {
                 },
                 {
                   title: 'Hybrid System',
-                  icon: Zap,
+                  icon: HighVoltageIcon,
                   desc: 'Solar panels provide power and charge batteries. The home remains connected to the grid, which serves as a backup power source.',
                   features: ['Best of both worlds', 'Battery backup', 'Grid reliability']
                 }

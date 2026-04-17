@@ -45,6 +45,21 @@ type Product = {
   isOutOfStock?: boolean;
 };
 
+const HighVoltageIcon = ({ className = "h-5 w-5" }) => (
+  <svg 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={className}
+  >
+    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+    <path d="M14 8l-4 6h5l-4 6" fill="currentColor" stroke="none" />
+  </svg>
+);
+
 // Products object with string keys
 
 const ProductDetail = () => {
@@ -115,14 +130,36 @@ const ProductDetail = () => {
       ['Total Price', pData.total_price],
     ];
     flatFields.forEach(([k, v]) => { if (v !== undefined && v !== null && String(v).trim() !== '') flatSpecMap[k] = String(v); });
-    const arraySpecs = (pData.specifications || []).reduce((acc: any, s: any) => { acc[s.key] = s.value; return acc; }, {});
-    
-    // Extract potential benefits/applications from arraySpecs and remove from table
-    const specBenefits = arraySpecs['Key Benefits'] || arraySpecs['Key Benifits'] || '';
-    const specApps = arraySpecs['Applications'] || '';
-    delete arraySpecs['Key Benefits'];
-    delete arraySpecs['Key Benifits'];
-    delete arraySpecs['Applications'];
+    // Normalize specifications to an object
+    const rawSpecs = pData.specifications || [];
+    let arraySpecs: Record<string, any> = {};
+    if (Array.isArray(rawSpecs)) {
+      rawSpecs.forEach((s: any) => {
+        if (s) {
+          const k = s.key || s.label;
+          const v = s.value;
+          if (k !== undefined) arraySpecs[k] = v;
+        }
+      });
+    } else if (typeof rawSpecs === 'object') {
+      arraySpecs = { ...rawSpecs };
+    }
+
+    // Extract potential benefits/applications (typo-tolerant)
+    const findSpecValue = (keywords: string[]) => {
+      const key = Object.keys(arraySpecs).find(k =>
+        keywords.some(kw => String(k).toLowerCase().includes(kw.toLowerCase()))
+      );
+      if (key) {
+        const val = arraySpecs[key];
+        delete arraySpecs[key]; // Remove from specs table
+        return val;
+      }
+      return '';
+    };
+
+    const specBenefits = findSpecValue(['benefit', 'benifit']);
+    const specApps = findSpecValue(['application']);
 
     const specifications = { ...flatSpecMap, ...arraySpecs };
 
@@ -130,8 +167,8 @@ const ProductDetail = () => {
     const splitItems = (raw: any): string[] => {
       if (Array.isArray(raw) && raw.length > 0) return raw;
       if (typeof raw === 'string' && raw.trim()) {
-        // Split by * or , and filter
-        return raw.split(/[,\*]/).map((s: string) => s.trim()).filter(Boolean);
+        // Split by *, comma, or newline and filter
+        return String(raw).split(/[\*\n\|]/).flatMap(s => s.split(',')).map((s: string) => s.trim()).filter(Boolean);
       }
       return [];
     };
@@ -212,7 +249,7 @@ const ProductDetail = () => {
         .map((spec, index) => (
           <div key={index} className="flex justify-between items-start gap-4 py-2 border-b">
             <span className="text-muted-foreground shrink-0" style={{ maxWidth: '55%' }}>
-              {typeof spec === 'object' && 'label' in spec ? 
+              {typeof spec === 'object' && 'label' in spec ?
                 (() => {
                   const label = String(spec.label);
                   if (label.toLowerCase() === 'warranty' && (product as any).isSolarPanel) return 'Warranty (product)';
@@ -434,7 +471,7 @@ const ProductDetail = () => {
                 )}
                 {product.phase && (
                   <span className="flex items-center gap-2 text-blue-600 font-bold">
-                    <Zap className="h-5 w-5" />
+                    <HighVoltageIcon className="h-5 w-5" />
                     {product.phase}
                   </span>
                 )}
@@ -548,7 +585,7 @@ const ProductDetail = () => {
                   {(product.benefits ?? []).length > 0 ? (
                     (product.benefits ?? []).map((benefit, index) => (
                       <li key={index} className="flex items-start gap-3">
-                        <Check className="h-5 w-5 text-eco shrink-0 mt-0.5" />
+                        <span className="text-eco text-lg leading-none shrink-0 mt-0.5 select-none">✳</span>
                         <span className="text-muted-foreground">{benefit}</span>
                       </li>
                     ))
@@ -572,7 +609,7 @@ const ProductDetail = () => {
                   {(product.applications ?? []).length > 0 ? (
                     (product.applications ?? []).map((app, index) => (
                       <li key={index} className="flex items-start gap-3">
-                        <Zap className="h-5 w-5 text-solar shrink-0 mt-0.5" />
+                        <span className="text-solar text-lg leading-none shrink-0 mt-0.5 select-none">✳</span>
                         <span className="text-muted-foreground">{app}</span>
                       </li>
                     ))
