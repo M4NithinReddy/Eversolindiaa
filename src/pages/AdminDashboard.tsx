@@ -74,7 +74,7 @@ const AdminDashboard = () => {
   const handleBulkDelete = async () => {
     if (selectedIds.size === 0) return;
     if (!window.confirm(`Are you sure you want to delete ${selectedIds.size} selected product${selectedIds.size !== 1 ? 's' : ''}? This cannot be undone.`)) return;
-    
+
     await deleteSelectedProducts(Array.from(selectedIds));
     setSelectedIds(new Set());
     setSelectionMode(false);
@@ -233,7 +233,7 @@ const AdminDashboard = () => {
                     >
                       <Plus className="w-4 h-4" /> Add Product
                     </Button>
-                    
+
                     {selectedModule && (
                       <Button
                         onClick={() => {

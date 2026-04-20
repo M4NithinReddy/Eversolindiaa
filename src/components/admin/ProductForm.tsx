@@ -126,7 +126,7 @@ const ProductForm = ({ moduleId, brandId, subBrandId, editProduct, onCancel, onS
 
   const filteredBrands = [...data.brands.filter(b => b.moduleId === selectedModuleId)].sort((a, b) => {
     const modName = data.modules.find(m => m.id === selectedModuleId)?.name || '';
-    
+
     // 1. Custom sort for "Solar Modules ( Panels )"
     if (modName.toLowerCase().includes('module') || modName.toLowerCase().includes('panel')) {
       const excelOrder = ['SOLEX', 'WAAREE', 'PANASONIC', 'AXITEC'];
@@ -139,17 +139,17 @@ const ProductForm = ({ moduleId, brandId, subBrandId, editProduct, onCancel, onS
 
     const nameA = a.name.toUpperCase();
     const nameB = b.name.toUpperCase();
-    
+
     const isNonDcrA = nameA.includes('NON DCR');
     const isNonDcrB = nameB.includes('NON DCR');
-    
+
     if (isNonDcrA !== isNonDcrB) return isNonDcrA ? 1 : -1;
-    
+
     const getKw = (name: string) => {
       const match = name.match(/(\d+)Kw/i) || name.match(/K(\d+)w/i);
       return match ? parseInt(match[1]) : 0;
     };
-    
+
     const kwA = getKw(nameA), kwB = getKw(nameB);
     if (kwA !== kwB) return kwA - kwB;
     return nameA.localeCompare(nameB);

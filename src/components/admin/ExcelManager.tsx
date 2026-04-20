@@ -80,11 +80,11 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
             const mod = data.modules.find(m => m.name.toLowerCase() === rawModuleName.toLowerCase());
             if (mod) moduleId = mod.id;
           }
-          
+
           // Match existing brand ONLY within the same module
           if (rawBrandName && moduleId) {
-            const brand = data.brands.find(b => 
-              b.name.toLowerCase() === rawBrandName.toLowerCase() && 
+            const brand = data.brands.find(b =>
+              b.name.toLowerCase() === rawBrandName.toLowerCase() &&
               b.moduleId === moduleId
             );
             if (brand) brandId = brand.id;
@@ -111,7 +111,7 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
           ];
 
           const specs: ProductSpecification[] = [];
-          
+
           // Map standard specifications from spec mappings
           const specMappings = [
             { key: 'MONO/BIFECIAL', variants: ['mono/bifecial', 'mono bifecial'] },
@@ -362,19 +362,19 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => {
-        const sampleData: any[] = [
-          { title: "Solar on grid System", brand: "EVERSOL DCR 3kW 545X6", systemSize: "3", phase: "1Phase", price: 132000, warranty: "30Years Module, 10years In...", module: "Eversol Roof Top Kit", specs: [["Included Module Brand", "SOLEX/WAAREE/PANASON"], ["Included Inverter Brand", "INVOLTICS / SOLPLANET/GOOD"], ["Structure Type", "GI / Aluminam"], ["Area Required", "200"], ["Subsidy Eligible (Yes/No)", "YES"], ["Installation Included (Yes/No)", "At Actual"], ["Meters", "At Actual"]] },
-          { title: "Solar on grid System", brand: "EVERSOL DCR 3.5kW 590X6", systemSize: "3.5", phase: "1Phase", price: 159000, warranty: "30Years Module, 10years In...", module: "Eversol Roof Top Kit", specs: [["Included Module Brand", "SOLEX/WAAREE/PANASON"], ["Included Inverter Brand", "INVOLTICS / SOLPLANET/GOOD"], ["Structure Type", "GI / Aluminam"], ["Area Required", "200"], ["Subsidy Eligible (Yes/No)", "YES"], ["Installation Included (Yes/No)", "At Actual"], ["Meters", "At Actual"]] },
-          { title: "Solar on grid System", brand: "EVERSOL DCR 5kW 545X9", systemSize: "5", phase: "1Phase", price: 199000, warranty: "30Years Module, 10years In...", module: "Eversol Roof Top Kit", specs: [["Included Module Brand", "SOLEX/WAAREE/PANASON"], ["Included Inverter Brand", "INVOLTICS / SOLPLANET/GOOD"], ["Structure Type", "GI / Aluminam"], ["Area Required", "400"], ["Subsidy Eligible (Yes/No)", "YES"], ["Installation Included (Yes/No)", "At Actual"], ["Meters", "At Actual"]] },
-          { title: "Solar on grid System", brand: "EVERSOL DCR 5kW 390X9", systemSize: "5", phase: "3Phase", price: 225000, warranty: "30Years Module, 10years In...", module: "Eversol Roof Top Kit", specs: [["Included Module Brand", "SOLEX/WAAREE/PANASON"], ["Included Inverter Brand", "INVOLTICS / SOLPLANET/GOOD"], ["Structure Type", "GI / Aluminam"], ["Area Required", "400"], ["Subsidy Eligible (Yes/No)", "YES"], ["Installation Included (Yes/No)", "At Actual"], ["Meters", "At Actual"]] },
-          { title: "Solar on grid System", brand: "EVERSOL NON DCR 3kW 615X", systemSize: "3", phase: "1Phase", price: 102000, warranty: "30Years Module, 10years In...", module: "Eversol Roof Top Kit", specs: [["Included Module Brand", "SOLEX/WAAREE/PANASON"], ["Included Inverter Brand", "INVOLTICS / SOLPLANET/GOOD"], ["Structure Type", "GI / Aluminam"], ["Area Required", "200"], ["Subsidy Eligible (Yes/No)", "NO"], ["Installation Included (Yes/No)", "At Actual"], ["Meters", "At Actual"]] },
-          { title: "Solar on grid System", brand: "EVERSOL NON DCR 4kW 615X", systemSize: "4", phase: "1Phase", price: 140000, warranty: "30Years Module, 10years In...", module: "Eversol Roof Top Kit", specs: [["Included Module Brand", "SOLEX/WAAREE/PANASON"], ["Included Inverter Brand", "INVOLTICS / SOLPLANET/GOOD"], ["Structure Type", "GI / Aluminam"], ["Area Required", "400"], ["Subsidy Eligible (Yes/No)", "NO"], ["Installation Included (Yes/No)", "At Actual"], ["Meters", "At Actual"]] },
-          { title: "Solar on grid System", brand: "EVERSOL NON DCR 5kW 615x", systemSize: "5", phase: "1Phase", price: 159000, warranty: "30Years Module, 10years In...", module: "Eversol Roof Top Kit", specs: [["Included Module Brand", "SOLEX/WAAREE/PANASON"], ["Included Inverter Brand", "INVOLTICS / SOLPLANET/GOOD"], ["Structure Type", "GI / Aluminam"], ["Area Required", "400"], ["Subsidy Eligible (Yes/No)", "NO"], ["Installation Included (Yes/No)", "At Actual"], ["Meters", "At Actual"]] },
-          { title: "Solar on grid System", brand: "EVERSOL NON DCR 5kW 615x", systemSize: "5", phase: "3Phase", price: 180000, warranty: "30Years Module, 10years In...", module: "Eversol Roof Top Kit", specs: [["Included Module Brand", "SOLEX/WAAREE/PANASON"], ["Included Inverter Brand", "INVOLTICS / SOLPLANET/GOOD"], ["Structure Type", "GI / Aluminam"], ["Area Required", "400"], ["Subsidy Eligible (Yes/No)", "NO"], ["Installation Included (Yes/No)", "At Actual"], ["Meters", "At Actual"]] },
-          { title: "Solar on grid System", brand: "EVERSOL NON DCR 6kW 615X", systemSize: "6", phase: "3Phase", price: 205000, warranty: "30Years Module, 10years In...", module: "Eversol Roof Top Kit", specs: [["Included Module Brand", "SOLEX/WAAREE/PANASON"], ["Included Inverter Brand", "INVOLTICS / SOLPLANET/GOOD"], ["Structure Type", "GI / Aluminam"], ["Area Required", "400"], ["Subsidy Eligible (Yes/No)", "NO"], ["Installation Included (Yes/No)", "At Actual"], ["Meters", "At Actual"]] },
-          { title: "Solar on grid System", brand: "EVERSOL NON DCR 8kW 615X", systemSize: "8", phase: "3Phase", price: 252000, warranty: "30Years Module, 10years In...", module: "Eversol Roof Top Kit", specs: [["Included Module Brand", "SOLEX/WAAREE/PANASON"], ["Included Inverter Brand", "INVOLTICS / SOLPLANET/GOOD"], ["Structure Type", "GI / Aluminam"], ["Area Required", "600"], ["Subsidy Eligible (Yes/No)", "NO"], ["Installation Included (Yes/No)", "At Actual"], ["Meters", "At Actual"]] },
-          { title: "Solar on grid System", brand: "EVERSOL NON DCR 10kW 615", systemSize: "10", phase: "3Phase", price: 285000, warranty: "30Years Module, 10years In...", module: "Eversol Roof Top Kit", specs: [["Included Module Brand", "SOLEX/WAAREE/PANASON"], ["Included Inverter Brand", "INVOLTICS / SOLPLANET/GOOD"], ["Structure Type", "GI / Aluminam"], ["Area Required", "800"], ["Subsidy Eligible (Yes/No)", "NO"], ["Installation Included (Yes/No)", "At Actual"], ["Meters", "At Actual"]] },
-        ];
+            const sampleData: any[] = [
+              { title: "Solar on grid System", brand: "EVERSOL DCR 3kW 545X6", systemSize: "3", phase: "1Phase", price: 132000, warranty: "30Years Module, 10years In...", module: "Eversol Roof Top Kit", specs: [["Included Module Brand", "SOLEX/WAAREE/PANASON"], ["Included Inverter Brand", "INVOLTICS / SOLPLANET/GOOD"], ["Structure Type", "GI / Aluminam"], ["Area Required", "200"], ["Subsidy Eligible (Yes/No)", "YES"], ["Installation Included (Yes/No)", "At Actual"], ["Meters", "At Actual"]] },
+              { title: "Solar on grid System", brand: "EVERSOL DCR 3.5kW 590X6", systemSize: "3.5", phase: "1Phase", price: 159000, warranty: "30Years Module, 10years In...", module: "Eversol Roof Top Kit", specs: [["Included Module Brand", "SOLEX/WAAREE/PANASON"], ["Included Inverter Brand", "INVOLTICS / SOLPLANET/GOOD"], ["Structure Type", "GI / Aluminam"], ["Area Required", "200"], ["Subsidy Eligible (Yes/No)", "YES"], ["Installation Included (Yes/No)", "At Actual"], ["Meters", "At Actual"]] },
+              { title: "Solar on grid System", brand: "EVERSOL DCR 5kW 545X9", systemSize: "5", phase: "1Phase", price: 199000, warranty: "30Years Module, 10years In...", module: "Eversol Roof Top Kit", specs: [["Included Module Brand", "SOLEX/WAAREE/PANASON"], ["Included Inverter Brand", "INVOLTICS / SOLPLANET/GOOD"], ["Structure Type", "GI / Aluminam"], ["Area Required", "400"], ["Subsidy Eligible (Yes/No)", "YES"], ["Installation Included (Yes/No)", "At Actual"], ["Meters", "At Actual"]] },
+              { title: "Solar on grid System", brand: "EVERSOL DCR 5kW 390X9", systemSize: "5", phase: "3Phase", price: 225000, warranty: "30Years Module, 10years In...", module: "Eversol Roof Top Kit", specs: [["Included Module Brand", "SOLEX/WAAREE/PANASON"], ["Included Inverter Brand", "INVOLTICS / SOLPLANET/GOOD"], ["Structure Type", "GI / Aluminam"], ["Area Required", "400"], ["Subsidy Eligible (Yes/No)", "YES"], ["Installation Included (Yes/No)", "At Actual"], ["Meters", "At Actual"]] },
+              { title: "Solar on grid System", brand: "EVERSOL NON DCR 3kW 615X", systemSize: "3", phase: "1Phase", price: 102000, warranty: "30Years Module, 10years In...", module: "Eversol Roof Top Kit", specs: [["Included Module Brand", "SOLEX/WAAREE/PANASON"], ["Included Inverter Brand", "INVOLTICS / SOLPLANET/GOOD"], ["Structure Type", "GI / Aluminam"], ["Area Required", "200"], ["Subsidy Eligible (Yes/No)", "NO"], ["Installation Included (Yes/No)", "At Actual"], ["Meters", "At Actual"]] },
+              { title: "Solar on grid System", brand: "EVERSOL NON DCR 4kW 615X", systemSize: "4", phase: "1Phase", price: 140000, warranty: "30Years Module, 10years In...", module: "Eversol Roof Top Kit", specs: [["Included Module Brand", "SOLEX/WAAREE/PANASON"], ["Included Inverter Brand", "INVOLTICS / SOLPLANET/GOOD"], ["Structure Type", "GI / Aluminam"], ["Area Required", "400"], ["Subsidy Eligible (Yes/No)", "NO"], ["Installation Included (Yes/No)", "At Actual"], ["Meters", "At Actual"]] },
+              { title: "Solar on grid System", brand: "EVERSOL NON DCR 5kW 615x", systemSize: "5", phase: "1Phase", price: 159000, warranty: "30Years Module, 10years In...", module: "Eversol Roof Top Kit", specs: [["Included Module Brand", "SOLEX/WAAREE/PANASON"], ["Included Inverter Brand", "INVOLTICS / SOLPLANET/GOOD"], ["Structure Type", "GI / Aluminam"], ["Area Required", "400"], ["Subsidy Eligible (Yes/No)", "NO"], ["Installation Included (Yes/No)", "At Actual"], ["Meters", "At Actual"]] },
+              { title: "Solar on grid System", brand: "EVERSOL NON DCR 5kW 615x", systemSize: "5", phase: "3Phase", price: 180000, warranty: "30Years Module, 10years In...", module: "Eversol Roof Top Kit", specs: [["Included Module Brand", "SOLEX/WAAREE/PANASON"], ["Included Inverter Brand", "INVOLTICS / SOLPLANET/GOOD"], ["Structure Type", "GI / Aluminam"], ["Area Required", "400"], ["Subsidy Eligible (Yes/No)", "NO"], ["Installation Included (Yes/No)", "At Actual"], ["Meters", "At Actual"]] },
+              { title: "Solar on grid System", brand: "EVERSOL NON DCR 6kW 615X", systemSize: "6", phase: "3Phase", price: 205000, warranty: "30Years Module, 10years In...", module: "Eversol Roof Top Kit", specs: [["Included Module Brand", "SOLEX/WAAREE/PANASON"], ["Included Inverter Brand", "INVOLTICS / SOLPLANET/GOOD"], ["Structure Type", "GI / Aluminam"], ["Area Required", "400"], ["Subsidy Eligible (Yes/No)", "NO"], ["Installation Included (Yes/No)", "At Actual"], ["Meters", "At Actual"]] },
+              { title: "Solar on grid System", brand: "EVERSOL NON DCR 8kW 615X", systemSize: "8", phase: "3Phase", price: 252000, warranty: "30Years Module, 10years In...", module: "Eversol Roof Top Kit", specs: [["Included Module Brand", "SOLEX/WAAREE/PANASON"], ["Included Inverter Brand", "INVOLTICS / SOLPLANET/GOOD"], ["Structure Type", "GI / Aluminam"], ["Area Required", "600"], ["Subsidy Eligible (Yes/No)", "NO"], ["Installation Included (Yes/No)", "At Actual"], ["Meters", "At Actual"]] },
+              { title: "Solar on grid System", brand: "EVERSOL NON DCR 10kW 615", systemSize: "10", phase: "3Phase", price: 285000, warranty: "30Years Module, 10years In...", module: "Eversol Roof Top Kit", specs: [["Included Module Brand", "SOLEX/WAAREE/PANASON"], ["Included Inverter Brand", "INVOLTICS / SOLPLANET/GOOD"], ["Structure Type", "GI / Aluminam"], ["Area Required", "800"], ["Subsidy Eligible (Yes/No)", "NO"], ["Installation Included (Yes/No)", "At Actual"], ["Meters", "At Actual"]] },
+            ];
 
             const drafts: AdminProduct[] = sampleData.map((d, index) => {
               let moduleId = '';
@@ -698,7 +698,7 @@ const ExcelManager = ({ onCancel }: ExcelManagerProps) => {
                         <p className="text-sm text-gray-500 line-clamp-2 mb-4 flex-1">
                           {draft.description || 'No description'}
                         </p>
-                        
+
                         <div className="grid grid-cols-2 gap-2 text-xs border-y border-gray-100 py-3 mb-4">
                           <div>
                             <span className="text-gray-500 block">Capacity</span>
