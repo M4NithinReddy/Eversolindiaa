@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, MouseEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -22,7 +22,7 @@ export const Navbar = () => {
   const navigate = useNavigate();
   const { totalItems } = useCart();
 
-  const handleNavClick = (e: React.MouseEvent, link: { path: string; hash?: string }) => {
+  const handleNavClick = (e: MouseEvent, link: { path: string; hash?: string }) => {
     if (link.hash) {
       e.preventDefault();
       if (location.pathname === link.path) {

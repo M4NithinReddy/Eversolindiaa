@@ -409,6 +409,9 @@ const Shop = () => {
     // Category specific filters
     const isInverter = selectedCategory === 'Solar Inverters';
 
+    // Module validation: only show products linked to current modules
+    const matchesModuleLink = data.modules.some(m => m.id === (product.id ? data.products.find(p => p.id === product.id)?.moduleId : ''));
+    
     // Brand filtering — applies to all categories
     const matchesBrand = !selectedBrand ||
       (product.brand && product.brand.toLowerCase() === selectedBrand.toLowerCase());

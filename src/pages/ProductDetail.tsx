@@ -193,6 +193,8 @@ const ProductDetail = () => {
     const categoryName = mod?.name || pData.category || 'Unknown';
     const brandName = br?.name || pData.brandName || 'Unknown';
 
+    const isSolarPanel = categoryName.toLowerCase().includes('module') || categoryName.toLowerCase().includes('panel');
+
     const getDefaultImage = (catName: string) => {
       const cat = catName.toLowerCase();
       if (cat.includes('inverter')) return inverterImg;
@@ -205,7 +207,7 @@ const ProductDetail = () => {
     const flatSpecMap: Record<string, string> = {};
     const flatFields: Array<[string, any]> = [
       ['MONO/BIFACIAL', pData.mono_bifacial],
-      ['Model Number', pData.model_number],
+      ['Model / Type', pData.model_number],
       ['Wattage (W)', pData.wattage_w],
       ['Cell Type', pData.cell_type],
       ['Module Efficiency (%)', pData.module_efficiency],
@@ -259,8 +261,8 @@ const ProductDetail = () => {
     const splitItems = (raw: any): string[] => {
       if (Array.isArray(raw) && raw.length > 0) return raw;
       if (typeof raw === 'string' && raw.trim()) {
-        // Split by * or , and filter
-        return raw.split(/[,\*]/).map((s: string) => s.trim()).filter(Boolean);
+        // Split by *, comma, or newline and filter
+        return String(raw).split(/[\*\n\|]/).flatMap(s => s.split(',')).map((s: string) => s.trim()).filter(Boolean);
       }
       return [];
     };
@@ -293,6 +295,7 @@ const ProductDetail = () => {
       image: (pData.images && pData.images.length > 0) ? pData.images[0] : getDefaultImage(categoryName),
       images: pData.images || [],
       warranty: pData.warranty || '',
+      isSolarPanel,
       description: pData.description || '',
       specifications,
       features: benefits.length > 0 ? benefits : applications,
@@ -357,7 +360,14 @@ const ProductDetail = () => {
         .map((spec, index) => (
           <div key={index} className="flex justify-between items-start gap-4 py-2 border-b">
             <span className="text-muted-foreground shrink-0" style={{ maxWidth: '55%' }}>
-              {typeof spec === 'object' && 'label' in spec ? spec.label : ''}
+              {typeof spec === 'object' && 'label' in spec ?
+                (() => {
+                  const label = String(spec.label);
+                  if (label.toLowerCase() === 'warranty' && (product as any).isSolarPanel) return 'Warranty (product)';
+                  if (label.toLowerCase() === 'model number') return 'Model / Type';
+                  return label;
+                })()
+                : ''}
             </span>
             <span className={`font-medium text-right ${getSpecColor(
               typeof spec === 'object' && 'label' in spec ? String(spec.label) : '',
@@ -374,7 +384,13 @@ const ProductDetail = () => {
       .filter(([key]) => !excludedKeys.includes(key))
       .map(([key, value]) => (
         <div key={key} className="flex justify-between items-start gap-4 py-2 border-b">
-          <span className="text-muted-foreground shrink-0" style={{ maxWidth: '55%' }}>{key}</span>
+          <span className="text-muted-foreground shrink-0" style={{ maxWidth: '55%' }}>
+            {(() => {
+              if (key.toLowerCase() === 'warranty' && (product as any).isSolarPanel) return 'Warranty (product)';
+              if (key.toLowerCase() === 'model number') return 'Model / Type';
+              return key;
+            })()}
+          </span>
           <span className={`font-medium text-right ${getSpecColor(key, String(value))}`}>
             {String(value)}
           </span>
@@ -540,19 +556,19 @@ const ProductDetail = () => {
                 {product.category}
               </span>
 
-              <h1 className="text-3xl md:text-4xl font-heading font-bold text-foreground mb-2">
+              <h1 className="text-lg md:text-xl font-medium text-muted-foreground mb-1">
                 {product.name}
               </h1>
 
               {product.brand && product.brand !== 'Unknown' && (
-                <div className="text-primary font-bold text-lg mb-4">
+                <div className="text-2xl md:text-3xl font-black text-primary mb-6 tracking-tighter uppercase leading-none">
                   {product.brand}
                 </div>
               )}
 
               <div className="flex items-center gap-4 text-eco font-medium mb-6">
                 <span className="flex items-center gap-2">
-                  {product.capacity ? (product.capacity.toLowerCase().endsWith('kw') ? product.capacity : `${product.capacity} KW`) : ''}
+                  {product.capacity || ''}
                 </span>
                 <span className="flex items-center gap-2">
                   {((product.category === 'Solar Hybrid' && (product.brand?.toUpperCase() === 'INVOLTICS' || product.brand?.toUpperCase() === 'SUNWAYS')) || 
@@ -577,7 +593,7 @@ const ProductDetail = () => {
                 )}
                 {product.phase && (
                   <span className="flex items-center gap-2 text-blue-600 font-bold">
-                    <Zap className="h-5 w-5" />
+                    <HighVoltageIcon className="h-5 w-5" />
                     {product.phase}
                   </span>
                 )}
@@ -691,7 +707,7 @@ const ProductDetail = () => {
                   {(product.benefits ?? []).length > 0 ? (
                     (product.benefits ?? []).map((benefit, index) => (
                       <li key={index} className="flex items-start gap-3">
-                        <Check className="h-5 w-5 text-eco shrink-0 mt-0.5" />
+                        <span className="text-eco text-lg leading-none shrink-0 mt-0.5 select-none">✳</span>
                         <span className="text-muted-foreground">{benefit}</span>
                       </li>
                     ))
@@ -715,7 +731,7 @@ const ProductDetail = () => {
                   {(product.applications ?? []).length > 0 ? (
                     (product.applications ?? []).map((app, index) => (
                       <li key={index} className="flex items-start gap-3">
-                        <Zap className="h-5 w-5 text-solar shrink-0 mt-0.5" />
+                        <span className="text-solar text-lg leading-none shrink-0 mt-0.5 select-none">✳</span>
                         <span className="text-muted-foreground">{app}</span>
                       </li>
                     ))

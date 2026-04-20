@@ -1,14 +1,14 @@
-import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
 import {
   getModules, createModuleApi, updateModuleApi, deleteModuleApi,
-  getBrands,  createBrandApi,  updateBrandApi,  deleteBrandApi,
+  getBrands, createBrandApi, updateBrandApi, deleteBrandApi,
   getProducts, createProductApi, updateProductApi, deleteProductApi, bulkCreateProductsApi, deleteAllProductsApi,
   unifiedExcelPostApi
 } from '@/lib/api';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
-export interface AdminModule  { id: string; name: string; createdAt: string; }
-export interface AdminBrand   { id: string; name: string; moduleId: string; createdAt: string; }
+export interface AdminModule { id: string; name: string; createdAt: string; }
+export interface AdminBrand { id: string; name: string; moduleId: string; createdAt: string; }
 export interface AdminSubBrand { id: string; name: string; brandId: string; createdAt: string; }
 export interface ProductSpecification { key: string; value: string; }
 export interface AdminProduct {
@@ -35,23 +35,28 @@ export interface AdminProduct {
 export interface AdminData {
   modules: AdminModule[]; brands: AdminBrand[];
   subBrands: AdminSubBrand[]; products: AdminProduct[];
+  catalogStats: {
+    modules: number;
+    brands: number;
+    products: number;
+  };
 }
 
 interface AdminContextType {
   data: AdminData;
   modulesLoading: boolean; modulesError: string | null; modulesBusy: boolean;
-  brandsLoading:  boolean; brandsError:  string | null; brandsBusy:  boolean;
+  brandsLoading: boolean; brandsError: string | null; brandsBusy: boolean;
   productsLoading: boolean; productsError: string | null; productsBusy: boolean;
-  addModule:    (name: string) => Promise<AdminModule>;
+  addModule: (name: string) => Promise<AdminModule>;
   updateModule: (id: string, name: string) => Promise<void>;
   deleteModule: (id: string) => Promise<void>;
-  addBrand:    (name: string, moduleId: string) => Promise<AdminBrand>;
+  addBrand: (name: string, moduleId: string) => Promise<AdminBrand>;
   updateBrand: (id: string, name: string) => Promise<void>;
   deleteBrand: (id: string) => Promise<void>;
-  addSubBrand:    (name: string, brandId: string) => void;
+  addSubBrand: (name: string, brandId: string) => void;
   updateSubBrand: (id: string, name: string) => void;
   deleteSubBrand: (id: string) => void;
-  addProduct:    (product: Omit<AdminProduct, 'id' | 'createdAt'>) => Promise<void>;
+  addProduct: (product: Omit<AdminProduct, 'id' | 'createdAt'>) => Promise<void>;
   bulkAddProducts: (products: Omit<AdminProduct, 'id' | 'createdAt'>[]) => Promise<void>;
   unifiedBulkAddProducts: (products: any[]) => Promise<void>;
   updateProduct: (id: string, product: Omit<AdminProduct, 'id' | 'createdAt'>) => Promise<void>;
@@ -74,61 +79,61 @@ function isCorsOrNetwork(e: unknown) { return e instanceof TypeError; }
  */
 function normalizeProduct(raw: any): AdminProduct {
   // Pull moduleId/brandId/isOutOfStock from extraFields if not at top level
-  const moduleId    = raw.moduleId    || raw.extraFields?.moduleId    || '';
-  const brandId     = raw.brandId     || raw.extraFields?.brandId     || '';
+  const moduleId = raw.moduleId || raw.extraFields?.moduleId || '';
+  const brandId = raw.brandId || raw.extraFields?.brandId || '';
   const isOutOfStock = raw.isOutOfStock !== undefined
     ? Boolean(raw.isOutOfStock)
     : (raw.extraFields?.isOutOfStock === 'true' || raw.extraFields?.isOutOfStock === true);
 
   return {
     ...raw,
-    id            : raw.id           ?? '',
-    title         : raw.title        ?? 'Untitled',
-    description   : raw.description  ?? '',
-    images        : Array.isArray(raw.images)         ? raw.images         : [],
+    id: raw.id ?? '',
+    title: raw.title ?? 'Untitled',
+    description: raw.description ?? '',
+    images: Array.isArray(raw.images) ? raw.images : [],
     moduleId,
     brandId,
     specifications: Array.isArray(raw.specifications) ? raw.specifications : [],
-    benefits      : Array.isArray(raw.benefits)       ? raw.benefits       :
-                    (typeof raw.benefits === 'string' && raw.benefits.trim() ? [raw.benefits] : []),
-    applications  : Array.isArray(raw.applications)   ? raw.applications   : [],
-    price         : typeof raw.price === 'number' ? raw.price : (parseFloat(String(raw.price ?? '0')) || 0),
-    capacity      : raw.capacity     ?? '',
-    warranty      : raw.warranty     ?? '',
-    datasheet     : raw.datasheet    ?? '',
+    benefits: Array.isArray(raw.benefits) ? raw.benefits :
+      (typeof raw.benefits === 'string' && raw.benefits.trim() ? [raw.benefits] : []),
+    applications: Array.isArray(raw.applications) ? raw.applications : [],
+    price: typeof raw.price === 'number' ? raw.price : (parseFloat(String(raw.price ?? '0')) || 0),
+    capacity: (raw.capacity ?? '').replace(/\s*KW$/i, '').trim(),
+    warranty: raw.warranty ?? '',
+    datasheet: raw.datasheet ?? '',
     isOutOfStock,
-    createdAt     : raw.createdAt    ?? new Date().toISOString(),
-  };
+    createdAt: raw.createdAt ?? new Date().toISOString(),
+  } as AdminProduct;
 }
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
 export const AdminProvider = ({ children }: { children: ReactNode }) => {
   const local = loadLocal();
-  const [modules,  setModules]  = useState<AdminModule[]>([]);
-  const [brands,   setBrands]   = useState<AdminBrand[]>([]);
-  const [subBrands,setSubBrands]= useState<AdminSubBrand[]>(local.subBrands);
+  const [modules, setModules] = useState<AdminModule[]>([]);
+  const [brands, setBrands] = useState<AdminBrand[]>([]);
+  const [subBrands, setSubBrands] = useState<AdminSubBrand[]>(local.subBrands);
   const [products, setProducts] = useState<AdminProduct[]>([]);
 
-  const [modulesLoading,  setModulesLoading]  = useState(true);
-  const [modulesError,    setModulesError]    = useState<string | null>(null);
-  const [modulesBusy,     setModulesBusy]     = useState(false);
-  const [brandsLoading,   setBrandsLoading]   = useState(true);
-  const [brandsError,     setBrandsError]     = useState<string | null>(null);
-  const [brandsBusy,      setBrandsBusy]      = useState(false);
+  const [modulesLoading, setModulesLoading] = useState(true);
+  const [modulesError, setModulesError] = useState<string | null>(null);
+  const [modulesBusy, setModulesBusy] = useState(false);
+  const [brandsLoading, setBrandsLoading] = useState(true);
+  const [brandsError, setBrandsError] = useState<string | null>(null);
+  const [brandsBusy, setBrandsBusy] = useState(false);
   const [productsLoading, setProductsLoading] = useState(true);
-  const [productsError,   setProductsError]   = useState<string | null>(null);
-  const [productsBusy,    setProductsBusy]    = useState(false);
+  const [productsError, setProductsError] = useState<string | null>(null);
+  const [productsBusy, setProductsBusy] = useState(false);
 
   useEffect(() => { localStorage.setItem(LOCAL_KEY, JSON.stringify({ subBrands })); }, [subBrands]);
 
-  const refreshModules  = useCallback(async () => { 
-    try { 
+  const refreshModules = useCallback(async () => {
+    try {
       const rawModules = await getModules();
-      setModules(rawModules.map(m => m.name.toLowerCase() === 'solar modules' ? { ...m, name: 'Eversol Roof Top Kit' } : m)); 
-    } catch { /* */ } 
+      setModules(rawModules.map(m => m.name.toLowerCase() === 'solar modules' ? { ...m, name: 'Eversol Roof Top Kit' } : m));
+    } catch { /* */ }
   }, []);
-  const refreshBrands   = useCallback(async () => { try { setBrands(await getBrands()); }     catch { /* */ } }, []);
+  const refreshBrands = useCallback(async () => { try { setBrands(await getBrands()); } catch { /* */ } }, []);
   const refreshProducts = useCallback(async () => { try { setProducts((await getProducts()).map(normalizeProduct)); } catch { /* */ } }, []);
 
   // Fetch on mount
@@ -214,7 +219,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
   }, [refreshBrands]);
 
   // ── Sub-brand CRUD (localStorage) ──────────────────────────────────────────
-  const addSubBrand    = useCallback((name: string, brandId: string) => {
+  const addSubBrand = useCallback((name: string, brandId: string) => {
     setSubBrands(p => [...p, { id: generateId(), name, brandId, createdAt: new Date().toISOString() }]);
   }, []);
   const updateSubBrand = useCallback((id: string, name: string) => {
@@ -242,7 +247,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     try {
       const BATCH_SIZE = 25;
       const allCreated: AdminProduct[] = [];
-      
+
       for (let i = 0; i < newProducts.length; i += BATCH_SIZE) {
         const chunk = newProducts.slice(i, i + BATCH_SIZE);
         const response = await bulkCreateProductsApi(chunk);
@@ -250,7 +255,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
           allCreated.push(...response.data.map(normalizeProduct));
         }
       }
-      
+
       if (allCreated.length > 0) {
         setProducts(p => [...p, ...allCreated]);
       } else {
@@ -303,18 +308,40 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     finally { setProductsBusy(false); }
   }, [refreshProducts]);
 
-  const data: AdminData = { modules, brands, subBrands, products };
+  const filteredProducts = useMemo(() => {
+    const validModIds = new Set(modules.map(m => m.id));
+    const validBrandsMap = new Map(brands.map(b => [b.id, b.moduleId]));
+
+    return products.filter(p => {
+      // 1. Must have a valid module ID
+      if (!p.moduleId || !validModIds.has(p.moduleId)) return false;
+
+      // 2. Must have a valid brand ID that belongs to that module
+      const brandModuleId = validBrandsMap.get(p.brandId);
+      if (!brandModuleId || brandModuleId !== p.moduleId) return false;
+
+      return true;
+    });
+  }, [modules, brands, products]);
+
+  const catalogStats = useMemo(() => ({
+    modules: modules.length,
+    brands: brands.filter(b => modules.some(m => m.id === b.moduleId)).length,
+    products: filteredProducts.length,
+  }), [modules, brands, filteredProducts]);
+
+  const data: AdminData = { modules, brands, subBrands, products: filteredProducts, catalogStats };
 
   return (
     <AdminContext.Provider value={{
       data,
       modulesLoading, modulesError, modulesBusy,
-      brandsLoading,  brandsError,  brandsBusy,
+      brandsLoading, brandsError, brandsBusy,
       productsLoading, productsError, productsBusy,
       addModule, updateModule, deleteModule,
-      addBrand,  updateBrand,  deleteBrand,
+      addBrand, updateBrand, deleteBrand,
       addSubBrand, updateSubBrand, deleteSubBrand,
-      addProduct,  updateProduct,  deleteProduct, bulkAddProducts, unifiedBulkAddProducts, deleteAllProducts
+      addProduct, updateProduct, deleteProduct, bulkAddProducts, unifiedBulkAddProducts, deleteAllProducts
     }}>
       {children}
     </AdminContext.Provider>

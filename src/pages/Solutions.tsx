@@ -168,7 +168,7 @@ const Solutions = () => {
                     <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {solution.benefits.map((benefit, i) => (
                         <li key={i} className="flex items-start gap-2">
-                          <Check className="h-5 w-5 text-eco shrink-0 mt-0.5" />
+                          <span className="text-eco text-lg leading-none shrink-0 mt-0.5 select-none">✳</span>
                           <span className="text-sm text-muted-foreground">{benefit}</span>
                         </li>
                       ))}
