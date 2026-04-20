@@ -130,7 +130,16 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
   const refreshModules = useCallback(async () => {
     try {
       const rawModules = await getModules();
-      setModules(rawModules.map(m => m.name.toLowerCase() === 'solar modules' ? { ...m, name: 'Eversol Roof Top Kit' } : m));
+      setModules(rawModules.map(m => {
+        const name = m.name.toLowerCase();
+        if (name === 'solar modules') return { ...m, name: 'Solar Modules ( Panels )' };
+        if (name === 'solar on grid') return { ...m, name: 'Solar On Grid Inverter' };
+        if (name === 'solar hybrid') return { ...m, name: 'Solar Hybrid Inverter' };
+        if (name === 'solar roof top on grid kit' || name === 'solar rooftop on grid kit') return { ...m, name: 'Solar Roof Top On Grid Kit' };
+        if (name === 'solar roof top hybrid kit' || name === 'solar rooftop hybrid kit') return { ...m, name: 'Solar Roof Top Hybrid Kit' };
+        if (name.includes('battery energy storage system') || name === 'bess') return { ...m, name: 'Battery Energy Storage System ( BESS )' };
+        return m;
+      }));
     } catch { /* */ }
   }, []);
   const refreshBrands = useCallback(async () => { try { setBrands(await getBrands()); } catch { /* */ } }, []);
@@ -140,7 +149,16 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     setModulesLoading(true);
     getModules().then(raw => {
-      setModules(raw.map(m => m.name.toLowerCase() === 'solar modules' ? { ...m, name: 'Eversol Roof Top Kit' } : m));
+      setModules(raw.map(m => {
+        const name = m.name.toLowerCase();
+        if (name === 'solar modules') return { ...m, name: 'Solar Modules ( Panels )' };
+        if (name === 'solar on grid') return { ...m, name: 'Solar On Grid Inverter' };
+        if (name === 'solar hybrid') return { ...m, name: 'Solar Hybrid Inverter' };
+        if (name === 'solar roof top on grid kit' || name === 'solar rooftop on grid kit') return { ...m, name: 'Solar Roof Top On Grid Kit' };
+        if (name === 'solar roof top hybrid kit' || name === 'solar rooftop hybrid kit') return { ...m, name: 'Solar Roof Top Hybrid Kit' };
+        if (name.includes('battery energy storage system') || name === 'bess') return { ...m, name: 'Battery Energy Storage System ( BESS )' };
+        return m;
+      }));
     }).catch(e => setModulesError(e.message)).finally(() => setModulesLoading(false));
   }, []);
   useEffect(() => {
