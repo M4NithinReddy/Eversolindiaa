@@ -67,7 +67,27 @@ const Shop = () => {
   const { addToCart } = useCart();
   const { data } = useAdmin();
 
-  const categories = ['All', ...Array.from(new Set(data.modules.map(m => m.name)))];
+  const categories = ['All', ...Array.from(new Set(data.modules.map(m => m.name))).sort((a, b) => {
+    const desiredOrder = [
+      'Solar Modules ( Panels )',
+      'Eversol Roof Top Kit',
+      'Solar On Grid Inverter',
+      'Solar Hybrid Inverter',
+      'Solar Roof Top On Grid Kit',
+      'Solar Roof Top Hybrid Kit',
+      'Battery Energy Storage System ( BESS )',
+      'Solar Earthing Kit',
+      'Solar DC Cables'
+    ];
+    
+    const indexA = desiredOrder.indexOf(a);
+    const indexB = desiredOrder.indexOf(b);
+    
+    if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+    if (indexA !== -1) return -1;
+    if (indexB !== -1) return 1;
+    return a.localeCompare(b);
+  })];
   
   const getBrandsForCategory = (categoryName: string) => {
     const mod = data.modules.find(m => m.name === categoryName);
