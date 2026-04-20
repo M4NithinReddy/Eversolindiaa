@@ -685,7 +685,7 @@ const Shop = () => {
 
                             {/* 3. Watt and Warranty */}
                             <div className="flex flex-wrap items-center gap-2 text-eco text-sm font-medium mb-2">
-                              <span>{product.capacity}</span>
+                              <span>{product.capacity}{product.capacity && !/[wk]w$/i.test(String(product.capacity)) ? (product.isSolarPanel ? 'W' : 'kW') : ''}</span>
                               <span className="text-muted-foreground">•</span>
                               <span>{product.warranty} Warranty{(product as any).isSolarPanel ? ' (product)' : ''}</span>
                             </div>
