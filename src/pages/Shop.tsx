@@ -637,8 +637,13 @@ const Shop = () => {
                             {/* 2. Specs Box */}
                             <div className="grid grid-cols-2 gap-x-2 gap-y-2.5 text-[10px] mb-3 bg-slate-50/80 p-3 rounded-lg border border-slate-100/50">
                                <div className="flex flex-col">
+<<<<<<< Updated upstream
                                  <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[10px]">Capacity</span>
                                  <span className="font-bold text-slate-800">{product.capacity || '-'}</span>
+=======
+                                 <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[9px]">Capacity</span>
+                                 <span className="font-bold text-slate-800">{product.capacity ? (product.capacity.toLowerCase().includes('w') ? product.capacity : (product.isSolarPanel ? `${product.capacity}W` : `${product.capacity}kW`)) : '-'}</span>
+>>>>>>> Stashed changes
                                </div>
                                <div className="flex flex-col">
                                  <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[10px]">Voltage</span>
@@ -685,7 +690,7 @@ const Shop = () => {
 
                             {/* 3. Watt and Warranty */}
                             <div className="flex flex-wrap items-center gap-2 text-eco text-sm font-medium mb-2">
-                              <span>{product.capacity}</span>
+                              <span>{product.capacity ? (product.capacity.toLowerCase().includes('w') ? product.capacity : (product.isSolarPanel ? `${product.capacity}W` : `${product.capacity}kW`)) : ''}</span>
                               <span className="text-muted-foreground">•</span>
                               <span>{product.warranty} Warranty{(product as any).isSolarPanel ? ' (product)' : ''}</span>
                             </div>

@@ -458,7 +458,7 @@ const ProductDetail = () => {
 
               <div className="flex items-center gap-4 text-eco font-medium mb-6">
                 <span className="flex items-center gap-2">
-                  {product.capacity || ''}
+                  {product.capacity ? (product.capacity.toLowerCase().includes('w') ? product.capacity : (product.isSolarPanel ? `${product.capacity}W` : `${product.capacity}kW`)) : ''}
                 </span>
                 <span className="flex items-center gap-2">
                   <Shield className="h-5 w-5" />
@@ -537,8 +537,8 @@ const ProductDetail = () => {
                   <span className="text-sm text-muted-foreground">Genuine Product</span>
                 </div>
                 <div className="text-center">
-                  <Package className="h-8 w-8 text-solar mx-auto mb-2" />
-                  <span className="text-sm text-muted-foreground">Paid Delivery</span>
+                  <Truck className="h-8 w-8 text-solar mx-auto mb-2" />
+                  <span className="text-sm text-muted-foreground">Delivery</span>
                 </div>
                 <div className="text-center">
                   <Award className="h-8 w-8 text-primary mx-auto mb-2" />
