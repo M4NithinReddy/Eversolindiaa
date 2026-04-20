@@ -12,7 +12,12 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ children }) => {
     '/images/solexlogo.webp',
     '/images/solplanetlogo.png',
     '/images/waareelogo.webp',
-    '/images/solaryaanlogo.jpeg'
+    '/images/solaryaanlogo.jpeg',
+    '/images/axitec_logo.png',
+    '/images/dyness_logo.png',
+    '/images/involitics_logo.png',
+    '/images/turnovolt_logo.png',
+    '/images/sunway_logo.png'
   ];
 
   // clones
@@ -80,15 +85,25 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ children }) => {
                     transform: `translateX(-${index * 100}%)`,
                   }}
                 >
-                  {extendedImages.map((image, i) => (
-                    <div key={i} className="w-full h-full flex-shrink-0 flex items-center justify-center p-4">
-                      <img
-                        src={image}
-                        alt={`logo-${i}`}
-                        className="max-h-[120px] w-auto max-w-full object-contain"
-                      />
-                    </div>
-                  ))}
+                  {extendedImages.map((image, i) => {
+                    const isNewLogo = [
+                      '/images/axitec_logo.png',
+                      '/images/dyness_logo.png',
+                      '/images/involitics_logo.png',
+                      '/images/turnovolt_logo.png',
+                      '/images/sunway_logo.png'
+                    ].includes(image);
+
+                    return (
+                      <div key={i} className="w-full h-full flex-shrink-0 flex items-center justify-center p-2">
+                        <img
+                          src={image}
+                          alt={`logo-${i}`}
+                          className={`max-h-[150px] w-auto max-w-full object-contain ${isNewLogo ? 'scale-[1.8]' : ''}`}
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
 
               </div>

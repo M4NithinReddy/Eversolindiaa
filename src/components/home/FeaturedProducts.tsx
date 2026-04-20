@@ -43,7 +43,7 @@ export const FeaturedProducts = () => {
               Featured Products
             </span>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-heading font-bold text-foreground">
-              Premium <span className="text-primary">Solar Products</span>
+              High-Quality <span className="text-primary">Solar Products</span>
             </h2>
           </div>
           <Button variant="outline" size="lg" asChild>
@@ -105,7 +105,7 @@ export const FeaturedProducts = () => {
                       {product.brand}
                     </div>
                   )}
-                  <h3 className="text-sm font-medium text-muted-foreground mb-4 group-hover:text-foreground transition-colors line-clamp-1">
+                  <h3 className="text-xl font-semibold text-muted-foreground mb-4 group-hover:text-foreground transition-colors line-clamp-1">
                     {product.name}
                   </h3>
                   <p className="text-sm text-muted-foreground mb-4 line-clamp-2">

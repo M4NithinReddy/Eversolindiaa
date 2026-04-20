@@ -630,26 +630,26 @@ const Shop = () => {
                                 {product.brand}
                               </div>
                             )}
-                            <h3 className="text-sm font-medium text-muted-foreground mb-4 group-hover:text-foreground transition-colors line-clamp-1">
+                            <h3 className="text-xl font-semibold text-muted-foreground mb-4 group-hover:text-foreground transition-colors line-clamp-1">
                               {product.name}
                             </h3>
 
                             {/* 2. Specs Box */}
-                            <div className="grid grid-cols-2 gap-x-2 gap-y-2.5 text-[11px] mb-3 bg-slate-50/80 p-3 rounded-lg border border-slate-100/50">
+                            <div className="grid grid-cols-2 gap-x-2 gap-y-2.5 text-[10px] mb-3 bg-slate-50/80 p-3 rounded-lg border border-slate-100/50">
                                <div className="flex flex-col">
-                                 <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[9px]">Capacity</span>
+                                 <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[10px]">Capacity</span>
                                  <span className="font-bold text-slate-800">{product.capacity || '-'}</span>
                                </div>
                                <div className="flex flex-col">
-                                 <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[9px]">Voltage</span>
+                                 <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[10px]">Voltage</span>
                                  <span className="font-bold text-slate-800 truncate" title={product.specifications?.['Battery Nominal Voltage'] || product.specifications?.['Battery Nomi'] || product.specifications?.['Operating V'] || product.specifications?.['Operating Voltage Range'] || '-'} >{product.specifications?.['Battery Nominal Voltage'] || product.specifications?.['Battery Nomi'] || product.specifications?.['Operating V'] || product.specifications?.['Operating Voltage Range'] || '-'}</span>
                                </div>
                                <div className="flex flex-col">
-                                 <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[9px]">Cycle Life</span>
+                                 <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[10px]">Cycle Life</span>
                                  <span className="font-bold text-slate-800">{product.specifications?.['Cycle Life'] || '-'}</span>
                                </div>
                                <div className="flex flex-col">
-                                 <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[9px]">Warranty</span>
+                                 <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[10px]">Warranty</span>
                                  <span className="font-bold text-slate-800">{product.warranty || '-'}</span>
                                </div>
                             </div>
@@ -679,7 +679,7 @@ const Shop = () => {
                                 {product.brand}
                               </div>
                             )}
-                            <h3 className="text-sm font-medium text-muted-foreground mb-4 group-hover:text-foreground transition-colors line-clamp-1">
+                            <h3 className="text-xl font-semibold text-muted-foreground mb-4 group-hover:text-foreground transition-colors line-clamp-1">
                               {product.benefit}
                             </h3>
 
@@ -692,7 +692,7 @@ const Shop = () => {
 
                             {/* 4. Title & Brand */}
                             <div className="flex flex-wrap items-center gap-2 mb-4 mt-auto pt-2">
-                              <span className="text-sm font-medium text-gray-400 tracking-wide italic">{product.name}</span>
+                              <span className="text-xl font-medium text-gray-400 tracking-wide italic">{product.name}</span>
                             </div>
                           </>
                         )}
