@@ -45,6 +45,122 @@ type Product = {
   isOutOfStock?: boolean;
 };
 
+const getInvolticsHybridModel = (capacity: string, phase: string) => {
+  const cap = parseFloat(String(capacity).match(/(\d+(\.\d+)?)/)?.[0] || '0');
+  const is3P = String(phase).toUpperCase().includes('3');
+  
+  if (cap === 3) return 'GTSI-0304K1P';
+  if (cap === 3.6) return 'GTSI-3.605K1P';
+  if (cap === 5) return is3P ? 'GTSI-0506K-3P' : 'GTSI-0506K1P';
+  if (cap === 6) return is3P ? 'GTSI-0608K-3P' : 'GTSI-0608K1P';
+  if (cap === 8) return is3P ? 'GTSI-0810K-3P' : 'GTSI-0810K1P';
+  if (cap === 10) return 'GTSI-1012K-3P';
+  if (cap === 12) return 'GTSI-1215K-3P';
+  if (cap === 15) return 'GTSI-1520K-3P';
+  if (cap === 20) return 'GTSI-2025K-3P';
+  return '';
+};
+
+const getSunwaysHybridModel = (capacity: string, phase: string) => {
+  const cap = parseFloat(String(capacity).match(/(\d+(\.\d+)?)/)?.[0] || '0');
+  const is3P = String(phase).toUpperCase().includes('3');
+  
+  if (is3P) {
+    if (cap === 6) return 'STH-6KTL-HT';
+    if (cap === 8) return 'STH-8KTL-HT';
+    if (cap === 10) return 'STH-10KTL-HT';
+    if (cap === 15) return 'STH-15KTL-HT';
+    if (cap === 20) return 'STH-20KTL-HT';
+    if (cap === 25) return 'STH-25KTL-HT';
+    if (cap === 30) return 'STH-30KTL-HT';
+    if (cap === 33) return 'STH-33KTL-HT';
+  } else {
+    if (cap === 3) return 'STH-3KTL-LS';
+    if (cap === 5) return 'STH-5KTL-LS';
+    if (cap === 8) return 'STH-8KTL-LS';
+  }
+  return '';
+};
+
+const getBessModel = (brand: string, capacity: string) => {
+  const b = brand.toUpperCase();
+  const c = capacity.toLowerCase().replace(/\s+/g, '');
+  
+  if (b.includes('DYNESS')) {
+    if (c.includes('23.04kwh40ah')) return 'TOWER PRO TP23 HV';
+    if (c.includes('19.2kwh/40ah') || c.includes('19.2kwh40ah'))  return 'TOWER PRO TP19 HV';
+    if (c.includes('15.36kwh/40ah') || c.includes('15.36kwh40ah')) return 'TOWER PRO TP15 HV';
+    if (c.includes('11.52kwh/40ah') || c.includes('11.52kwh40ah')) return 'TOWER PRO TP11 HV';
+    if (c.includes('7.68kwh/40ah') || c.includes('7.68kwh40ah'))  return 'TOWER PRO TP7 HV';
+    if (c.includes('14.33kwh/280ah') || c.includes('14.33kwh280ah')) return 'POWER BRICK PRO LV'; 
+    if (c.includes('10.24kwh/200ah') || c.includes('10.24kwh200ah')) return 'POWER BOX G2';
+    if (c.includes('5kwh/100ah') || c.includes('5kwh100ah'))     return 'DL5.0C Pro';
+    if (c.includes('100ah'))          return 'DYNESS STACK 100';
+  }
+  if (b.includes('INVOLTICS')) {
+    return 'INVOLTICS LV';
+  }
+  if (b.includes('TURNO')) {
+    return 'Low Voltage';
+  }
+  return '';
+};
+
+const getBessWarranty = (brand: string, capacity: string) => {
+  const b = brand.toUpperCase();
+  const c = capacity.toLowerCase().replace(/\s+/g, '');
+  
+  if (b.includes('DYNESS')) {
+    // TODO: Update these with accurate values from the Excel sheet
+    if (c.includes('23.04kwh40ah')) return '10 Years';
+    if (c.includes('19.2kwh/40ah') || c.includes('19.2kwh40ah'))  return '10 Years';
+    if (c.includes('15.36kwh/40ah') || c.includes('15.36kwh40ah')) return '10 Years';
+    if (c.includes('11.52kwh/40ah') || c.includes('11.52kwh40ah')) return '10 Years';
+    if (c.includes('7.68kwh/40ah') || c.includes('7.68kwh40ah'))  return '10 Years';
+    if (c.includes('14.33kwh/280ah') || c.includes('14.33kwh280ah')) return '10 Years'; 
+    if (c.includes('10.24kwh/200ah') || c.includes('10.24kwh200ah')) return '10 Years';
+    if (c.includes('5kwh/100ah') || c.includes('5kwh100ah'))     return '10 Years';
+    if (c.includes('100ah'))          return '10 Years';
+  }
+  if (b.includes('INVOLTICS')) {
+    return '5 Years';
+  }
+  if (b.includes('TURNO')) {
+    return '5 Years';
+  }
+  return '';
+};
+
+
+const getSolplanetOnGridModel = (capacity: string, phase: string, occurrence: number = 1) => {
+  const cap = parseFloat(String(capacity).match(/(\d+(\.\d+)?)/)?.[0] || '0');
+  const is3P = String(phase).toUpperCase().includes('3');
+  
+  if (is3P) {
+    if (cap === 5) return 'ASW 5K-LT-G2 Pro 5 kW';
+    if (cap === 6) return 'ASW 6K-LT-G2 Pro 6 kW';
+    if (cap === 8) return 'ASW 8K-LT-G2 Pro 8 kW';
+    if (cap === 10) return 'ASW 10K-LT-G2 Pro 10 kW';
+    if (cap === 12) return 'ASW 12K-LT-G2 Pro 12 kW';
+    if (cap === 15) return 'ASW 15K-LT-G2 Pro 15 kW';
+    if (cap === 17) return 'ASW 17K-LT-G2 Pro 17 kW';
+    if (cap === 20) return 'ASW 20K-LT-G2 Pro 20 kW';
+    if (cap === 25) return 'ASW 25K-LT-G3 W/ AFCI 25 kW';
+    if (cap === 30) return 'ASW 30K-LT-G3 W/ AFCI 30 kW';
+    if (cap === 33) return 'ASW 33K-LT-G3 W/ AFCI 33 kW';
+    if (cap === 36) return 'ASW 36K-LT-G3 W/ AFCI 36 kW';
+    if (cap === 40) return 'ASW 40K-LT-G3 W/ AFCI 40 kW';
+    if (cap === 50) return 'ASW50K-LT-G3 50 kW';
+  } else {
+    if (cap === 3) {
+      return occurrence === 2 ? 'ASW 3000-S-G2 3 kW' : 'ASW 3000S-S2 3 kW';
+    }
+    if (cap === 4) return 'ASW 4000-S-G2 4 kW';
+    if (cap === 5) return 'ASW 5000-S-G2 5 kW';
+  }
+  return '';
+};
+
 // Products object with string keys
 
 const ProductDetail = () => {
@@ -115,12 +231,27 @@ const ProductDetail = () => {
     flatFields.forEach(([k, v]) => { if (v !== undefined && v !== null && String(v).trim() !== '') flatSpecMap[k] = String(v); });
     const arraySpecs = (pData.specifications || []).reduce((acc: any, s: any) => { acc[s.key] = s.value; return acc; }, {});
     
-    // Extract potential benefits/applications from arraySpecs and remove from table
     const specBenefits = arraySpecs['Key Benefits'] || arraySpecs['Key Benifits'] || '';
     const specApps = arraySpecs['Applications'] || '';
     delete arraySpecs['Key Benefits'];
     delete arraySpecs['Key Benifits'];
     delete arraySpecs['Applications'];
+
+    // Resolve capacity first so we can use it for warranty map
+    const capacity = pData.capacity || pData.capacity_kwh_ah || pData.wattage_w || pData.system_size_kw || '';
+
+    // If BESS product, inject warranty from hardcoded map
+    if (categoryName.toLowerCase().includes('storage') || categoryName.toLowerCase().includes('bess')) {
+      const bessWarranty = getBessWarranty(brandName, capacity);
+      if (bessWarranty) {
+        flatSpecMap['Warranty'] = bessWarranty;
+      }
+    }
+
+    // If Sunways Hybrid, inject warranty
+    if ((categoryName.toLowerCase().includes('hybrid') || categoryName.toLowerCase().includes('inverter')) && brandName.toUpperCase().includes('SUNWAYS')) {
+      flatSpecMap['Warranty'] = '5 Years';
+    }
 
     const specifications = { ...flatSpecMap, ...arraySpecs };
 
@@ -142,8 +273,14 @@ const ProductDetail = () => {
     let applications = splitItems(pData.applications);
     if (applications.length === 0) applications = splitItems(specApps);
 
-    // Resolve capacity
-    const capacity = pData.capacity || pData.capacity_kwh_ah || pData.wattage_w || pData.system_size_kw || '';
+    // Calculate occurrence index for duplicate capacities (like Solplanet 3kW)
+    const sameCapProducts = adminData.products.filter(p => {
+      const pCat = p.category?.name || p.category || '';
+      const pBrand = p.brand?.name || p.brand || '';
+      const pCap = p.capacity || (p.specifications && p.specifications['Capacity']) || '';
+      return pCat === categoryName && pBrand === brandName && String(pCap) === String(capacity);
+    });
+    const occurrence = sameCapProducts.findIndex(p => p.id === pData.id) + 1;
 
     return {
       id: pData.id,
@@ -166,6 +303,17 @@ const ProductDetail = () => {
       productType: pData.productType || pData.product_type || '',
       phase: pData.phase || '',
       isOutOfStock: !!pData.isOutOfStock,
+      modelNumber: (specifications['Model Number'] || pData.model_number)
+        ? (specifications['Model Number'] || pData.model_number)
+        : (categoryName === 'Solar Hybrid' && brandName.toUpperCase() === 'INVOLTICS')
+          ? getInvolticsHybridModel(capacity, pData.phase || '')
+        : (categoryName === 'Solar Hybrid' && brandName.toUpperCase() === 'SUNWAYS')
+          ? getSunwaysHybridModel(capacity, pData.phase || '')
+        : (categoryName === 'Solar On Grid' && brandName.toUpperCase() === 'SOLPLANET')
+          ? getSolplanetOnGridModel(capacity, pData.phase || '', occurrence)
+          : (categoryName.toLowerCase().includes('storage') || categoryName.toLowerCase().includes('bess'))
+            ? getBessModel(brandName, capacity)
+            : '',
     };
   }, [apiProduct, adminData]);
 
@@ -407,8 +555,19 @@ const ProductDetail = () => {
                   {product.capacity ? (product.capacity.toLowerCase().endsWith('kw') ? product.capacity : `${product.capacity} KW`) : ''}
                 </span>
                 <span className="flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
-                  {product.warranty} Warranty
+                  {((product.category === 'Solar Hybrid' && (product.brand?.toUpperCase() === 'INVOLTICS' || product.brand?.toUpperCase() === 'SUNWAYS')) || 
+                    (product.category === 'Solar On Grid' && product.brand?.toUpperCase() === 'SOLPLANET') ||
+                    (product.category.toLowerCase().includes('bess') || product.category.toLowerCase().includes('storage'))) ? (
+                    <>
+                      <Package className="h-5 w-5" />
+                      Model: {product.modelNumber || 'N/A'}
+                    </>
+                  ) : (
+                    <>
+                      <Shield className="h-5 w-5" />
+                      {product.warranty} Warranty{(product.category.toLowerCase().includes('module') || product.category.toLowerCase().includes('panel')) && ' (product)'}
+                    </>
+                  )}
                 </span>
                 {product.productType && (
                   <span className="flex items-center gap-2 text-primary font-bold">
