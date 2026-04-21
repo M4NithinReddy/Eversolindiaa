@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useCart } from '@/context/CartContext';
 import { useAdmin } from '@/context/AdminContext';
 import { Layout } from '@/components/layout/Layout';
+import { findBrandModel } from '@/lib/brandData';
 import { Search, Grid, List, ChevronDown, Zap, ShoppingCart, Filter, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -39,7 +40,7 @@ const brandInfo: Record<string, { tagline: string; description: string; logo?: s
   },
   Solplanet: {
     tagline: "Intelligent Solar. Global Reach.",
-    description: "Solplanet is a global solar technology brand offering a complete ecosystem of inverters and battery storage. Their Ai-HB and Ai-LB battery series feature LiFePO4 chemistry, modular design, real-time monitoring, and IP65 protection - engineered for seamless integration with their own hybrid inverter range.",
+    description: "Solplanet specializes in high-performance solar inverters and energy storage. Their Solar On-Grid Inverter range includes Single-Phase ASW G2 series (1-10kW) and Three-Phase ASW LT-G2 Pro/LT-G3 series (3-60kW), alongside high-capacity utility-scale inverters like the ASW 75-110K LT and ASWHT series (up to 360kW). All models feature ShadeSol technology and smart monitoring.",
   },
   Hoymiles: {
     tagline: "Next-Level Microinverter Innovation",
@@ -50,8 +51,8 @@ const brandInfo: Record<string, { tagline: string; description: string; logo?: s
     description: "SolarYana manufactures a comprehensive range of on-grid, hybrid, and off-grid inverters engineered for Indian grid conditions. Known for robust build quality, high conversion efficiency, and smart energy management features, SolarYana inverters are a dependable choice for both residential and commercial solar installations.",
   },
   Involtics: {
-    tagline: "Smart Inverters. Smarter Energy.",
-    description: "Involtics offers a comprehensive lineup of ON GRID and Hybrid inverters for the Indian market. Their GTSI Hybrid series supports both Lead Acid and Lithium batteries with 1-phase and 3-phase options from 3kW to 20kW, while the GT ON GRID series covers 1.5kW to 25kW with up to 10-year warranty and built-in WiFi monitoring.",
+    tagline: "Smart Performance. Sustainable Power.",
+    description: "Involtics specializes in high-efficiency solar inverters for both residential and commercial applications. Their GT series ON-GRID inverters range from compact 1.5kW units for small homes to powerful 25kW three-phase systems for businesses. Featuring multi-MPPT tracking, built-in WiFi monitoring, and robust 10-year warranties, Involtics delivers reliable power electronics for the modern grid.",
   },
   GoodWe: {
     tagline: "Good Energy. Better Life.",
@@ -209,6 +210,17 @@ const Shop = () => {
     if (Array.isArray(p.benefits) && p.benefits.length > 0) features = p.benefits;
     else if (typeof rawBenefits === 'string' && rawBenefits.trim()) features = rawBenefits.split(',').map((s: string) => s.trim()).filter(Boolean);
     else if (Array.isArray(p.applications) && p.applications.length > 0) features = p.applications;
+
+    // 4. Resolve Model Number with Brand lookup fallback
+    let finalModel = flatSpecMap['Model / Type'] || arraySpecs['Model Number'] || (p as any).model_number || (p as any).model || '';
+    const brandLower = brandName.toLowerCase().trim();
+    const enrichmentBrands = ['solplanet', 'involtics', 'sunways', 'turno volt', 'dyness']; // Brands that should have model enrichment
+    
+    if (!finalModel && enrichmentBrands.some(b => brandLower.includes(b))) {
+      finalModel = findBrandModel(brandName, capacity, p.price || 0, p.phase) || '';
+    }
+    specifications['Model Number'] = finalModel;
+    specifications['Model / Type'] = finalModel;
 
     return {
       id          : p.id,
@@ -648,10 +660,14 @@ const Shop = () => {
                                  <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[10px]">Cycle Life</span>
                                  <span className="font-bold text-slate-800">{product.specifications?.['Cycle Life'] || '-'}</span>
                                </div>
-                               <div className="flex flex-col">
-                                 <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[10px]">Warranty</span>
-                                 <span className="font-bold text-slate-800">{product.warranty || '-'}</span>
-                               </div>
+                                <div className="flex flex-col">
+                                  <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[10px]">{['solplanet', 'involtics', 'sunways', 'turno volt', 'dyness'].some(b => product.brand?.toLowerCase().trim().includes(b)) ? 'Model' : 'Warranty'}</span>
+                                  <span className="font-bold text-slate-800 truncate">
+                                    {['solplanet', 'involtics', 'sunways', 'turno volt', 'dyness'].some(b => product.brand?.toLowerCase().trim().includes(b))
+                                      ? `Model: ${product.specifications['Model / Type'] || product.specifications['Model Number'] || (product as any).model_number || (product as any).model || product.warranty}`
+                                      : (product.warranty || '-')}
+                                  </span>
+                                </div>
                             </div>
 
                             {/* 3. Badges (Type & Cooling) */}
@@ -683,11 +699,13 @@ const Shop = () => {
                               {product.benefit}
                             </h3>
 
-                            {/* 3. Watt and Warranty */}
+                            {/* 3. Watt and Model/Warranty */}
                             <div className="flex flex-wrap items-center gap-2 text-eco text-sm font-medium mb-2">
                               <span>{product.capacity}{product.capacity && !/[wk]w$/i.test(String(product.capacity)) ? (product.isSolarPanel ? 'W' : 'kW') : ''}</span>
                               <span className="text-muted-foreground">•</span>
-                              <span>{product.warranty} Warranty{(product as any).isSolarPanel ? ' (product)' : ''}</span>
+                              <span>{['solplanet', 'involtics', 'sunways', 'turno volt'].some(b => product.brand?.toLowerCase().trim().includes(b))
+                                ? `Model: ${product.specifications['Model / Type'] || product.specifications['Model Number'] || (product as any).model_number || (product as any).model || product.warranty}`
+                                : `${product.warranty} Warranty${(product as any).isSolarPanel ? ' (product)' : ''}`}</span>
                             </div>
 
                             {/* 4. Title & Brand */}
