@@ -14,6 +14,7 @@ import { useCart } from '@/context/CartContext';
 import { useAdmin } from '@/context/AdminContext';
 import { useQuery } from '@tanstack/react-query';
 import { getProductById } from '@/lib/api';
+import { findBrandModel } from '@/lib/brandData';
 import { useState, useMemo, useEffect } from 'react';
 
 // Product type definitions
@@ -184,6 +185,17 @@ const ProductDetail = () => {
 
     // Resolve capacity
     const capacity = pData.capacity || pData.capacity_kwh_ah || pData.wattage_w || pData.system_size_kw || '';
+
+    // 4. Resolve Model Number with Brand lookup fallback
+    let finalModel = flatSpecMap['Model / Type'] || arraySpecs['Model Number'] || pData.model_number || pData.model || '';
+    const brandLower = brandName.toLowerCase().trim();
+    const enrichmentBrands = ['solplanet', 'involtics', 'sunways', 'turno volt', 'dyness'];
+
+    if (!finalModel && enrichmentBrands.some(b => brandLower.includes(b))) {
+      finalModel = findBrandModel(brandName, capacity, pData.price || 0, pData.phase) || '';
+    }
+    specifications['Model Number'] = finalModel;
+    specifications['Model / Type'] = finalModel;
 
     return {
       id: pData.id,
@@ -462,7 +474,9 @@ const ProductDetail = () => {
                 </span>
                 <span className="flex items-center gap-2">
                   <Shield className="h-5 w-5" />
-                  {product.warranty} Warranty{(product as any).isSolarPanel ? ' (product)' : ''}
+                  {['solplanet', 'involtics', 'sunways', 'turno volt', 'dyness'].some(b => product.brand?.toLowerCase().trim().includes(b))
+                    ? `Model: ${product.specifications['Model / Type'] || product.specifications['Model Number'] || (product as any).model_number || (product as any).model || product.warranty}`
+                    : `${product.warranty} Warranty${(product as any).isSolarPanel ? ' (product)' : ''}`}
                 </span>
                 {product.productType && (
                   <span className="flex items-center gap-2 text-primary font-bold">
