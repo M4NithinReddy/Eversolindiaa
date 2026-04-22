@@ -164,6 +164,17 @@ const ProductDetail = () => {
 
     const specifications = { ...flatSpecMap, ...arraySpecs };
 
+    const wifiBrands = ['involtics', 'solplanet', 'sunways'];
+    const isWIFIDevice = (wifiBrands.some(b => brandName.toLowerCase().includes(b)) && 
+                         (categoryName.toLowerCase().includes('hybrid') || categoryName.toLowerCase().includes('on-grid') || categoryName.toLowerCase().includes('on grid'))) ||
+                         categoryName.toLowerCase().includes('battery') || 
+                         categoryName.toLowerCase().includes('energy storage') ||
+                         categoryName.toLowerCase().includes('bess');
+
+    if (isSolarPanel || isWIFIDevice) {
+      specifications['Features'] = 'WIFI';
+    }
+
     // Helper to split by multiple delimiters (* and ,)
     const splitItems = (raw: any): string[] => {
       if (Array.isArray(raw) && raw.length > 0) return raw;
@@ -194,8 +205,23 @@ const ProductDetail = () => {
     if (!finalModel && enrichmentBrands.some(b => brandLower.includes(b))) {
       finalModel = findBrandModel(brandName, capacity, pData.price || 0, pData.phase) || '';
     }
-    specifications['Model Number'] = finalModel;
-    specifications['Model / Type'] = finalModel;
+    const isRedundantModel = ['dcr', 'non dcr', 'nondcr'].includes(String(finalModel).toLowerCase().trim());
+    
+    if (!isRedundantModel && finalModel) {
+      specifications['Model / Type'] = finalModel;
+    }
+    
+    // Robust case-insensitive cleanup of model-related keys to avoid duplicates
+    Object.keys(specifications).forEach(k => {
+      const lowerK = k.toLowerCase().trim();
+      if ((lowerK === 'model number' || lowerK === 'model / type' || lowerK === 'model') && k !== 'Model / Type') {
+        delete (specifications as any)[k];
+      }
+    });
+
+    if (!specifications['Model / Type'] && isRedundantModel) {
+       delete (specifications as any)['Model / Type'];
+    }
 
     return {
       id: pData.id,
