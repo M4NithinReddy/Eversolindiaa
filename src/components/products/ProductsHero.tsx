@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, MapPin } from 'lucide-react';
 import ImageCarousel from '../solutions/ImageCarousel';
 
 const ProductsHero = () => {
@@ -34,6 +34,20 @@ const ProductsHero = () => {
             Learn More
           </Button>
         </div>
+
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="mt-8 flex items-center gap-3 text-white/90 bg-white/5 backdrop-blur-sm p-3 rounded-xl border border-white/10 w-fit mx-auto lg:mx-0 shadow-lg"
+        >
+          <div className="bg-solar/20 p-2 rounded-lg">
+            <MapPin className="h-5 w-5 text-solar" />
+          </div>
+          <span className="text-sm md:text-base font-medium tracking-wide">
+            Delivery available for <span className="text-solar font-bold">Telangana, Andhra Pradesh, Tamil Nadu and Karnataka</span>
+          </span>
+        </motion.div>
       </motion.div>
     </ImageCarousel>
   );
