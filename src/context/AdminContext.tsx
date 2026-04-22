@@ -326,9 +326,28 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     finally { setProductsBusy(false); }
   }, [refreshProducts]);
 
+  // APAR, ORIENT, POLYCAB are virtual/frontend-only brands for the "Solar DC Cables"
+  // category that don't exist in the database. We inject them into the brands list
+  // so they appear in the Admin Dashboard and Brand Manager.
+  const enrichedBrands = useMemo(() => {
+    const dcCableModule = modules.find(m => m.name === 'Solar DC Cables');
+    if (!dcCableModule) return brands;
+
+    const virtualBrands: AdminBrand[] = [
+      { id: 'mock-apar', name: 'APAR', moduleId: dcCableModule.id, createdAt: new Date().toISOString() },
+      { id: 'mock-orient', name: 'ORIENT', moduleId: dcCableModule.id, createdAt: new Date().toISOString() },
+      { id: 'mock-polycab', name: 'POLYCAB', moduleId: dcCableModule.id, createdAt: new Date().toISOString() },
+    ];
+
+    const existingNames = new Set(brands.filter(b => b.moduleId === dcCableModule.id).map(b => b.name.toUpperCase().trim()));
+    const toAdd = virtualBrands.filter(vb => !existingNames.has(vb.name.toUpperCase()));
+
+    return [...brands, ...toAdd];
+  }, [modules, brands]);
+
   const filteredProducts = useMemo(() => {
     const validModIds = new Set(modules.map(m => m.id));
-    const validBrandsMap = new Map(brands.map(b => [b.id, b.moduleId]));
+    const validBrandsMap = new Map(enrichedBrands.map(b => [b.id, b.moduleId]));
 
     return products.filter(p => {
       // 1. Must have a valid module ID
@@ -340,15 +359,15 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
 
       return true;
     });
-  }, [modules, brands, products]);
+  }, [modules, enrichedBrands, products]);
 
   const catalogStats = useMemo(() => ({
     modules: modules.length,
-    brands: brands.filter(b => modules.some(m => m.id === b.moduleId)).length,
+    brands: enrichedBrands.filter(b => modules.some(m => m.id === b.moduleId)).length,
     products: filteredProducts.length,
-  }), [modules, brands, filteredProducts]);
+  }), [modules, enrichedBrands, filteredProducts]);
 
-  const data: AdminData = { modules, brands, subBrands, products: filteredProducts, catalogStats };
+  const data: AdminData = { modules, brands: enrichedBrands, subBrands, products: filteredProducts, catalogStats };
 
   return (
     <AdminContext.Provider value={{

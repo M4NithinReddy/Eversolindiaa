@@ -8,7 +8,7 @@ import { useCart } from '@/context/CartContext';
 const navLinks = [
   { name: 'Home', path: '/' },
   { name: 'About', path: '/about' },
-  { name: 'Products', path: '/shop', hash: 'product-search' },
+  { name: 'Products', path: '/shop' },
   { name: 'Solutions', path: '/solutions' },
   { name: 'Impact', path: '/impact' },
   { name: 'Contact', path: '/contact' },

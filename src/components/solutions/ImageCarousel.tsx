@@ -6,18 +6,18 @@ interface ImageCarouselProps {
 
 const ImageCarousel: React.FC<ImageCarouselProps> = ({ children }) => {
   const images = [
-    '/images/Hoymiles_logo.png',
-    '/images/panasoniclogo.png',
-    '/images/pahallogo.png',
-    '/images/solexlogo.webp',
+    '/images/solexlogo.png',
+    '/images/axitec_logo.jpg',
     '/images/solplanetlogo.png',
-    '/images/waareelogo.webp',
-    '/images/solaryaanlogo.jpeg',
-    '/images/axitec_logo.png',
-    '/images/dyness_logo.png',
+    '/images/sunway_logo.png',
+    '/images/dyness_logo.jpg',
     '/images/involitics_logo.png',
+    '/images/waareelogo.webp',
     '/images/turnovolt_logo.png',
-    '/images/sunway_logo.png'
+    '/images/apar_logo.png',
+    '/images/anchor_logo.png',
+    '/images/orient_logo.png',
+    '/images/polycab_logo.png'
   ];
 
   // clones
@@ -77,7 +77,7 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ children }) => {
           {/* Right Carousel */}
           <div className="w-full lg:w-1/2 flex justify-center">
             <div className="bg-white rounded-3xl shadow-xl overflow-hidden border-8 border-solar w-full max-w-lg mt-12">
-              <div className="relative h-[200px] overflow-hidden flex items-center">
+              <div className="relative h-[220px] overflow-hidden flex items-center">
                 <div
                   ref={sliderRef}
                   className={`flex h-full items-center ${transition ? 'transition-transform duration-700 ease-in-out' : ''}`}
@@ -85,25 +85,19 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ children }) => {
                     transform: `translateX(-${index * 100}%)`,
                   }}
                 >
-                  {extendedImages.map((image, i) => {
-                    const isNewLogo = [
-                      '/images/axitec_logo.png',
-                      '/images/dyness_logo.png',
-                      '/images/involitics_logo.png',
-                      '/images/turnovolt_logo.png',
-                      '/images/sunway_logo.png'
-                    ].includes(image);
-
-                    return (
-                      <div key={i} className="w-full h-full flex-shrink-0 flex items-center justify-center p-2">
-                        <img
-                          src={image}
-                          alt={`logo-${i}`}
-                          className={`max-h-[150px] w-auto max-w-full object-contain ${isNewLogo ? 'scale-[1.8]' : ''}`}
-                        />
-                      </div>
-                    );
-                  })}
+                  {extendedImages.map((image, i) => (
+                    <div key={i} className="min-w-full h-full flex items-center justify-center">
+                      <img
+                        src={image}
+                        alt={`logo-${i}`}
+                        className={`block object-contain ${
+                          image.includes('anchor') || image.includes('turnovolt') || image.includes('involitics')
+                            ? 'max-h-[160px] max-w-[90%] scale-[1.3]'
+                            : 'max-h-[140px] max-w-[80%]'
+                        }`}
+                      />
+                    </div>
+                  ))}
                 </div>
 
               </div>

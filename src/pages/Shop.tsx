@@ -698,19 +698,19 @@ const Shop = () => {
                             <>
                               {/* 1. Header (Brand) */}
                               {product.brand && (
-                                <div className="text-xl font-black text-primary mb-1 uppercase tracking-tighter leading-none">
+                                <div className="text-xl font-heading font-black text-primary mb-1 uppercase tracking-tighter leading-none">
                                   {product.brand}
                                 </div>
                               )}
-                              <h3 className="text-xl font-semibold text-muted-foreground mb-4 group-hover:text-foreground transition-colors line-clamp-1">
+                              <h3 className="text-xl font-heading font-semibold text-muted-foreground mb-4 group-hover:text-foreground transition-colors line-clamp-1">
                                 {product.name}
                               </h3>
 
                               {/* 2. Specs Box */}
                               <div className="grid grid-cols-2 gap-x-2 gap-y-2.5 text-[10px] mb-3 bg-slate-50/80 p-3 rounded-lg border border-slate-100/50">
                                 <div className="flex flex-col">
-                                  <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[10px]">Capacity</span>
-                                  <span className="font-bold text-slate-800">{product.capacity || '-'}</span>
+                                  <span className="text-slate-500 font-heading font-semibold mb-0.5 uppercase tracking-wider text-[10px]">Capacity</span>
+                                  <span className="font-heading font-bold text-slate-800">{product.capacity || '-'}</span>
                                 </div>
                                 <div className="flex flex-col">
                                   <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[10px]">Voltage</span>
@@ -751,16 +751,16 @@ const Shop = () => {
 
                               {/* 2. Brand Header */}
                               {product.brand && (
-                                <div className="text-xl font-black text-primary mb-1 uppercase tracking-tighter leading-none">
+                                <div className="text-xl font-heading font-black text-primary mb-1 uppercase tracking-tighter leading-none">
                                   {product.brand}
                                 </div>
                               )}
-                              <h3 className="text-xl font-semibold text-muted-foreground mb-4 group-hover:text-foreground transition-colors line-clamp-1">
+                              <h3 className="text-xl font-heading font-semibold text-muted-foreground mb-4 group-hover:text-foreground transition-colors line-clamp-1">
                                 {product.benefit}
                               </h3>
 
                               {/* 3. Watt and Model/Warranty */}
-                              <div className="flex flex-wrap items-center gap-2 text-eco text-sm font-medium mb-2">
+                              <div className="flex flex-wrap items-center gap-2 text-eco text-sm font-heading font-medium mb-2">
                                 <span>{product.capacity}{product.capacity && !/[wk]w$/i.test(String(product.capacity)) ? (product.isSolarPanel ? 'W' : 'kW') : ''}</span>
                                 <span className="text-muted-foreground">•</span>
                                 <span>{['solplanet', 'involtics', 'sunways', 'turno volt'].some(b => product.brand?.toLowerCase().trim().includes(b))
@@ -770,7 +770,7 @@ const Shop = () => {
 
                               {/* 4. Title & Brand */}
                               <div className="flex flex-wrap items-center gap-2 mb-4 mt-auto pt-2">
-                                <span className="text-xl font-medium text-gray-400 tracking-wide italic">{product.name}</span>
+                                <span className="text-xl font-heading font-medium text-gray-400 tracking-wide italic">{product.name}</span>
                               </div>
                             </>
                           )}
