@@ -62,13 +62,25 @@ const brandInfo: Record<string, { tagline: string; description: string; logo?: s
     tagline: "Powering Tomorrow, Today.",
     description: "Sunways manufactures high-performance hybrid inverters designed for both single-phase and three-phase applications. Their STH series ranges from 3kW to 33kW, offering 2-MPPT tracking, WiFi monitoring, and robust build quality — ideal for residential and commercial solar installations across India.",
   },
+  APAR: {
+    tagline: "Excellence in Innovation. Quality in Cables.",
+    description: "APAR Industries is a global leader in the cable industry, providing high-quality Solar DC cables designed for long-term outdoor use. Their cables are UV resistant, flame retardant, and engineered to minimize power loss in solar installations.",
+  },
+  ORIENT: {
+    tagline: "Powering a Greener Tomorrow.",
+    description: "Orient Cables manufactures premium Solar DC cables that meet international standards for safety and performance. Designed to withstand harsh weather conditions, Orient cables ensure reliable power transmission for residential and commercial solar systems.",
+  },
+  POLYCAB: {
+    tagline: "Connection Zindagi Ka. Leading Cable Manufacturer.",
+    description: "Polycab is India's leading cable and wire manufacturer. Their Solar DC cables are specially designed for solar power applications, featuring cross-linked polyolefin insulation for superior thermal and chemical resistance, ensuring a long service life for your solar PV system.",
+  },
 };
 
 const Shop = () => {
   const { addToCart } = useCart();
   const { data } = useAdmin();
 
-  const categories = ['All', ...Array.from(new Set(data.modules.map(m => m.name))).sort((a, b) => {
+  const categories = ['All', ...Array.from(new Set([...data.modules.map(m => m.name), 'Solar DC Cables'])).sort((a, b) => {
     const desiredOrder = [
       'Solar Modules ( Panels )',
       'Eversol Roof Top Kit',
@@ -80,62 +92,80 @@ const Shop = () => {
       'Solar Earthing Kit',
       'Solar DC Cables'
     ];
-    
+
     const indexA = desiredOrder.indexOf(a);
     const indexB = desiredOrder.indexOf(b);
-    
+
     if (indexA !== -1 && indexB !== -1) return indexA - indexB;
     if (indexA !== -1) return -1;
     if (indexB !== -1) return 1;
     return a.localeCompare(b);
   })];
-  
+
   const getBrandsForCategory = (categoryName: string) => {
     const mod = data.modules.find(m => m.name === categoryName);
-    if (!mod) return [];
-    
-    const brands = data.brands.filter(b => b.moduleId === mod.id);
-    
+    const brands = mod ? data.brands.filter(b => b.moduleId === mod.id) : [];
+
     // 1. Custom sort for "Solar Modules ( Panels )"
     if (categoryName.toLowerCase().includes('module') || categoryName.toLowerCase().includes('panel')) {
       const excelOrder = ['SOLEX', 'WAAREE', 'PANASONIC', 'AXITEC'];
       return [...brands].sort((a, b) => {
         const indexA = excelOrder.indexOf(a.name.toUpperCase());
         const indexB = excelOrder.indexOf(b.name.toUpperCase());
-        
+
         if (indexA !== -1 && indexB !== -1) return indexA - indexB;
         if (indexA !== -1) return -1;
         if (indexB !== -1) return 1;
         return a.name.localeCompare(b.name);
       });
     }
-    
+
+    // 2. Custom brands for "Solar DC Cables"
+    if (categoryName === 'Solar DC Cables') {
+      const excelOrder = ['APAR', 'ORIENT', 'POLYCAB'];
+      const brandsMap = new Map(brands.map(b => [b.name.toUpperCase().trim(), b]));
+
+      const result = excelOrder.map(name => {
+        const existing = brandsMap.get(name);
+        if (existing) return existing;
+        return { id: `mock-${name.toLowerCase()}`, name, moduleId: mod?.id || 'solar-dc-cables', createdAt: new Date().toISOString() };
+      }) as any[];
+
+      // Add any other brands from DB that aren't in the list
+      brands.forEach(b => {
+        if (!excelOrder.includes(b.name.toUpperCase().trim())) {
+          result.push(b);
+        }
+      });
+      return result;
+    }
+
     // 2. Custom sort for product brands (DCR first, then by Kw value)
     return [...brands].sort((a, b) => {
       const nameA = a.name.toUpperCase();
       const nameB = b.name.toUpperCase();
-      
+
       const isNonDcrA = nameA.includes('NON DCR');
       const isNonDcrB = nameB.includes('NON DCR');
-      
+
       // DCR comes before NON DCR
       if (isNonDcrA !== isNonDcrB) {
         return isNonDcrA ? 1 : -1;
       }
-      
+
       // Extract Kw value
       const getKw = (name: string) => {
         const match = name.match(/(\d+)Kw/i) || name.match(/K(\d+)w/i);
         return match ? parseInt(match[1]) : 0;
       };
-      
+
       const kwA = getKw(nameA);
       const kwB = getKw(nameB);
-      
+
       if (kwA !== kwB) {
         return kwA - kwB;
       }
-      
+
       // Fallback to alphabetical
       return nameA.localeCompare(nameB);
     });
@@ -153,16 +183,16 @@ const Shop = () => {
     // CRITICAL: moduleId/brandId may be buried in extraFields in the new schema
     const pAny = p as any;
     const resolvedModuleId = p.moduleId || pAny.extraFields?.moduleId || '';
-    const resolvedBrandId  = p.brandId  || pAny.extraFields?.brandId  || '';
+    const resolvedBrandId = p.brandId || pAny.extraFields?.brandId || '';
 
     // Support BOTH old schema (moduleId/brandId lookup) AND new flat schema (category/brandName)
     const mod = data.modules.find(m => m.id === resolvedModuleId);
-    const br  = data.brands.find(b => b.id === resolvedBrandId);
+    const br = data.brands.find(b => b.id === resolvedBrandId);
 
     // Resolve category: prefer module lookup, fall back to flat 'category' field
     const categoryName = mod?.name || pAny.category || 'General';
     // Resolve brand: prefer brand lookup, fall back to flat 'brandName' field
-    const brandName    = br?.name  || pAny.brandName || '';
+    const brandName = br?.name || pAny.brandName || '';
 
     // Resolve image: uploaded image or category default
     const image = (p.images && p.images.length > 0) ? p.images[0] : getDefaultImage(categoryName);
@@ -170,29 +200,29 @@ const Shop = () => {
     // Build specifications: merge flat spec fields + array of {key,value}
     const flatSpecMap: Record<string, string> = {};
     const flatFields: Array<[string, any]> = [
-      ['MONO/BIFACIAL',           (p as any).mono_bifacial],
-      ['Model / Type',               (p as any).model_number],
-      ['Wattage (W)',              (p as any).wattage_w],
-      ['Cell Type',                (p as any).cell_type],
-      ['Module Efficiency (%)',    (p as any).module_efficiency],
-      ['No. of Cells',             (p as any).no_of_cells],
-      ['Available Stock',          (p as any).available_stock],
-      ['Battery Type',             (p as any).battery_type],
-      ['Capacity (kWh/Ah)',        (p as any).capacity_kwh_ah],
-      ['Battery Nominal Voltage',  (p as any).battery_nominal_voltage_v],
-      ['Operating Voltage',        (p as any).operating_voltage],
-      ['Cycle Life',               (p as any).cycle_life],
-      ['Cooling',                  (p as any).cooling],
-      ['Compatible Inverters',     (p as any).compatible_inverters],
-      ['System Size (kW)',         (p as any).system_size_kw],
-      ['Included Module Brand',    (p as any).included_module_brand],
-      ['Included Inverter Brand',  (p as any).included_inverter_brand],
-      ['Structure Type',           (p as any).structure_type],
-      ['Area Required (sq.ft)',    (p as any).area_required_sqft],
-      ['Subsidy Eligible',         (p as any).subsidy_eligible],
-      ['Installation Included',    (p as any).installation_included],
-      ['Meters',                   (p as any).meters],
-      ['Total Price',              (p as any).total_price],
+      ['MONO/BIFACIAL', (p as any).mono_bifacial],
+      ['Model / Type', (p as any).model_number],
+      ['Wattage (W)', (p as any).wattage_w],
+      ['Cell Type', (p as any).cell_type],
+      ['Module Efficiency (%)', (p as any).module_efficiency],
+      ['No. of Cells', (p as any).no_of_cells],
+      ['Available Stock', (p as any).available_stock],
+      ['Battery Type', (p as any).battery_type],
+      ['Capacity (kWh/Ah)', (p as any).capacity_kwh_ah],
+      ['Battery Nominal Voltage', (p as any).battery_nominal_voltage_v],
+      ['Operating Voltage', (p as any).operating_voltage],
+      ['Cycle Life', (p as any).cycle_life],
+      ['Cooling', (p as any).cooling],
+      ['Compatible Inverters', (p as any).compatible_inverters],
+      ['System Size (kW)', (p as any).system_size_kw],
+      ['Included Module Brand', (p as any).included_module_brand],
+      ['Included Inverter Brand', (p as any).included_inverter_brand],
+      ['Structure Type', (p as any).structure_type],
+      ['Area Required (sq.ft)', (p as any).area_required_sqft],
+      ['Subsidy Eligible', (p as any).subsidy_eligible],
+      ['Installation Included', (p as any).installation_included],
+      ['Meters', (p as any).meters],
+      ['Total Price', (p as any).total_price],
     ];
     flatFields.forEach(([k, v]) => { if (v !== undefined && v !== null && String(v).trim() !== '') flatSpecMap[k] = String(v); });
     const arraySpecs = (p.specifications || []).reduce((acc: any, s) => { acc[s.key] = s.value; return acc; }, {});
@@ -215,37 +245,67 @@ const Shop = () => {
     let finalModel = flatSpecMap['Model / Type'] || arraySpecs['Model Number'] || (p as any).model_number || (p as any).model || '';
     const brandLower = brandName.toLowerCase().trim();
     const enrichmentBrands = ['solplanet', 'involtics', 'sunways', 'turno volt', 'dyness']; // Brands that should have model enrichment
-    
+
     if (!finalModel && enrichmentBrands.some(b => brandLower.includes(b))) {
       finalModel = findBrandModel(brandName, capacity, p.price || 0, p.phase) || '';
     }
-    specifications['Model Number'] = finalModel;
-    specifications['Model / Type'] = finalModel;
+    const isRedundantModel = ['dcr', 'non dcr', 'nondcr'].includes(String(finalModel).toLowerCase().trim());
+
+    if (!isRedundantModel && finalModel) {
+      specifications['Model / Type'] = finalModel;
+    }
+
+    // Robust case-insensitive cleanup of model-related keys to avoid duplicates
+    Object.keys(specifications).forEach(k => {
+      const lowerK = k.toLowerCase().trim();
+      if ((lowerK === 'model number' || lowerK === 'model / type' || lowerK === 'model') && k !== 'Model / Type') {
+        delete (specifications as any)[k];
+      }
+    });
+
+    if (!specifications['Model / Type'] && isRedundantModel) {
+      delete (specifications as any)['Model / Type'];
+    }
+
+    const wifiBrands = ['involtics', 'solplanet', 'sunways'];
+    const isWIFIDevice = (wifiBrands.some(b => brandName.toLowerCase().includes(b)) &&
+      (categoryName.toLowerCase().includes('hybrid') || categoryName.toLowerCase().includes('on-grid') || categoryName.toLowerCase().includes('on grid'))) ||
+      categoryName.toLowerCase().includes('battery') ||
+      categoryName.toLowerCase().includes('energy storage') ||
+      categoryName.toLowerCase().includes('bess');
+
+    if (
+      categoryName.toLowerCase().includes('panel') ||
+      categoryName.toLowerCase().includes('module') ||
+      isWIFIDevice
+    ) {
+      specifications['Features'] = 'WIFI';
+    }
 
     return {
-      id          : p.id,
-      name        : p.title || '',
-      category    : categoryName,
-      brand       : brandName,
+      id: p.id,
+      name: p.title || '',
+      category: categoryName,
+      brand: brandName,
       isSolarPanel: categoryName.toLowerCase().includes('panel') || categoryName.toLowerCase().includes('module'),
       capacity,
-      price       : p.price || 0,
-      benefit     : p.description || '',
+      price: p.price || 0,
+      benefit: p.description || '',
       image,
-      images      : p.images || [],
-      warranty    : p.warranty || '',
-      datasheet   : p.datasheet || '',
+      images: p.images || [],
+      warranty: p.warranty || '',
+      datasheet: p.datasheet || '',
       specifications,
       features,
       productType,
-      phase       : p.phase || '',
+      phase: p.phase || '',
       isOutOfStock: !!p.isOutOfStock,
     };
   });
 
   const inverterProducts = mappedProducts.filter(p => p.category === 'Solar Inverters');
   const derivedInverterTypes = Array.from(new Set(inverterProducts.map(p => p.productType).filter(Boolean)));
-  
+
   const getBrandsForInverterType = (type: string) => {
     return Array.from(new Set(inverterProducts.filter(p => p.productType === type).map(p => p.brand).filter(Boolean)));
   };
@@ -308,7 +368,7 @@ const Shop = () => {
 
     // Module validation: only show products linked to current modules
     const matchesModuleLink = data.modules.some(m => m.id === (product.id ? data.products.find(p => p.id === product.id)?.moduleId : ''));
-    
+
     // Brand filtering — applies to all categories
     const matchesBrand = !selectedBrand ||
       (product.brand && product.brand.toLowerCase() === selectedBrand.toLowerCase());
@@ -324,7 +384,7 @@ const Shop = () => {
     if (selectedCategory === 'Solar On Grid' || selectedCategory === 'Solar Hybrid') {
       const isTargetA = a.brand?.toUpperCase() === 'SOLPLANET' || a.brand?.toUpperCase() === 'INVOLTICS';
       const isTargetB = b.brand?.toUpperCase() === 'SOLPLANET' || b.brand?.toUpperCase() === 'INVOLTICS';
-      
+
       if (isTargetA && isTargetB) {
         const getCap = (c: string) => parseFloat(String(c).match(/(\d+(\.\d+)?)/)?.[0] || '0');
         return getCap(a.capacity) - getCap(b.capacity);
@@ -394,7 +454,7 @@ const Shop = () => {
                           }
                           // Keep existing inverter filter toggle
                           setIsInverterFiltersOpen(category === 'Solar Inverters' ? !isInverterFiltersOpen : false);
-                          
+
                           // Reset filters only when changing category
                           if (isChangingCategory) {
                             setSelectedBrand(null);
@@ -588,7 +648,7 @@ const Shop = () => {
           <div className="py-16 bg-background">
             <div className="container mx-auto px-4">
               <div className="mb-8">
-                  Showing {Math.min(filteredProducts.length, (currentPage - 1) * ITEMS_PER_PAGE + 1)} - {Math.min(filteredProducts.length, currentPage * ITEMS_PER_PAGE)} of {data.catalogStats.products} products
+                Showing {Math.min(filteredProducts.length, (currentPage - 1) * ITEMS_PER_PAGE + 1)} - {Math.min(filteredProducts.length, currentPage * ITEMS_PER_PAGE)} of {data.catalogStats.products} products
               </div>
 
               <div className={viewMode === 'grid'
@@ -598,68 +658,68 @@ const Shop = () => {
                 {filteredProducts
                   .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
                   .map((product, index) => (
-                  <Link key={product.id} to={`/product/${product.id}`} className="block cursor-pointer">
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.4, delay: index * 0.05 }}
-                      className={`group bg-card rounded-2xl overflow-hidden border-4 border-orange-500 hover:border-orange-600 transition-all duration-300 card-hover h-full ${viewMode === 'list' ? 'flex flex-row' : ''
-                        }`}
-                    >
-                      <div className={`relative overflow-hidden bg-card ${viewMode === 'list' ? 'w-40 shrink-0' : 'aspect-square h-64'
-                        }`}>
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className={`w-full h-full object-contain p-3 transition-transform duration-500 group-hover:scale-105 ${product.isOutOfStock ? 'grayscale opacity-50' : ''}`}
-                        />
-                        <span className="absolute top-4 left-4 px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-semibold max-w-[80%] truncate">
-                          {product.category}
-                        </span>
-                        {product.isOutOfStock && (
-                          <>
-                            <div className="absolute inset-0 bg-white/20 backdrop-blur-[1px] z-10" />
-                            <div className="absolute inset-0 flex flex-col items-center justify-center z-20 p-6">
-                              <img 
-                                src="/images/out-of-stock-illustration.png" 
-                                alt="Out of stock" 
-                                className="w-1/2 h-auto object-contain drop-shadow-xl mb-2" 
-                              />
-                              <div className="bg-red-600 text-white text-[10px] font-bold px-3 py-1 rounded shadow-lg uppercase tracking-widest border border-white/20">
-                                Currently Out of Stock
+                    <Link key={product.id} to={`/product/${product.id}`} className="block cursor-pointer">
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: index * 0.05 }}
+                        className={`group bg-card rounded-2xl overflow-hidden border-4 border-orange-500 hover:border-orange-600 transition-all duration-300 card-hover h-full ${viewMode === 'list' ? 'flex flex-row' : ''
+                          }`}
+                      >
+                        <div className={`relative overflow-hidden bg-card ${viewMode === 'list' ? 'w-40 shrink-0' : 'aspect-square h-64'
+                          }`}>
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            className={`w-full h-full object-contain p-3 transition-transform duration-500 group-hover:scale-105 ${product.isOutOfStock ? 'grayscale opacity-50' : ''}`}
+                          />
+                          <span className="absolute top-4 left-4 px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-semibold max-w-[80%] truncate">
+                            {product.category}
+                          </span>
+                          {product.isOutOfStock && (
+                            <>
+                              <div className="absolute inset-0 bg-white/20 backdrop-blur-[1px] z-10" />
+                              <div className="absolute inset-0 flex flex-col items-center justify-center z-20 p-6">
+                                <img
+                                  src="/images/out-of-stock-illustration.png"
+                                  alt="Out of stock"
+                                  className="w-1/2 h-auto object-contain drop-shadow-xl mb-2"
+                                />
+                                <div className="bg-red-600 text-white text-[10px] font-bold px-3 py-1 rounded shadow-lg uppercase tracking-widest border border-white/20">
+                                  Currently Out of Stock
+                                </div>
                               </div>
-                            </div>
-                          </>
-                        )}
-                      </div>
+                            </>
+                          )}
+                        </div>
 
-                      <div className="p-6 flex-1 flex flex-col">
-                        {product.category.toLowerCase().includes('storage') ? (
-                          <>
-                            {/* 1. Header (Brand) */}
-                            {product.brand && (
-                              <div className="text-xl font-black text-primary mb-1 uppercase tracking-tighter leading-none">
-                                {product.brand}
-                              </div>
-                            )}
-                            <h3 className="text-xl font-semibold text-muted-foreground mb-4 group-hover:text-foreground transition-colors line-clamp-1">
-                              {product.name}
-                            </h3>
+                        <div className="p-6 flex-1 flex flex-col">
+                          {product.category.toLowerCase().includes('storage') ? (
+                            <>
+                              {/* 1. Header (Brand) */}
+                              {product.brand && (
+                                <div className="text-xl font-black text-primary mb-1 uppercase tracking-tighter leading-none">
+                                  {product.brand}
+                                </div>
+                              )}
+                              <h3 className="text-xl font-semibold text-muted-foreground mb-4 group-hover:text-foreground transition-colors line-clamp-1">
+                                {product.name}
+                              </h3>
 
-                            {/* 2. Specs Box */}
-                            <div className="grid grid-cols-2 gap-x-2 gap-y-2.5 text-[10px] mb-3 bg-slate-50/80 p-3 rounded-lg border border-slate-100/50">
-                               <div className="flex flex-col">
-                                 <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[10px]">Capacity</span>
-                                 <span className="font-bold text-slate-800">{product.capacity || '-'}</span>
-                               </div>
-                               <div className="flex flex-col">
-                                 <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[10px]">Voltage</span>
-                                 <span className="font-bold text-slate-800 truncate" title={product.specifications?.['Battery Nominal Voltage'] || product.specifications?.['Battery Nomi'] || product.specifications?.['Operating V'] || product.specifications?.['Operating Voltage Range'] || '-'} >{product.specifications?.['Battery Nominal Voltage'] || product.specifications?.['Battery Nomi'] || product.specifications?.['Operating V'] || product.specifications?.['Operating Voltage Range'] || '-'}</span>
-                               </div>
-                               <div className="flex flex-col">
-                                 <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[10px]">Cycle Life</span>
-                                 <span className="font-bold text-slate-800">{product.specifications?.['Cycle Life'] || '-'}</span>
-                               </div>
+                              {/* 2. Specs Box */}
+                              <div className="grid grid-cols-2 gap-x-2 gap-y-2.5 text-[10px] mb-3 bg-slate-50/80 p-3 rounded-lg border border-slate-100/50">
+                                <div className="flex flex-col">
+                                  <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[10px]">Capacity</span>
+                                  <span className="font-bold text-slate-800">{product.capacity || '-'}</span>
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[10px]">Voltage</span>
+                                  <span className="font-bold text-slate-800 truncate" title={product.specifications?.['Battery Nominal Voltage'] || product.specifications?.['Battery Nomi'] || product.specifications?.['Operating V'] || product.specifications?.['Operating Voltage Range'] || '-'} >{product.specifications?.['Battery Nominal Voltage'] || product.specifications?.['Battery Nomi'] || product.specifications?.['Operating V'] || product.specifications?.['Operating Voltage Range'] || '-'}</span>
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[10px]">Cycle Life</span>
+                                  <span className="font-bold text-slate-800">{product.specifications?.['Cycle Life'] || '-'}</span>
+                                </div>
                                 <div className="flex flex-col">
                                   <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[10px]">{['solplanet', 'involtics', 'sunways', 'turno volt', 'dyness'].some(b => product.brand?.toLowerCase().trim().includes(b)) ? 'Model' : 'Warranty'}</span>
                                   <span className="font-bold text-slate-800 truncate">
@@ -668,73 +728,73 @@ const Shop = () => {
                                       : (product.warranty || '-')}
                                   </span>
                                 </div>
-                            </div>
-
-                            {/* 3. Badges (Type & Cooling) */}
-                            <div className="flex flex-wrap gap-2 mb-4">
-                              {product.productType && <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] rounded-full uppercase font-bold tracking-wide">{product.productType}</span>}
-                              {product.specifications?.['Cooling'] && <span className="px-2 py-0.5 bg-cyan-50 text-cyan-700 text-[10px] rounded-full uppercase font-bold tracking-wide">{product.specifications['Cooling']}</span>}
-                            </div>
-
-                            {/* 4. Sub-info (Description & Brand) */}
-                            <div className="flex flex-wrap items-center gap-2 mb-4 mt-auto pt-2">
-                              <span className="text-sm font-medium text-gray-400 line-clamp-1 flex-1 italic">{product.benefit || 'Energy Storage Module'}</span>
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            {/* 1. Type (and phase if applicable) */}
-                            <div className="flex flex-wrap gap-2 mb-2">
-                              {product.productType && <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] rounded-full uppercase font-bold tracking-wide">{product.productType}</span>}
-                              {product.phase && <span className="px-2 py-0.5 bg-purple-50 text-purple-700 text-[10px] rounded-full uppercase font-bold tracking-wide">{product.phase}</span>}
-                            </div>
-
-                            {/* 2. Brand Header */}
-                            {product.brand && (
-                              <div className="text-xl font-black text-primary mb-1 uppercase tracking-tighter leading-none">
-                                {product.brand}
                               </div>
-                            )}
-                            <h3 className="text-xl font-semibold text-muted-foreground mb-4 group-hover:text-foreground transition-colors line-clamp-1">
-                              {product.benefit}
-                            </h3>
 
-                            {/* 3. Watt and Model/Warranty */}
-                            <div className="flex flex-wrap items-center gap-2 text-eco text-sm font-medium mb-2">
-                              <span>{product.capacity}{product.capacity && !/[wk]w$/i.test(String(product.capacity)) ? (product.isSolarPanel ? 'W' : 'kW') : ''}</span>
-                              <span className="text-muted-foreground">•</span>
-                              <span>{['solplanet', 'involtics', 'sunways', 'turno volt'].some(b => product.brand?.toLowerCase().trim().includes(b))
-                                ? `Model: ${product.specifications['Model / Type'] || product.specifications['Model Number'] || (product as any).model_number || (product as any).model || product.warranty}`
-                                : `${product.warranty} Warranty${(product as any).isSolarPanel ? ' (product)' : ''}`}</span>
-                            </div>
+                              {/* 3. Badges (Type & Cooling) */}
+                              <div className="flex flex-wrap gap-2 mb-4">
+                                {product.productType && <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] rounded-full uppercase font-bold tracking-wide">{product.productType}</span>}
+                                {product.specifications?.['Cooling'] && <span className="px-2 py-0.5 bg-cyan-50 text-cyan-700 text-[10px] rounded-full uppercase font-bold tracking-wide">{product.specifications['Cooling']}</span>}
+                              </div>
 
-                            {/* 4. Title & Brand */}
-                            <div className="flex flex-wrap items-center gap-2 mb-4 mt-auto pt-2">
-                              <span className="text-xl font-medium text-gray-400 tracking-wide italic">{product.name}</span>
+                              {/* 4. Sub-info (Description & Brand) */}
+                              <div className="flex flex-wrap items-center gap-2 mb-4 mt-auto pt-2">
+                                <span className="text-sm font-medium text-gray-400 line-clamp-1 flex-1 italic">{product.benefit || 'Energy Storage Module'}</span>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              {/* 1. Type (and phase if applicable) */}
+                              <div className="flex flex-wrap gap-2 mb-2">
+                                {product.productType && <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] rounded-full uppercase font-bold tracking-wide">{product.productType}</span>}
+                                {product.phase && <span className="px-2 py-0.5 bg-purple-50 text-purple-700 text-[10px] rounded-full uppercase font-bold tracking-wide">{product.phase}</span>}
+                              </div>
+
+                              {/* 2. Brand Header */}
+                              {product.brand && (
+                                <div className="text-xl font-black text-primary mb-1 uppercase tracking-tighter leading-none">
+                                  {product.brand}
+                                </div>
+                              )}
+                              <h3 className="text-xl font-semibold text-muted-foreground mb-4 group-hover:text-foreground transition-colors line-clamp-1">
+                                {product.benefit}
+                              </h3>
+
+                              {/* 3. Watt and Model/Warranty */}
+                              <div className="flex flex-wrap items-center gap-2 text-eco text-sm font-medium mb-2">
+                                <span>{product.capacity}{product.capacity && !/[wk]w$/i.test(String(product.capacity)) ? (product.isSolarPanel ? 'W' : 'kW') : ''}</span>
+                                <span className="text-muted-foreground">•</span>
+                                <span>{['solplanet', 'involtics', 'sunways', 'turno volt'].some(b => product.brand?.toLowerCase().trim().includes(b))
+                                  ? `Model: ${product.specifications['Model / Type'] || product.specifications['Model Number'] || (product as any).model_number || (product as any).model || product.warranty}`
+                                  : `${product.warranty} Warranty${(product as any).isSolarPanel ? ' (product)' : ''}`}</span>
+                              </div>
+
+                              {/* 4. Title & Brand */}
+                              <div className="flex flex-wrap items-center gap-2 mb-4 mt-auto pt-2">
+                                <span className="text-xl font-medium text-gray-400 tracking-wide italic">{product.name}</span>
+                              </div>
+                            </>
+                          )}
+                          <div className="flex items-center justify-between gap-4">
+                            <span className="text-2xl font-heading font-bold text-primary">
+                              {formatPrice(product.price)}
+                            </span>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="solar"
+                                size="sm"
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); product.datasheet && handleDownloadDatasheet(product.datasheet, product.name); }}
+                              >
+                                <Download className="h-4 w-4" />
+                              </Button>
+                              <Button variant="solar" size="sm" onClick={(e) => { e.preventDefault(); e.stopPropagation(); addToCart({ id: product.id, name: product.name, category: product.category, brand: product.brand, capacity: product.capacity, price: product.price, image: product.image, warranty: product.warranty }); }}>
+                                <ShoppingCart className="h-4 w-4" />
+                              </Button>
                             </div>
-                          </>
-                        )}
-                        <div className="flex items-center justify-between gap-4">
-                          <span className="text-2xl font-heading font-bold text-primary">
-                            {formatPrice(product.price)}
-                          </span>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="solar"
-                              size="sm"
-                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); product.datasheet && handleDownloadDatasheet(product.datasheet, product.name); }}
-                            >
-                              <Download className="h-4 w-4" />
-                            </Button>
-                            <Button variant="solar" size="sm" onClick={(e) => { e.preventDefault(); e.stopPropagation(); addToCart({ id: product.id, name: product.name, category: product.category, brand: product.brand, capacity: product.capacity, price: product.price, image: product.image, warranty: product.warranty }); }}>
-                              <ShoppingCart className="h-4 w-4" />
-                            </Button>
                           </div>
                         </div>
-                      </div>
-                    </motion.div>
-                  </Link>
-                ))}
+                      </motion.div>
+                    </Link>
+                  ))}
               </div>
 
               {/* Pagination Controls */}
