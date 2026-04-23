@@ -14,7 +14,7 @@ import { useCart } from '@/context/CartContext';
 import { useAdmin } from '@/context/AdminContext';
 import { useQuery } from '@tanstack/react-query';
 import { getProductById } from '@/lib/api';
-import { findBrandModel } from '@/lib/brandData';
+import { findBrandModel, SOLPLANET_MODELS } from '@/lib/brandData';
 import { useState, useMemo, useEffect } from 'react';
 
 // Product type definitions
@@ -164,15 +164,37 @@ const ProductDetail = () => {
 
     const specifications = { ...flatSpecMap, ...arraySpecs };
 
-    const wifiBrands = ['involtics', 'solplanet', 'sunways'];
+    const wifiBrands = ['involtics', 'sunways'];
     const isWIFIDevice = (wifiBrands.some(b => brandName.toLowerCase().includes(b)) &&
       (categoryName.toLowerCase().includes('hybrid') || categoryName.toLowerCase().includes('on-grid') || categoryName.toLowerCase().includes('on grid'))) ||
       categoryName.toLowerCase().includes('battery') ||
       categoryName.toLowerCase().includes('energy storage') ||
       categoryName.toLowerCase().includes('bess');
 
+    let finalName = pData.title || '';
+    // Replace WIFI with accurate MPPT info for Solplanet on-grid inverters
+    if (brandName.toLowerCase().includes('solplanet')) {
+       // Specifically handle "WIFI" in title
+       if (finalName.toUpperCase().includes('WIFI')) {
+          const mpptKey = Object.keys(specifications).find(k => k.toLowerCase().includes('mppt'));
+          if (specifications[mpptKey || '']) {
+            finalName = specifications[mpptKey || ''];
+          } else {
+            const capStr = String(capacity).replace(/[^\d.]/g, '');
+            const isThreePhase = (pData.phase || '').toLowerCase().includes('3ph') || (pData.phase || '').toLowerCase().includes('three');
+            const match = SOLPLANET_MODELS.find(m => m.capacity === capStr && (isThreePhase ? m.phase === '3Ph' : m.phase === '1Ph'));
+            if (match?.mppt) finalName = match.mppt;
+            else if (categoryName.toLowerCase().includes('on grid')) {
+              finalName = isThreePhase ? '2-10 MPPT' : '1-2 MPPT';
+            } else {
+              finalName = finalName.replace(/WIFI/gi, '').trim() || 'Solar Inverter';
+            }
+          }
+       }
+    }
+
     if (isSolarPanel || isWIFIDevice) {
-      specifications['Features'] = 'WIFI';
+      specifications['Features'] = finalName;
     }
 
     // Helper to split by multiple delimiters (* and ,)
@@ -192,6 +214,27 @@ const ProductDetail = () => {
     // Resolve applications
     let applications = splitItems(pData.applications);
     if (applications.length === 0) applications = splitItems(specApps);
+
+    // ── Solplanet Solar On Grid Inverter override ───────────────────────────
+    if (brandName.toLowerCase().includes('solplanet') && categoryName.toLowerCase().includes('on grid')) {
+      benefits = [
+        'High efficiency (up to ~99%)',
+        'Easy installation & user-friendly',
+        'Smart monitoring (app-based)',
+        'Durable & weather-resistant (IP66)',
+        'Performs well in low sunlight / partial shading',
+        'Flexible & scalable systems',
+        'Cost-effective (low maintenance)',
+      ];
+      applications = [
+        'Residential (homes, rooftops)',
+        'Commercial buildings (offices, shops)',
+        'Industrial use (factories)',
+        'Utility-scale solar projects',
+        'Hybrid systems (battery storage)',
+        'EV charging systems',
+      ];
+    }
 
 
     // Resolve capacity
@@ -225,12 +268,21 @@ const ProductDetail = () => {
 
     return {
       id: pData.id,
-      name: pData.title || '',
+      name: finalName,
       category: categoryName,
       brand: brandName,
       capacity,
       price: pData.price || 0,
-      benefit: pData.description || '',
+      benefit: (() => {
+        if (brandName.toLowerCase().includes('solplanet') && categoryName.toLowerCase().includes('on grid')) {
+          const phaseStr = (pData.phase || '').trim();
+          if (phaseStr && !phaseStr.toUpperCase().includes('MPPT') && finalName.toUpperCase().includes('MPPT')) {
+            return `${phaseStr} - ${finalName}`;
+          }
+          return phaseStr ? phaseStr : finalName;
+        }
+        return (pData.description || '').replace(/WIFI/gi, '').trim();
+      })(),
       image: (pData.images && pData.images.length > 0) ? pData.images[0] : getDefaultImage(categoryName),
       images: pData.images || [],
       warranty: (() => {
@@ -242,7 +294,7 @@ const ProductDetail = () => {
         return '';
       })(),
       isSolarPanel,
-      description: pData.description || '',
+      description: (pData.description || '').replace(/WIFI/gi, '').trim(),
       specifications,
       features: benefits.length > 0 ? benefits : applications,
       benefits,
