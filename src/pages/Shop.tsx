@@ -293,7 +293,14 @@ const Shop = () => {
       benefit: p.description || '',
       image,
       images: p.images || [],
-      warranty: p.warranty || '',
+      warranty: (() => {
+        if (p.warranty) return p.warranty;
+        if (categoryName === 'Solar Roof Top Hybrid Kit') {
+          const wKey = Object.keys(specifications).find(k => k.toLowerCase().includes('warranty'));
+          if (wKey) return String(specifications[wKey]).replace(/^[:\s-]+/, '').trim();
+        }
+        return '';
+      })(),
       datasheet: p.datasheet || '',
       specifications,
       features,
@@ -698,7 +705,7 @@ const Shop = () => {
                             <>
                               {/* 1. Header (Brand) */}
                               {product.brand && (
-                                <div className="text-xl font-heading font-black text-primary mb-1 uppercase tracking-tighter leading-none">
+                                <div className="text-base font-heading font-bold text-primary mb-1 uppercase tracking-tighter leading-none">
                                   {product.brand}
                                 </div>
                               )}
@@ -751,7 +758,7 @@ const Shop = () => {
 
                               {/* 2. Brand Header */}
                               {product.brand && (
-                                <div className="text-xl font-heading font-black text-primary mb-1 uppercase tracking-tighter leading-none">
+                                <div className="text-base font-heading font-bold text-primary mb-1 uppercase tracking-tighter leading-none">
                                   {product.brand}
                                 </div>
                               )}
@@ -765,7 +772,13 @@ const Shop = () => {
                                 <span className="text-muted-foreground">•</span>
                                 <span>{['solplanet', 'involtics', 'sunways', 'turno volt'].some(b => product.brand?.toLowerCase().trim().includes(b))
                                   ? `Model: ${product.specifications['Model / Type'] || product.specifications['Model Number'] || (product as any).model_number || (product as any).model || product.warranty}`
-                                  : `${product.warranty} Warranty${(product as any).isSolarPanel ? ' (product)' : ''}`}</span>
+                                  : (
+                                    <>
+                                      <span className="font-semibold">Warranty:</span>
+                                      {product.category === 'Solar Roof Top Hybrid Kit' ? product.warranty : `${product.warranty}${(product as any).isSolarPanel ? ' (product)' : ''}`}
+                                    </>
+                                  )}
+                                </span>
                               </div>
 
                               {/* 4. Title & Brand */}

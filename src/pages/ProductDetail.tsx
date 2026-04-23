@@ -165,11 +165,11 @@ const ProductDetail = () => {
     const specifications = { ...flatSpecMap, ...arraySpecs };
 
     const wifiBrands = ['involtics', 'solplanet', 'sunways'];
-    const isWIFIDevice = (wifiBrands.some(b => brandName.toLowerCase().includes(b)) && 
-                         (categoryName.toLowerCase().includes('hybrid') || categoryName.toLowerCase().includes('on-grid') || categoryName.toLowerCase().includes('on grid'))) ||
-                         categoryName.toLowerCase().includes('battery') || 
-                         categoryName.toLowerCase().includes('energy storage') ||
-                         categoryName.toLowerCase().includes('bess');
+    const isWIFIDevice = (wifiBrands.some(b => brandName.toLowerCase().includes(b)) &&
+      (categoryName.toLowerCase().includes('hybrid') || categoryName.toLowerCase().includes('on-grid') || categoryName.toLowerCase().includes('on grid'))) ||
+      categoryName.toLowerCase().includes('battery') ||
+      categoryName.toLowerCase().includes('energy storage') ||
+      categoryName.toLowerCase().includes('bess');
 
     if (isSolarPanel || isWIFIDevice) {
       specifications['Features'] = 'WIFI';
@@ -206,11 +206,11 @@ const ProductDetail = () => {
       finalModel = findBrandModel(brandName, capacity, pData.price || 0, pData.phase) || '';
     }
     const isRedundantModel = ['dcr', 'non dcr', 'nondcr'].includes(String(finalModel).toLowerCase().trim());
-    
+
     if (!isRedundantModel && finalModel) {
       specifications['Model / Type'] = finalModel;
     }
-    
+
     // Robust case-insensitive cleanup of model-related keys to avoid duplicates
     Object.keys(specifications).forEach(k => {
       const lowerK = k.toLowerCase().trim();
@@ -220,7 +220,7 @@ const ProductDetail = () => {
     });
 
     if (!specifications['Model / Type'] && isRedundantModel) {
-       delete (specifications as any)['Model / Type'];
+      delete (specifications as any)['Model / Type'];
     }
 
     return {
@@ -233,7 +233,14 @@ const ProductDetail = () => {
       benefit: pData.description || '',
       image: (pData.images && pData.images.length > 0) ? pData.images[0] : getDefaultImage(categoryName),
       images: pData.images || [],
-      warranty: pData.warranty || '',
+      warranty: (() => {
+        if (pData.warranty) return pData.warranty;
+        if (categoryName === 'Solar Roof Top Hybrid Kit') {
+          const wKey = Object.keys(specifications).find(k => k.toLowerCase().includes('warranty'));
+          if (wKey) return String(specifications[wKey]).replace(/^[:\s-]+/, '').trim();
+        }
+        return '';
+      })(),
       isSolarPanel,
       description: pData.description || '',
       specifications,
@@ -489,7 +496,7 @@ const ProductDetail = () => {
               </h1>
 
               {product.brand && product.brand !== 'Unknown' && (
-                <div className="text-2xl md:text-3xl font-black text-primary mb-6 tracking-tighter uppercase leading-none">
+                <div className="text-lg md:text-xl font-heading font-bold text-primary mb-6 tracking-tighter uppercase leading-none">
                   {product.brand}
                 </div>
               )}
@@ -499,10 +506,15 @@ const ProductDetail = () => {
                   {product.capacity ? `${product.capacity}${!/[wk]w$/i.test(String(product.capacity)) ? (product.isSolarPanel ? 'W' : 'kW') : ''}` : ''}
                 </span>
                 <span className="flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
+                  <Shield className="h-6 w-6" />
                   {['solplanet', 'involtics', 'sunways', 'turno volt', 'dyness'].some(b => product.brand?.toLowerCase().trim().includes(b))
                     ? `Model: ${product.specifications['Model / Type'] || product.specifications['Model Number'] || (product as any).model_number || (product as any).model || product.warranty}`
-                    : `${product.warranty} Warranty${(product as any).isSolarPanel ? ' (product)' : ''}`}
+                    : (
+                      <>
+                        <span className="font-semibold">Warranty:</span>
+                        {product.category === 'Solar Roof Top Hybrid Kit' ? product.warranty : `${product.warranty}${(product as any).isSolarPanel ? ' (product)' : ''}`}
+                      </>
+                    )}
                 </span>
                 {product.productType && (
                   <span className="flex items-center gap-2 text-primary font-bold">

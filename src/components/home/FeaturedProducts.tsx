@@ -101,7 +101,7 @@ export const FeaturedProducts = () => {
                     {product.capacity}
                   </div>
                   {product.hasProduct && (
-                    <div className="text-xl font-black text-primary mb-1 uppercase tracking-tighter leading-none">
+                    <div className="text-base font-heading font-bold text-primary mb-1 uppercase tracking-tighter leading-none">
                       {product.brand}
                     </div>
                   )}
