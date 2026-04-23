@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useCart } from '@/context/CartContext';
 import { useAdmin } from '@/context/AdminContext';
 import { Layout } from '@/components/layout/Layout';
-import { findBrandModel } from '@/lib/brandData';
+import { findBrandModel, SOLPLANET_MODELS } from '@/lib/brandData';
 import { Search, Grid, List, ChevronDown, Zap, ShoppingCart, Filter, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -267,30 +267,65 @@ const Shop = () => {
       delete (specifications as any)['Model / Type'];
     }
 
-    const wifiBrands = ['involtics', 'solplanet', 'sunways'];
+    const wifiBrands = ['involtics', 'sunways'];
     const isWIFIDevice = (wifiBrands.some(b => brandName.toLowerCase().includes(b)) &&
       (categoryName.toLowerCase().includes('hybrid') || categoryName.toLowerCase().includes('on-grid') || categoryName.toLowerCase().includes('on grid'))) ||
       categoryName.toLowerCase().includes('battery') ||
       categoryName.toLowerCase().includes('energy storage') ||
       categoryName.toLowerCase().includes('bess');
 
+    let finalName = p.title || '';
+    // Replace WIFI with accurate MPPT info for Solplanet on-grid inverters
+    if (brandName.toLowerCase().includes('solplanet')) {
+       // Specifically handle "WIFI" in title
+       if (finalName.toUpperCase().includes('WIFI')) {
+          const mpptKey = Object.keys(specifications).find(k => k.toLowerCase().includes('mppt'));
+          if (specifications[mpptKey || '']) {
+            finalName = specifications[mpptKey || ''];
+          } else {
+            const capStr = String(capacity).replace(/[^\d.]/g, '');
+            const isThreePhase = (p.phase || (p as any).phase || '').toLowerCase().includes('3ph') || (p.phase || (p as any).phase || '').toLowerCase().includes('three');
+            const match = SOLPLANET_MODELS.find(m => m.capacity === capStr && (isThreePhase ? m.phase === '3Ph' : m.phase === '1Ph'));
+            if (match?.mppt) finalName = match.mppt;
+            else if (categoryName.toLowerCase().includes('on grid')) {
+              finalName = isThreePhase ? '2-10 MPPT' : '1-2 MPPT';
+            } else {
+              finalName = finalName.replace(/WIFI/gi, '').trim() || 'Solar Inverter';
+            }
+          }
+       }
+    }
+
     if (
       categoryName.toLowerCase().includes('panel') ||
       categoryName.toLowerCase().includes('module') ||
       isWIFIDevice
     ) {
-      specifications['Features'] = 'WIFI';
+      specifications['Features'] = finalName;
     }
 
     return {
       id: p.id,
-      name: p.title || '',
+      name: finalName,
       category: categoryName,
       brand: brandName,
       isSolarPanel: categoryName.toLowerCase().includes('panel') || categoryName.toLowerCase().includes('module'),
       capacity,
       price: p.price || 0,
-      benefit: p.description || '',
+      benefit: (() => {
+        if (brandName.toLowerCase().includes('solplanet') && categoryName.toLowerCase().includes('on grid')) {
+          const phaseStr = (p.phase || (p as any).phase || '').trim();
+          if (phaseStr && !phaseStr.toUpperCase().includes('MPPT') && finalName.toUpperCase().includes('MPPT')) {
+            return `${phaseStr} - ${finalName}`;
+          }
+          return phaseStr ? phaseStr : finalName;
+        }
+        let desc = p.description || '';
+        if (brandName.toLowerCase().includes('solplanet')) {
+          desc = desc.replace(/WIFI/gi, '').trim();
+        }
+        return desc;
+      })(),
       image,
       images: p.images || [],
       warranty: (() => {
