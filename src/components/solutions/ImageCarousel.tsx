@@ -90,11 +90,10 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ children }) => {
                       <img
                         src={image}
                         alt={`logo-${i}`}
-                        className={`block object-contain ${
-                          image.includes('anchor') || image.includes('turnovolt') || image.includes('involitics')
+                        className={`block object-contain ${image.includes('anchor') || image.includes('turnovolt') || image.includes('involitics')
                             ? 'max-h-[160px] max-w-[90%] scale-[1.3]'
                             : 'max-h-[140px] max-w-[80%]'
-                        }`}
+                          }`}
                       />
                     </div>
                   ))}
