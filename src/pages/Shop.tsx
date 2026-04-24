@@ -368,6 +368,7 @@ const Shop = () => {
   const [lastScrollY, setLastScrollY] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
 
   // Responsive Items Per Page
   useEffect(() => {
@@ -379,9 +380,27 @@ const Shop = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Reset page when filters change
+  // Reset page and scroll to results on mobile when filters change
   useEffect(() => {
     setCurrentPage(1);
+    
+    // Check if the current category has brands
+    const currentBrands = getBrandsForCategory(selectedCategory);
+    const hasBrands = currentBrands.length > 0;
+
+    // SCROLL LOGIC:
+    // 1. Scroll if a brand is specifically selected
+    // 2. Scroll if a category name that has NO brands is selected
+    // 3. Scroll if 'All' is selected
+    if (window.innerWidth < 1024) {
+      const shouldScroll = selectedBrand !== null || (selectedCategory === 'All') || !hasBrands;
+      
+      if (shouldScroll) {
+        setTimeout(() => {
+          resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 300); // Slightly longer delay for better feel
+      }
+    }
   }, [selectedCategory, selectedBrand, selectedInverterType, selectedInverterBrand, searchQuery]);
 
   // Show floating button and detect scroll direction
@@ -727,7 +746,7 @@ const Shop = () => {
           </AnimatePresence>
 
            {/* Products Grid */}
-          <div className="py-16 bg-background">
+          <div ref={resultsRef} className="py-16 bg-background pt-8 scroll-mt-24">
             <div className="container mx-auto px-4">
               
 
