@@ -4,7 +4,7 @@ import { useCart } from '@/context/CartContext';
 import { useAdmin } from '@/context/AdminContext';
 import { Layout } from '@/components/layout/Layout';
 import { findBrandModel, SOLPLANET_MODELS } from '@/lib/brandData';
-import { Search, Grid, List, ChevronDown, Zap, ShoppingCart, Filter, Download } from 'lucide-react';
+import { Search, Grid, List, ChevronDown, Zap, ShoppingCart, Filter, Download, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -277,23 +277,23 @@ const Shop = () => {
     let finalName = p.title || '';
     // Replace WIFI with accurate MPPT info for Solplanet on-grid inverters
     if (brandName.toLowerCase().includes('solplanet')) {
-       // Specifically handle "WIFI" in title
-       if (finalName.toUpperCase().includes('WIFI')) {
-          const mpptKey = Object.keys(specifications).find(k => k.toLowerCase().includes('mppt'));
-          if (specifications[mpptKey || '']) {
-            finalName = specifications[mpptKey || ''];
+      // Specifically handle "WIFI" in title
+      if (finalName.toUpperCase().includes('WIFI')) {
+        const mpptKey = Object.keys(specifications).find(k => k.toLowerCase().includes('mppt'));
+        if (specifications[mpptKey || '']) {
+          finalName = specifications[mpptKey || ''];
+        } else {
+          const capStr = String(capacity).replace(/[^\d.]/g, '');
+          const isThreePhase = (p.phase || (p as any).phase || '').toLowerCase().includes('3ph') || (p.phase || (p as any).phase || '').toLowerCase().includes('three');
+          const match = SOLPLANET_MODELS.find(m => m.capacity === capStr && (isThreePhase ? m.phase === '3Ph' : m.phase === '1Ph'));
+          if (match?.mppt) finalName = match.mppt;
+          else if (categoryName.toLowerCase().includes('on grid')) {
+            finalName = isThreePhase ? '2-10 MPPT' : '1-2 MPPT';
           } else {
-            const capStr = String(capacity).replace(/[^\d.]/g, '');
-            const isThreePhase = (p.phase || (p as any).phase || '').toLowerCase().includes('3ph') || (p.phase || (p as any).phase || '').toLowerCase().includes('three');
-            const match = SOLPLANET_MODELS.find(m => m.capacity === capStr && (isThreePhase ? m.phase === '3Ph' : m.phase === '1Ph'));
-            if (match?.mppt) finalName = match.mppt;
-            else if (categoryName.toLowerCase().includes('on grid')) {
-              finalName = isThreePhase ? '2-10 MPPT' : '1-2 MPPT';
-            } else {
-              finalName = finalName.replace(/WIFI/gi, '').trim() || 'Solar Inverter';
-            }
+            finalName = finalName.replace(/WIFI/gi, '').trim() || 'Solar Inverter';
           }
-       }
+        }
+      }
     }
 
     if (
@@ -363,13 +363,51 @@ const Shop = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 20;
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const [showScrollUpBtn, setShowScrollUpBtn] = useState(false);
+  const [lastScrollY, setLastScrollY] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Responsive Items Per Page
+  useEffect(() => {
+    const handleResize = () => {
+      setItemsPerPage(window.innerWidth < 1024 ? 200 : 20);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedCategory, selectedBrand, selectedInverterType, selectedInverterBrand, searchQuery]);
+
+  // Show floating button and detect scroll direction
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      // Bottom button show threshold
+      setShowScrollTop(currentScrollY > 600);
+
+      // Top button show logic (scrolling up after threshold)
+      if (currentScrollY > 600) {
+        if (currentScrollY < lastScrollY) {
+          setShowScrollUpBtn(true);
+        } else {
+          setShowScrollUpBtn(false);
+        }
+      } else {
+        setShowScrollUpBtn(false);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -454,7 +492,8 @@ const Shop = () => {
   };
 
   return (
-    <Layout>
+    <>
+      <Layout>
       {/* Hero */}
       <ProductsHero />
 
@@ -462,18 +501,19 @@ const Shop = () => {
       <div className="py-16">
         <div className="container mx-auto px-4">
           {/* Filters */}
-          <div id="product-search" className="bg-white rounded-xl shadow-sm p-6 mb-8 sticky top-20 z-30">
+          <div id="product-search" className="bg-white rounded-xl shadow-sm p-6 mb-8 lg:sticky lg:top-20 z-30">
             <div className="flex flex-col lg:flex-row gap-4 justify-between items-center">
-              {/* Search */}
-              <div className="relative w-full lg:w-96">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Search products..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
+              <div className="flex flex-row gap-2 w-full lg:w-96">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder="Search products..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
               </div>
 
 
@@ -686,11 +726,13 @@ const Shop = () => {
             })()}
           </AnimatePresence>
 
-          {/* Products Grid */}
+           {/* Products Grid */}
           <div className="py-16 bg-background">
             <div className="container mx-auto px-4">
+              
+
               <div className="mb-8">
-                Showing {Math.min(filteredProducts.length, (currentPage - 1) * ITEMS_PER_PAGE + 1)} - {Math.min(filteredProducts.length, currentPage * ITEMS_PER_PAGE)} of {data.catalogStats.products} products
+                Showing {Math.min(filteredProducts.length, (currentPage - 1) * itemsPerPage + 1)} - {Math.min(filteredProducts.length, currentPage * itemsPerPage)} of {data.catalogStats.products} products
               </div>
 
               <div className={viewMode === 'grid'
@@ -698,7 +740,7 @@ const Shop = () => {
                 : 'flex flex-col gap-4'
               }>
                 {filteredProducts
-                  .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+                  .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
                   .map((product, index) => (
                     <Link key={product.id} to={`/product/${product.id}`} className="block cursor-pointer">
                       <motion.div
@@ -708,7 +750,7 @@ const Shop = () => {
                         className={`group bg-card rounded-2xl overflow-hidden border-4 border-orange-500 hover:border-orange-600 transition-all duration-300 card-hover h-full ${viewMode === 'list' ? 'flex flex-row' : ''
                           }`}
                       >
-                        <div className={`relative overflow-hidden bg-card ${viewMode === 'list' ? 'w-40 shrink-0' : 'aspect-square h-64'
+                        <div className={`relative flex justify-center items-center overflow-hidden bg-card ${viewMode === 'list' ? 'w-28 sm:w-48 shrink-0' : 'aspect-square h-64'
                           }`}>
                           <img
                             src={product.image}
@@ -735,18 +777,18 @@ const Shop = () => {
                           )}
                         </div>
 
-                        <div className="p-6 flex-1 flex flex-col">
+                        <div className={`flex flex-col min-w-0 ${viewMode === 'list' ? 'p-3 sm:p-6 flex-1' : 'p-6 flex-1'}`}>
                           {product.category.toLowerCase().includes('storage') ? (
                             <>
-                              {/* 1. Header (Brand) */}
+                              <h3 className={`font-heading font-semibold text-muted-foreground mb-1 group-hover:text-foreground transition-colors ${viewMode === 'list' ? 'text-lg line-clamp-2' : 'text-xl line-clamp-1'}`}>
+                                {product.name}
+                              </h3>
+                              {/* 1. Brand (Now under name) */}
                               {product.brand && (
-                                <div className="text-base font-heading font-bold text-primary mb-1 uppercase tracking-tighter leading-none">
+                                <div className="text-xs font-heading font-bold text-primary mb-4 uppercase tracking-wider leading-none">
                                   {product.brand}
                                 </div>
                               )}
-                              <h3 className="text-xl font-heading font-semibold text-muted-foreground mb-4 group-hover:text-foreground transition-colors line-clamp-1">
-                                {product.name}
-                              </h3>
 
                               {/* 2. Specs Box */}
                               <div className="grid grid-cols-2 gap-x-2 gap-y-2.5 text-[10px] mb-3 bg-slate-50/80 p-3 rounded-lg border border-slate-100/50">
@@ -791,15 +833,15 @@ const Shop = () => {
                                 {product.phase && <span className="px-2 py-0.5 bg-purple-50 text-purple-700 text-[10px] rounded-full uppercase font-bold tracking-wide">{product.phase}</span>}
                               </div>
 
-                              {/* 2. Brand Header */}
+                              <h3 className={`font-heading font-semibold text-muted-foreground mb-1 group-hover:text-foreground transition-colors ${viewMode === 'list' ? 'text-lg line-clamp-2' : 'text-xl line-clamp-1'}`}>
+                                {product.benefit}
+                              </h3>
+                              {/* 2. Brand Header (Now under benefit) */}
                               {product.brand && (
-                                <div className="text-base font-heading font-bold text-primary mb-1 uppercase tracking-tighter leading-none">
+                                <div className="text-xs font-heading font-bold text-primary mb-4 uppercase tracking-wider leading-none">
                                   {product.brand}
                                 </div>
                               )}
-                              <h3 className="text-xl font-heading font-semibold text-muted-foreground mb-4 group-hover:text-foreground transition-colors line-clamp-1">
-                                {product.benefit}
-                              </h3>
 
                               {/* 3. Watt and Model/Warranty */}
                               <div className="flex flex-wrap items-center gap-2 text-eco text-sm font-heading font-medium mb-2">
@@ -846,7 +888,7 @@ const Shop = () => {
               </div>
 
               {/* Pagination Controls */}
-              {filteredProducts.length > ITEMS_PER_PAGE && (
+              {filteredProducts.length > itemsPerPage && (
                 <div className="mt-12 flex justify-center items-center gap-4">
                   <Button
                     variant="outline"
@@ -856,11 +898,11 @@ const Shop = () => {
                     Previous
                   </Button>
                   <div className="flex items-center gap-2">
-                    {Array.from({ length: Math.ceil(filteredProducts.length / ITEMS_PER_PAGE) }).map((_, i) => {
+                    {Array.from({ length: Math.ceil(filteredProducts.length / itemsPerPage) }).map((_, i) => {
                       const page = i + 1;
                       if (
                         page === 1 ||
-                        page === Math.ceil(filteredProducts.length / ITEMS_PER_PAGE) ||
+                        page === Math.ceil(filteredProducts.length / itemsPerPage) ||
                         (page >= currentPage - 1 && page <= currentPage + 1)
                       ) {
                         return (
@@ -883,7 +925,7 @@ const Shop = () => {
                   </div>
                   <Button
                     variant="outline"
-                    disabled={currentPage === Math.ceil(filteredProducts.length / ITEMS_PER_PAGE)}
+                    disabled={currentPage === Math.ceil(filteredProducts.length / itemsPerPage)}
                     onClick={() => setCurrentPage(prev => prev + 1)}
                   >
                     Next
@@ -972,6 +1014,33 @@ const Shop = () => {
         </div>
       )}
     </Layout>
+
+    <AnimatePresence>
+      {(showScrollTop || showScrollUpBtn) && (
+        <motion.div
+          initial={{ opacity: 0, y: showScrollUpBtn ? -20 : 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: showScrollUpBtn ? -20 : 20 }}
+          className={`fixed ${showScrollUpBtn ? 'top-20' : 'bottom-6'} right-6 z-50 lg:hidden`}
+        >
+          <Button
+            variant="solar"
+            size="lg"
+            className="rounded-full shadow-2xl gap-2 font-bold py-6 px-6"
+            onClick={() => {
+              const element = document.getElementById('product-search');
+              if (element) {
+                element.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+          >
+            <Filter className="h-5 w-5" />
+            Change Brand
+          </Button>
+        </motion.div>
+      )}
+    </AnimatePresence>
+    </>
   );
 };
 
