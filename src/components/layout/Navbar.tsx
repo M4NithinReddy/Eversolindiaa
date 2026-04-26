@@ -104,14 +104,24 @@ export const Navbar = () => {
             </Button>
           </div>
 
-          {/* Mobile Menu Toggle */}
-          <button
-            className={`lg:hidden p-2 ${textColor}`}
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            aria-label="Toggle menu"
-          >
-            {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
+          {/* Mobile: Cart + Menu Toggle */}
+          <div className="lg:hidden flex items-center gap-2">
+            <Link to="/cart" className={`relative p-2 rounded-full hover:bg-white/10 transition-colors ${textColor}`}>
+              <ShoppingCart className="h-5 w-5" />
+              {totalItems > 0 && (
+                <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                  {totalItems > 99 ? '99+' : totalItems}
+                </span>
+              )}
+            </Link>
+            <button
+              className={`p-2 ${textColor}`}
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label="Toggle menu"
+            >
+              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
+          </div>
         </nav>
       </div>
 
@@ -138,10 +148,16 @@ export const Navbar = () => {
               ))}
               <div className="pt-4 flex flex-col gap-3">
                 <Button variant="outline" asChild className="w-full">
-                  <Link to="/contact">Get Quote</Link>
+                  <Link to="/cart" onClick={() => setIsMobileMenuOpen(false)}>
+                    <ShoppingCart className="h-4 w-4 mr-2" />
+                    Cart {totalItems > 0 && `(${totalItems})`}
+                  </Link>
+                </Button>
+                <Button variant="outline" asChild className="w-full">
+                  <Link to="/contact" onClick={() => setIsMobileMenuOpen(false)}>Get Quote</Link>
                 </Button>
                 <Button variant="solar" asChild className="w-full">
-                  <Link to="/shop">Shop Now</Link>
+                  <Link to="/shop" onClick={() => setIsMobileMenuOpen(false)}>Shop Now</Link>
                 </Button>
               </div>
             </div>

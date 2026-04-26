@@ -106,28 +106,47 @@ export async function deleteBrandApi(id: string): Promise<void> {
 }
 
 // ── IMAGE UPLOAD API ────────────────────────────────────────────────────────────
-// Uploads a single image (File) and returns a public URL
+// Uploads a single image (File) via pre-signed URL and returns a public URL.
+// Flow: 1) Ask Lambda for pre-signed PUT URL  2) PUT file directly to S3
 export async function uploadImageApi(file: File): Promise<string> {
-  const base64 = await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = error => reject(error);
-  });
-
+  // Step 1: Get a pre-signed upload URL from the Lambda
   const res = await fetch(`${IMG_BASE}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ image: base64 }),
+    body: JSON.stringify({
+      contentType: file.type || 'image/jpeg',
+      fileName: file.name,
+    }),
   });
+
   const json = await res.json();
   if (!res.ok) throw new Error(json?.message || `HTTP ${res.status}`);
-  // Unwrap: { statusCode, body: '{"url":"..."}' } or { url: "..." }
+
+  // Unwrap potential AWS double-encoding: { statusCode, body: '{"uploadUrl":"...","imageUrl":"..."}' }
+  let payload = json;
   if (typeof json?.body === 'string') {
-    const inner = JSON.parse(json.body);
-    return inner?.url ?? inner?.imageUrl ?? inner;
+    payload = JSON.parse(json.body);
   }
-  return json?.url ?? json?.imageUrl ?? json;
+
+  const uploadUrl: string = payload.uploadUrl;
+  const imageUrl: string = payload.imageUrl;
+
+  if (!uploadUrl || !imageUrl) {
+    throw new Error('Lambda did not return uploadUrl / imageUrl');
+  }
+
+  // Step 2: Upload the file directly to S3 (no base64, no size limit)
+  const s3Res = await fetch(uploadUrl, {
+    method: 'PUT',
+    headers: { 'Content-Type': file.type || 'image/jpeg' },
+    body: file, // raw binary — NOT base64
+  });
+
+  if (!s3Res.ok) {
+    throw new Error(`S3 upload failed: HTTP ${s3Res.status}`);
+  }
+
+  return imageUrl;
 }
 
 // ── PRODUCT APIs ────────────────────────────────────────────────────────────────
