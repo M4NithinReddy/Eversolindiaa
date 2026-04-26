@@ -115,7 +115,7 @@ const ProductList = ({ moduleId, brandId, subBrandId, onEdit, onView, selectionM
                 </div>
               )}
               <Card className={`flex-1 bg-white border-gray-200 hover:border-gray-300 hover:shadow-md transition-all duration-200 ${selectedIds.has(product.id) ? 'border-emerald-200 bg-emerald-50/20' : ''}`}>
-                <CardContent className="p-4">
+                <CardContent className="p-4 h-[120px] overflow-hidden">
                   <div className="flex gap-4">
                     {/* Image */}
                     <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-100 shrink-0 flex items-center justify-center">
@@ -132,10 +132,11 @@ const ProductList = ({ moduleId, brandId, subBrandId, onEdit, onView, selectionM
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
+                      {/* Top row: title + actions */}
                       <div className="flex items-start justify-between gap-2">
-                        <div>
+                        <div className="min-w-0">
                           <h3 className="text-gray-900 font-semibold text-sm truncate">{product.title}</h3>
-                          <p className="text-xs text-gray-400 mt-0.5">
+                          <p className="text-xs text-gray-400 mt-0.5 truncate">
                             {getModuleName(product.moduleId)} · {getBrandName(product.brandId)}
                             {getSubBrandName(product.subBrandId) && ` · ${getSubBrandName(product.subBrandId)}`}
                           </p>
@@ -194,44 +195,42 @@ const ProductList = ({ moduleId, brandId, subBrandId, onEdit, onView, selectionM
                           </div>
                         </div>
                       </div>
-                      <p className="text-xs text-gray-400 mt-1 line-clamp-2">{product.description || 'No description'}</p>
-                      <div className="flex gap-3 mt-2 text-xs">
+
+                      {/* Description — max 80 chars */}
+                      <p className="text-xs text-gray-400 mt-1.5 truncate" title={product.description}>
+                        {product.description ? (product.description.length > 80 ? product.description.slice(0, 80) + '…' : product.description) : 'No description'}
+                      </p>
+
+                      {/* Badges row — single line, no wrap */}
+                      <div className="flex items-center gap-2 mt-2 overflow-hidden">
                         {product.capacity && (
-                          <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                          <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-xs whitespace-nowrap shrink-0">
                             {product.capacity}
                           </span>
                         )}
                         {product.productType && (
-                          <span className="px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                          <span className="px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200 text-xs whitespace-nowrap shrink-0">
                             {product.productType}
                           </span>
                         )}
                         {product.price > 0 && (
-                          <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs whitespace-nowrap shrink-0">
                             ₹{product.price.toLocaleString()}
                           </span>
                         )}
                         {product.warranty && (
-                          <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                          <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-xs whitespace-nowrap shrink-0">
                             {product.warranty}
                           </span>
                         )}
-                        {(product.specifications ?? []).length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {(product.specifications ?? []).slice(0, 3).map((spec, i) => (
-                              <span key={i} className="px-1.5 py-0.5 rounded bg-gray-100 text-[10px] text-gray-500 border border-gray-200">
-                                {spec.key}: {spec.value}
-                              </span>
-                            ))}
-                            {(product.specifications ?? []).length > 3 && (
-                              <span className="text-[10px] text-gray-400">+{(product.specifications ?? []).length - 3} more</span>
-                            )}
-                          </div>
-                        )}
                         {(product.images ?? []).length > 0 && (
-                          <span className="text-gray-400 text-[10px]">{(product.images ?? []).length} images</span>
+                          <span className="px-2 py-0.5 rounded-full bg-gray-50 text-gray-500 border border-gray-200 text-xs whitespace-nowrap shrink-0">
+                            {(product.images ?? []).length} img
+                          </span>
                         )}
                       </div>
+
+
                     </div>
                   </div>
                 </CardContent>

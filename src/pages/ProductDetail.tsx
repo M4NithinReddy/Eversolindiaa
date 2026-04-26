@@ -70,6 +70,7 @@ const ProductDetail = () => {
   const navigate = useNavigate();
   const [added, setAdded] = useState(false);
   const [viewMode, setViewMode] = useState<'gallery' | '360'>('gallery');
+  const [descExpanded, setDescExpanded] = useState(false);
 
   const { data: apiProduct, isLoading, error } = useQuery({
     queryKey: ['product', id],
@@ -539,52 +540,69 @@ const ProductDetail = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-4">
+              <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-3">
                 {product.category}
               </span>
 
-              <h1 className="text-lg md:text-xl font-medium text-muted-foreground mb-1">
+              <h1 className="text-xl md:text-2xl font-heading font-bold text-foreground mb-0.5 leading-tight">
                 {product.name}
               </h1>
 
               {product.brand && product.brand !== 'Unknown' && (
-                <div className="text-lg md:text-xl font-heading font-bold text-primary mb-6 tracking-tighter uppercase leading-none">
+                <p className="text-base font-semibold text-primary mb-4 uppercase tracking-wide">
                   {product.brand}
-                </div>
+                </p>
               )}
 
-              <div className="flex items-center gap-4 text-eco font-medium mb-6">
-                <span className="flex items-center gap-2">
-                  {product.capacity ? `${product.capacity}${!/[wk]w$/i.test(String(product.capacity)) ? (product.isSolarPanel ? 'W' : 'kW') : ''}` : ''}
-                </span>
-                <span className="flex items-center gap-2">
-                  <Shield className="h-6 w-6" />
-                  {['solplanet', 'involtics', 'sunways', 'turno volt', 'dyness'].some(b => product.brand?.toLowerCase().trim().includes(b))
-                    ? `Model: ${product.specifications['Model / Type'] || product.specifications['Model Number'] || (product as any).model_number || (product as any).model || product.warranty}`
-                    : (
-                      <>
-                        <span className="font-semibold">Warranty:</span>
-                        {product.category === 'Solar Roof Top Hybrid Kit' ? product.warranty : `${product.warranty}${(product as any).isSolarPanel ? ' (product)' : ''}`}
-                      </>
-                    )}
-                </span>
+              {/* Metadata badges */}
+              <div className="flex flex-wrap items-center gap-3 mb-5">
+                {product.capacity && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200">
+                    <Zap className="h-3.5 w-3.5" />
+                    {product.capacity}{!/[wk]w$/i.test(String(product.capacity)) ? ((product as any).isSolarPanel ? 'W' : 'kW') : ''}
+                  </span>
+                )}
+                {['solplanet', 'involtics', 'sunways', 'turno volt', 'dyness'].some(b => product.brand?.toLowerCase().trim().includes(b)) ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-200">
+                    <Shield className="h-3.5 w-3.5" />
+                    Model: {product.specifications['Model / Type'] || product.specifications['Model Number'] || (product as any).model_number || (product as any).model || product.warranty}
+                  </span>
+                ) : product.warranty ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-200">
+                    <Shield className="h-3.5 w-3.5" />
+                    Warranty: {product.category === 'Solar Roof Top Hybrid Kit' ? product.warranty : `${product.warranty}${(product as any).isSolarPanel ? ' (product)' : ''}`}
+                  </span>
+                ) : null}
                 {product.productType && (
-                  <span className="flex items-center gap-2 text-primary font-bold">
-                    <Check className="h-5 w-5" />
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold border border-primary/20">
+                    <Check className="h-3.5 w-3.5" />
                     {product.productType}
                   </span>
                 )}
                 {product.phase && (
-                  <span className="flex items-center gap-2 text-blue-600 font-bold">
-                    <HighVoltageIcon className="h-5 w-5" />
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-violet-50 text-violet-700 text-xs font-semibold border border-violet-200">
+                    <HighVoltageIcon className="h-3.5 w-3.5" />
                     {product.phase}
                   </span>
                 )}
               </div>
 
-              <p className="text-muted-foreground text-lg mb-8 leading-relaxed">
-                {product.description}
-              </p>
+              {/* Description with Read More */}
+              {product.description && (
+                <div className="mb-6">
+                  <p className={`text-sm text-muted-foreground leading-relaxed ${!descExpanded ? 'line-clamp-3' : ''}`}>
+                    {product.description}
+                  </p>
+                  {product.description.length > 200 && (
+                    <button
+                      onClick={() => setDescExpanded(!descExpanded)}
+                      className="text-primary text-xs font-medium mt-1 hover:underline inline-flex items-center gap-1"
+                    >
+                      {descExpanded ? (<>Show less <ChevronUp className="h-3 w-3" /></>) : (<>Read more <ChevronDown className="h-3 w-3" /></>)}
+                    </button>
+                  )}
+                </div>
+              )}
 
               <div className="flex items-end gap-4 mb-8">
                 <span className="text-4xl font-heading font-bold text-primary">
