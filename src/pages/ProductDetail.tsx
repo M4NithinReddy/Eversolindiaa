@@ -305,6 +305,7 @@ const ProductDetail = () => {
       productType: pData.productType || pData.product_type || '',
       phase: pData.phase || '',
       isOutOfStock: !!pData.isOutOfStock,
+      gstPercent: typeof pData.gstPercent === 'number' ? pData.gstPercent : (parseFloat(String(pData.gstPercent ?? '')) || 0),
     };
   }, [apiProduct, adminData]);
 
@@ -397,6 +398,7 @@ const ProductDetail = () => {
       price: product.price,
       image: product.image,
       warranty: product.warranty,
+      gstPercent: product.gstPercent || 0,
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
@@ -604,7 +606,7 @@ const ProductDetail = () => {
                 </div>
               )}
 
-              <div className="flex items-end gap-4 mb-8">
+              <div className="flex items-end gap-4 mb-2">
                 <span className="text-4xl font-heading font-bold text-primary">
                   {formatPrice(product.price)}
                 </span>
@@ -615,6 +617,20 @@ const ProductDetail = () => {
                   Save 20%
                 </span>
               </div>
+              {(product.gstPercent || 0) > 0 && (
+                <div className="flex items-center gap-3 mb-8 text-sm text-muted-foreground">
+                  <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 text-xs font-medium">
+                    GST {product.gstPercent}%
+                  </span>
+                  <span>
+                    + {formatPrice((product.price * (product.gstPercent || 0)) / 100)} GST
+                  </span>
+                  <span className="font-semibold text-foreground">
+                    = {formatPrice(product.price + (product.price * (product.gstPercent || 0)) / 100)} incl. GST
+                  </span>
+                </div>
+              )}
+              {!(product.gstPercent && product.gstPercent > 0) && <div className="mb-8" />}
 
               <div className="flex flex-col sm:flex-row gap-4 mb-8">
                 <Button

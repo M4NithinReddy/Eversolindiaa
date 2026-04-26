@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 
 export type CartItem = {
     id: string;
@@ -10,6 +10,7 @@ export type CartItem = {
     image: string;
     warranty: string;
     quantity: number;
+    gstPercent?: number;
 };
 
 type CartContextType = {
@@ -17,9 +18,12 @@ type CartContextType = {
     addToCart: (item: Omit<CartItem, 'quantity'>) => void;
     removeFromCart: (id: string) => void;
     updateQuantity: (id: string, quantity: number) => void;
+    updateCartItemData: (id: string, data: Partial<CartItem>) => void;
     clearCart: () => void;
     totalItems: number;
     totalPrice: number;
+    totalGst: number;
+    grandTotal: number;
 };
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -42,7 +46,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         setItems(prev => {
             const existing = prev.find(i => i.id === product.id);
             if (existing) {
-                return prev.map(i => i.id === product.id ? { ...i, quantity: i.quantity + 1 } : i);
+                // Merge latest product data (e.g. gstPercent) + increment quantity
+                return prev.map(i => i.id === product.id ? { ...i, ...product, quantity: i.quantity + 1 } : i);
             }
             return [...prev, { ...product, quantity: 1 }];
         });
@@ -57,13 +62,22 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         setItems(prev => prev.map(i => i.id === id ? { ...i, quantity } : i));
     };
 
+    const updateCartItemData = useCallback((id: string, data: Partial<CartItem>) => {
+        setItems(prev => prev.map(i => i.id === id ? { ...i, ...data } : i));
+    }, []);
+
     const clearCart = () => setItems([]);
 
     const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
     const totalPrice = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    const totalGst = items.reduce((sum, i) => {
+        const gst = (i.gstPercent || 0) > 0 ? (i.price * i.quantity * (i.gstPercent || 0)) / 100 : 0;
+        return sum + gst;
+    }, 0);
+    const grandTotal = totalPrice + totalGst;
 
     return (
-        <CartContext.Provider value={{ items, addToCart, removeFromCart, updateQuantity, clearCart, totalItems, totalPrice }}>
+        <CartContext.Provider value={{ items, addToCart, removeFromCart, updateQuantity, updateCartItemData, clearCart, totalItems, totalPrice, totalGst, grandTotal }}>
             {children}
         </CartContext.Provider>
     );

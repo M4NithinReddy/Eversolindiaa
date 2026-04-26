@@ -43,6 +43,7 @@ const ProductForm = ({ moduleId, brandId, subBrandId, editProduct, onCancel, onS
   const [selectedSubBrandId, setSelectedSubBrandId] = useState(editProduct?.subBrandId || subBrandId || '');
   const [productType, setProductType] = useState(editProduct?.productType || '');
   const [isOutOfStock, setIsOutOfStock] = useState(editProduct?.isOutOfStock || false);
+  const [gstPercent, setGstPercent] = useState(editProduct?.gstPercent?.toString() || '');
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -112,6 +113,7 @@ const ProductForm = ({ moduleId, brandId, subBrandId, editProduct, onCancel, onS
       datasheet: datasheet.trim(),
       productType: productType.trim() || undefined,
       isOutOfStock,
+      gstPercent: parseFloat(gstPercent) || 0,
     };
 
     if (onSaveOverride) {
@@ -318,6 +320,29 @@ const ProductForm = ({ moduleId, brandId, subBrandId, editProduct, onCancel, onS
                 className="bg-gray-50 border-gray-300 text-gray-900"
               />
             </div>
+            <div>
+              <Label className="text-gray-600 text-xs mb-1.5 block">GST (%)</Label>
+              <Input
+                type="number"
+                value={gstPercent}
+                onChange={e => setGstPercent(e.target.value)}
+                placeholder="e.g., 12"
+                className="bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400"
+              />
+            </div>
+            {(parseFloat(price) > 0 && parseFloat(gstPercent) > 0) && (
+              <div className="flex flex-col justify-end">
+                <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                  <p className="text-[10px] text-amber-600 font-medium uppercase tracking-wider">GST Amount</p>
+                  <p className="text-sm font-bold text-amber-700">
+                    ₹{((parseFloat(price) * parseFloat(gstPercent)) / 100).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                  </p>
+                  <p className="text-[10px] text-gray-500">
+                    Total: ₹{(parseFloat(price) + (parseFloat(price) * parseFloat(gstPercent)) / 100).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                  </p>
+                </div>
+              </div>
+            )}
             <div>
               <Label className="text-gray-600 text-xs mb-1.5 block">System Size</Label>
               <Input
