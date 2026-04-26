@@ -159,6 +159,7 @@ export interface ApiProduct {
   price: number; capacity: string; phase?: string; warranty: string; datasheet: string;
   images360?: string[];
   isOutOfStock?: boolean;
+  gstPercent?: number;
   createdAt: string;
 }
 

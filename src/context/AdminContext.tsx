@@ -17,7 +17,7 @@ export interface AdminProduct {
   productType?: string;
   specifications: ProductSpecification[]; benefits: string[];
   applications: string[]; price: number; capacity: string; phase?: string;
-  warranty: string; datasheet: string; isOutOfStock?: boolean; createdAt: string;
+  warranty: string; datasheet: string; isOutOfStock?: boolean; gstPercent?: number; createdAt: string;
   // New flat schema fields (from updated DynamoDB table)
   brandName?: string;
   category?: string;
@@ -102,6 +102,7 @@ function normalizeProduct(raw: any): AdminProduct {
     warranty: raw.warranty ?? '',
     datasheet: raw.datasheet ?? '',
     isOutOfStock,
+    gstPercent: typeof raw.gstPercent === 'number' ? raw.gstPercent : (parseFloat(String(raw.gstPercent ?? '')) || 0),
     createdAt: raw.createdAt ?? new Date().toISOString(),
   } as AdminProduct;
 }

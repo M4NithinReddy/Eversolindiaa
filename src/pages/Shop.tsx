@@ -342,6 +342,7 @@ const Shop = () => {
       productType,
       phase: p.phase || '',
       isOutOfStock: !!p.isOutOfStock,
+      gstPercent: typeof p.gstPercent === 'number' ? p.gstPercent : (parseFloat(String(p.gstPercent ?? '')) || 0),
     };
   });
 
@@ -895,7 +896,7 @@ const Shop = () => {
                               >
                                 <Download className="h-4 w-4" />
                               </Button>
-                              <Button variant="solar" size="sm" onClick={(e) => { e.preventDefault(); e.stopPropagation(); addToCart({ id: product.id, name: product.name, category: product.category, brand: product.brand, capacity: product.capacity, price: product.price, image: product.image, warranty: product.warranty }); }}>
+                              <Button variant="solar" size="sm" onClick={(e) => { e.preventDefault(); e.stopPropagation(); addToCart({ id: product.id, name: product.name, category: product.category, brand: product.brand, capacity: product.capacity, price: product.price, image: product.image, warranty: product.warranty, gstPercent: product.gstPercent || 0 }); }}>
                                 <ShoppingCart className="h-4 w-4" />
                               </Button>
                             </div>
