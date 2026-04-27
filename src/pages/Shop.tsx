@@ -854,7 +854,7 @@ const Shop = () => {
                               </div>
 
                               <h3 className={`font-heading font-semibold text-muted-foreground mb-1 group-hover:text-foreground transition-colors ${viewMode === 'list' ? 'text-lg line-clamp-2' : 'text-xl line-clamp-1'}`}>
-                                {product.benefit}
+                                {product.name}
                               </h3>
                               {/* 2. Brand Header (Now under benefit) */}
                               {product.brand && (
@@ -878,10 +878,11 @@ const Shop = () => {
                                 </span>
                               </div>
 
-                              {/* 4. Title & Brand */}
-                              <div className="flex flex-wrap items-center gap-2 mb-4 mt-auto pt-2">
-                                <span className="text-xl font-heading font-medium text-gray-400 tracking-wide italic">{product.name}</span>
-                              </div>
+                              {product.benefit && (
+                                <div className="flex flex-wrap items-center gap-2 mb-4 mt-auto pt-2">
+                                  <span className="text-sm font-heading font-medium text-gray-400 tracking-wide italic line-clamp-2">{product.benefit}</span>
+                                </div>
+                              )}
                             </>
                           )}
                           <div className="flex items-center justify-between gap-4">
