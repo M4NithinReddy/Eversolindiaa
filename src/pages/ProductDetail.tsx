@@ -175,23 +175,23 @@ const ProductDetail = () => {
     let finalName = pData.title || '';
     // Replace WIFI with accurate MPPT info for Solplanet on-grid inverters
     if (brandName.toLowerCase().includes('solplanet')) {
-       // Specifically handle "WIFI" in title
-       if (finalName.toUpperCase().includes('WIFI')) {
-          const mpptKey = Object.keys(specifications).find(k => k.toLowerCase().includes('mppt'));
-          if (specifications[mpptKey || '']) {
-            finalName = specifications[mpptKey || ''];
+      // Specifically handle "WIFI" in title
+      if (finalName.toUpperCase().includes('WIFI')) {
+        const mpptKey = Object.keys(specifications).find(k => k.toLowerCase().includes('mppt'));
+        if (specifications[mpptKey || '']) {
+          finalName = specifications[mpptKey || ''];
+        } else {
+          const capStr = String(capacity).replace(/[^\d.]/g, '');
+          const isThreePhase = (pData.phase || '').toLowerCase().includes('3ph') || (pData.phase || '').toLowerCase().includes('three');
+          const match = SOLPLANET_MODELS.find(m => m.capacity === capStr && (isThreePhase ? m.phase === '3Ph' : m.phase === '1Ph'));
+          if (match?.mppt) finalName = match.mppt;
+          else if (categoryName.toLowerCase().includes('on grid')) {
+            finalName = isThreePhase ? '2-10 MPPT' : '1-2 MPPT';
           } else {
-            const capStr = String(capacity).replace(/[^\d.]/g, '');
-            const isThreePhase = (pData.phase || '').toLowerCase().includes('3ph') || (pData.phase || '').toLowerCase().includes('three');
-            const match = SOLPLANET_MODELS.find(m => m.capacity === capStr && (isThreePhase ? m.phase === '3Ph' : m.phase === '1Ph'));
-            if (match?.mppt) finalName = match.mppt;
-            else if (categoryName.toLowerCase().includes('on grid')) {
-              finalName = isThreePhase ? '2-10 MPPT' : '1-2 MPPT';
-            } else {
-              finalName = finalName.replace(/WIFI/gi, '').trim() || 'Solar Inverter';
-            }
+            finalName = finalName.replace(/WIFI/gi, '').trim() || 'Solar Inverter';
           }
-       }
+        }
+      }
     }
 
     if (isSolarPanel || isWIFIDevice) {
@@ -438,7 +438,7 @@ const ProductDetail = () => {
         <div className="pt-32 pb-16 flex flex-col items-center justify-center min-h-[500px]">
           <h2 className="text-2xl font-bold mb-4">Product Not Found</h2>
           <p className="text-muted-foreground mb-8">The product you are looking for does not exist or has been removed.</p>
-          <Button onClick={() => navigate('/shop')}>Back to Shop</Button>
+          <Button onClick={() => navigate('/shop#product-search')}>Back to Shop</Button>
         </div>
       </Layout>
     );
@@ -449,7 +449,7 @@ const ProductDetail = () => {
       <section className="pt-28 pb-8 bg-card border-b border-border">
         <div className="container mx-auto px-4">
           <div className="flex items-center gap-2 text-sm">
-            <Link to="/shop" className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
+            <Link to="/shop#product-search" state={{ autoFilterCategory: product.category, autoFilterBrand: product.brand }} className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
               <ArrowLeft className="h-4 w-4" />
               Back to Shop
             </Link>

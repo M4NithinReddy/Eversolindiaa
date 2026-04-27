@@ -139,6 +139,8 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
         if (name === 'solar roof top on grid kit' || name === 'solar rooftop on grid kit') return { ...m, name: 'Solar Roof Top On Grid Kit' };
         if (name === 'solar roof top hybrid kit' || name === 'solar rooftop hybrid kit') return { ...m, name: 'Solar Roof Top Hybrid Kit' };
         if (name.includes('battery energy storage system') || name === 'bess') return { ...m, name: 'Battery Energy Storage System ( BESS )' };
+        if (name === 'solar earthing kit' || name === 'earthing kit') return { ...m, name: 'Solar Components' };
+        if (name === 'solar dc cables' || name === 'dc cables') return { ...m, name: 'Solar AC DC Cables' };
         return m;
       }));
     } catch { /* */ }
@@ -158,6 +160,8 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
         if (name === 'solar roof top on grid kit' || name === 'solar rooftop on grid kit') return { ...m, name: 'Solar Roof Top On Grid Kit' };
         if (name === 'solar roof top hybrid kit' || name === 'solar rooftop hybrid kit') return { ...m, name: 'Solar Roof Top Hybrid Kit' };
         if (name.includes('battery energy storage system') || name === 'bess') return { ...m, name: 'Battery Energy Storage System ( BESS )' };
+        if (name === 'solar earthing kit' || name === 'earthing kit') return { ...m, name: 'Solar Components' };
+        if (name === 'solar dc cables' || name === 'dc cables') return { ...m, name: 'Solar AC DC Cables' };
         return m;
       }));
     }).catch(e => setModulesError(e.message)).finally(() => setModulesLoading(false));
@@ -346,11 +350,11 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     finally { setProductsBusy(false); }
   }, [refreshProducts]);
 
-  // APAR, ORIENT, POLYCAB are virtual/frontend-only brands for the "Solar DC Cables"
+  // APAR, ORIENT, POLYCAB are virtual/frontend-only brands for the "Solar AC DC Cables"
   // category that don't exist in the database. We inject them into the brands list
   // so they appear in the Admin Dashboard and Brand Manager.
   const enrichedBrands = useMemo(() => {
-    const dcCableModule = modules.find(m => m.name === 'Solar DC Cables');
+    const dcCableModule = modules.find(m => m.name === 'Solar AC DC Cables');
     if (!dcCableModule) return brands;
 
     const virtualBrands: AdminBrand[] = [

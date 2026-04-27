@@ -19,6 +19,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import LoginPortal from "./pages/LoginPortal";
 import UserDashboard from "./pages/UserDashboard";
 import PartnerDashboard from "./pages/PartnerDashboard";
+import PolicyPage from "./pages/PolicyPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -49,6 +50,11 @@ const App = () => (
               <Route path="/userdashboard" element={<UserDashboard />} />
               <Route path="/partner-dashboard" element={<PartnerDashboard />} />
               <Route path="/partnerdashboard" element={<PartnerDashboard />} />
+              <Route path="/shipping-policy" element={<PolicyPage />} />
+              <Route path="/payment-policy" element={<PolicyPage />} />
+              <Route path="/privacy" element={<PolicyPage />} />
+              <Route path="/cancellation-policy" element={<PolicyPage />} />
+              <Route path="/terms" element={<PolicyPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
