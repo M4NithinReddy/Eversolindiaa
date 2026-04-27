@@ -38,7 +38,7 @@ export const Footer = () => {
               Generate | Conserve | Contribute
             </p>
             <div className="flex gap-4 mt-6">
-              <a href="#" className="p-2 rounded-full bg-primary-foreground/10 hover:bg-solar hover:text-accent-foreground transition-all duration-300">
+              <a href="https://www.facebook.com/profile.php?id=61567848662496" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-primary-foreground/10 hover:bg-solar hover:text-accent-foreground transition-all duration-300">
                 <Facebook className="h-5 w-5" />
               </a>
               <a href="#" className="p-2 rounded-full bg-primary-foreground/10 hover:bg-solar hover:text-accent-foreground transition-all duration-300">

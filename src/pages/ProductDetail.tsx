@@ -198,12 +198,13 @@ const ProductDetail = () => {
       specifications['Features'] = finalName;
     }
 
-    // Helper to split by multiple delimiters (* and ,)
+    // Helper to split by * | newline only (NOT commas, to preserve parenthetical lists)
     const splitItems = (raw: any): string[] => {
       if (Array.isArray(raw) && raw.length > 0) return raw;
       if (typeof raw === 'string' && raw.trim()) {
-        // Split by *, comma, or newline and filter
-        return String(raw).split(/[\*\n\|]/).flatMap(s => s.split(',')).map((s: string) => s.trim()).filter(Boolean);
+        // Split by *, |, or newline only — commas inside parentheses would break entries like
+        // "Commercial buildings (offices, malls, hotels)" into separate items.
+        return String(raw).split(/[*\n|]/).map((s: string) => s.trim()).filter(Boolean);
       }
       return [];
     };
@@ -237,6 +238,19 @@ const ProductDetail = () => {
       ];
     }
 
+    // ── Solar Roof Top Hybrid Kit override ─────────────────────────────────
+    if (categoryName === 'Solar Roof Top Hybrid Kit') {
+      applications = [
+        'Residential homes for reliable and cost-effective power',
+        'Commercial buildings (offices, malls, hotels)',
+        'Industrial facilities for continuous operations',
+        'Hospitals and healthcare centers (critical backup power)',
+        'Educational institutions (schools, colleges)',
+        'Rural and remote areas with limited grid access',
+        'Telecom towers and data centers',
+        'Agricultural use (irrigation pumps, farm operations)',
+      ];
+    }
 
     // Resolve capacity
     const capacity = pData.capacity || pData.capacity_kwh_ah || pData.wattage_w || pData.system_size_kw || '';
@@ -288,9 +302,13 @@ const ProductDetail = () => {
       images: pData.images || [],
       warranty: (() => {
         if (pData.warranty) return pData.warranty;
-        if (categoryName === 'Solar Roof Top Hybrid Kit') {
+        if (categoryName === 'Solar Roof Top Hybrid Kit' || categoryName === 'Solar Roof Top On Grid Kit') {
           const wKey = Object.keys(specifications).find(k => k.toLowerCase().includes('warranty'));
-          if (wKey) return String(specifications[wKey]).replace(/^[:\s-]+/, '').trim();
+          if (wKey) {
+            const val = String(specifications[wKey]).replace(/^[:\s-]+/, '').trim();
+            if (val.toLowerCase().includes('manufacturer')) return val;
+            return `Manufacturer Warranty: ${val}`;
+          }
         }
         return '';
       })(),
@@ -572,7 +590,8 @@ const ProductDetail = () => {
                 ) : product.warranty ? (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-200">
                     <Shield className="h-3.5 w-3.5" />
-                    Warranty: {product.category === 'Solar Roof Top Hybrid Kit' ? product.warranty : `${product.warranty}${(product as any).isSolarPanel ? ' (product)' : ''}`}
+                    {!['Solar Roof Top Hybrid Kit', 'Solar Roof Top On Grid Kit'].includes(product.category) && 'Warranty: '}
+                    {['Solar Roof Top Hybrid Kit', 'Solar Roof Top On Grid Kit'].includes(product.category) ? product.warranty : `${product.warranty}${(product as any).isSolarPanel ? ' (product)' : ''}`}
                   </span>
                 ) : null}
                 {product.productType && (
@@ -644,7 +663,7 @@ const ProductDetail = () => {
                     <>OUT OF STOCK</>
                   ) : (
                     <>
-                      {added ? <Check className="h-5 w-5" /> : <ShoppingCart className="h-5 w-5" />}
+                      {added ? <Check className="h-6 w-6" /> : <ShoppingCart className="h-6 w-6" />}
                       {added ? 'Added to Cart!' : 'Add to Cart'}
                     </>
                   )}

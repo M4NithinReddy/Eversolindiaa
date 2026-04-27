@@ -111,21 +111,23 @@ export const FeaturedProducts = () => {
                   <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
                     {product.benefit}
                   </p>
-                  <div className="flex items-center justify-between mt-auto pt-4">
-                    <span className="text-2xl font-heading font-bold text-primary">
+                  <div className="flex flex-nowrap items-center justify-between gap-2 mt-auto pt-4 w-full">
+                    <span className="text-xl sm:text-2xl font-heading font-bold text-primary truncate">
                       {product.price}
                     </span>
-                    {product.hasProduct ? (
-                      <Button variant="solar" size="sm" asChild>
-                        <Link to={`/product/${product.id}`}>
-                          <ShoppingCart className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                    ) : (
-                      <Button variant="solar" size="sm" disabled>
-                        <ShoppingCart className="h-4 w-4" opacity={0.5} />
-                      </Button>
-                    )}
+                    <div className="shrink-0">
+                      {product.hasProduct ? (
+                        <Button variant="solar" size="sm" className="px-2 sm:px-3 h-8 sm:h-9" asChild>
+                          <Link to={`/product/${product.id}`}>
+                            <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" />
+                          </Link>
+                        </Button>
+                      ) : (
+                        <Button variant="solar" size="sm" className="px-2 sm:px-3 h-8 sm:h-9" disabled>
+                          <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" opacity={0.5} />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </motion.div>

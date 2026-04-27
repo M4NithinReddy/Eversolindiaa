@@ -363,9 +363,13 @@ const Shop = () => {
       images: p.images || [],
       warranty: (() => {
         if (p.warranty) return p.warranty;
-        if (categoryName === 'Solar Roof Top Hybrid Kit') {
+        if (categoryName.toLowerCase().includes('kit') || categoryName === 'Solar Roof Top Hybrid Kit' || categoryName === 'Solar Roof Top On Grid Kit') {
           const wKey = Object.keys(specifications).find(k => k.toLowerCase().includes('warranty'));
-          if (wKey) return String(specifications[wKey]).replace(/^[:\s-]+/, '').trim();
+          if (wKey) {
+            const val = String(specifications[wKey]).replace(/^[:\s-]+/, '').trim();
+            if (val.toLowerCase().includes('manufacturer')) return val;
+            return `Manufacturer Warranty: ${val}`;
+          }
         }
         return '';
       })(),
@@ -555,7 +559,7 @@ const Shop = () => {
       <div className="py-16">
         <div className="container mx-auto px-4">
           {/* Filters */}
-          <div id="product-search" className="bg-white rounded-xl shadow-sm p-6 mb-8 lg:sticky lg:top-20 z-30">
+          <div ref={resultsRef} id="product-search" className="bg-white rounded-xl shadow-sm p-6 mb-8 lg:sticky lg:top-20 z-30 scroll-mt-24">
             <div className="flex flex-col lg:flex-row gap-4 justify-between items-center">
               <div className="flex flex-row gap-2 w-full lg:w-96">
                 <div className="relative flex-1">
@@ -781,7 +785,7 @@ const Shop = () => {
           </AnimatePresence>
 
            {/* Products Grid */}
-          <div ref={resultsRef} className="py-16 bg-background pt-8 scroll-mt-24">
+          <div className="py-16 bg-background pt-8">
             <div className="container mx-auto px-4">
               
 
@@ -801,10 +805,10 @@ const Shop = () => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.4, delay: index * 0.05 }}
-                        className={`group bg-card rounded-2xl overflow-hidden border-4 border-orange-500 hover:border-orange-600 transition-all duration-300 card-hover h-full ${viewMode === 'list' ? 'flex flex-row' : ''
+                        className={`group bg-card rounded-2xl overflow-hidden border-2 md:border-4 border-orange-500 hover:border-orange-600 transition-all duration-300 card-hover h-full ${viewMode === 'list' ? 'flex flex-row' : ''
                           }`}
                       >
-                        <div className={`relative flex justify-center items-center overflow-hidden bg-card ${viewMode === 'list' ? 'w-28 sm:w-48 shrink-0' : 'aspect-square h-64'
+                        <div className={`relative flex justify-center items-center overflow-hidden bg-card ${viewMode === 'list' ? 'w-28 sm:w-48 shrink-0' : 'h-64'
                           }`}>
                           <img
                             src={product.image}
@@ -831,108 +835,92 @@ const Shop = () => {
                           )}
                         </div>
 
-                        <div className={`flex flex-col min-w-0 ${viewMode === 'list' ? 'p-3 sm:p-6 flex-1' : 'p-6 flex-1'}`}>
+                        <div className={`flex flex-col min-w-0 ${viewMode === 'list' ? 'p-3 sm:p-6 flex-1' : 'p-4 sm:p-6 flex-1'}`}>
+                          {/* 1. Category-specific Badges (Type, Phase, Cooling) - Always at top */}
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            {product.productType && <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] rounded-full uppercase font-bold tracking-wide">{product.productType}</span>}
+                            {product.phase && <span className="px-2 py-0.5 bg-purple-50 text-purple-700 text-[10px] rounded-full uppercase font-bold tracking-wide">{product.phase}</span>}
+                            {product.specifications?.['Cooling'] && <span className="px-2 py-0.5 bg-cyan-50 text-cyan-700 text-[10px] rounded-full uppercase font-bold tracking-wide">{product.specifications['Cooling']}</span>}
+                          </div>
+
+                          {/* 2. Main Title */}
+                          <h3 className={`font-heading font-semibold text-muted-foreground mb-1 group-hover:text-foreground transition-colors ${viewMode === 'list' ? 'text-lg line-clamp-2' : 'text-xl line-clamp-1'}`}>
+                            {product.name}
+                          </h3>
+
+                          {/* 3. Brand Identification */}
+                          {product.brand && (
+                            <div className="text-xs font-heading font-bold text-primary mb-3 uppercase tracking-wider leading-none">
+                              {product.brand}
+                            </div>
+                          )}
+
+                          {/* 4. Product Specific Content (Specs) */}
                           {product.category.toLowerCase().includes('storage') ? (
-                            <>
-                              <h3 className={`font-heading font-semibold text-muted-foreground mb-1 group-hover:text-foreground transition-colors ${viewMode === 'list' ? 'text-lg line-clamp-2' : 'text-xl line-clamp-1'}`}>
-                                {product.name}
-                              </h3>
-                              {/* 1. Brand (Now under name) */}
-                              {product.brand && (
-                                <div className="text-xs font-heading font-bold text-primary mb-4 uppercase tracking-wider leading-none">
-                                  {product.brand}
-                                </div>
-                              )}
-
-                              {/* 2. Specs Box */}
-                              <div className="grid grid-cols-2 gap-x-2 gap-y-2.5 text-[10px] mb-3 bg-slate-50/80 p-3 rounded-lg border border-slate-100/50">
-                                <div className="flex flex-col">
-                                  <span className="text-slate-500 font-heading font-semibold mb-0.5 uppercase tracking-wider text-[10px]">Capacity</span>
-                                  <span className="font-heading font-bold text-slate-800">{product.capacity || '-'}</span>
-                                </div>
-                                <div className="flex flex-col">
-                                  <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[10px]">Voltage</span>
-                                  <span className="font-bold text-slate-800 truncate" title={product.specifications?.['Battery Nominal Voltage'] || product.specifications?.['Battery Nomi'] || product.specifications?.['Operating V'] || product.specifications?.['Operating Voltage Range'] || '-'} >{product.specifications?.['Battery Nominal Voltage'] || product.specifications?.['Battery Nomi'] || product.specifications?.['Operating V'] || product.specifications?.['Operating Voltage Range'] || '-'}</span>
-                                </div>
-                                <div className="flex flex-col">
-                                  <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[10px]">Cycle Life</span>
-                                  <span className="font-bold text-slate-800">{product.specifications?.['Cycle Life'] || '-'}</span>
-                                </div>
-                                <div className="flex flex-col">
-                                  <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[10px]">{['solplanet', 'involtics', 'sunways', 'turno volt', 'dyness'].some(b => product.brand?.toLowerCase().trim().includes(b)) ? 'Model' : 'Warranty'}</span>
-                                  <span className="font-bold text-slate-800 truncate">
-                                    {['solplanet', 'involtics', 'sunways', 'turno volt', 'dyness'].some(b => product.brand?.toLowerCase().trim().includes(b))
-                                      ? `Model: ${product.specifications['Model / Type'] || product.specifications['Model Number'] || (product as any).model_number || (product as any).model || product.warranty}`
-                                      : (product.warranty || '-')}
-                                  </span>
-                                </div>
+                            <div className="grid grid-cols-2 gap-x-2 gap-y-2.5 text-[10px] mb-3 bg-slate-50/80 p-3 rounded-lg border border-slate-100/50">
+                              <div className="flex flex-col">
+                                <span className="text-slate-500 font-heading font-semibold mb-0.5 uppercase tracking-wider text-[10px]">Capacity</span>
+                                <span className="font-heading font-bold text-slate-800">{product.capacity || '-'}</span>
                               </div>
-
-                              {/* 3. Badges (Type & Cooling) */}
-                              <div className="flex flex-wrap gap-2 mb-4">
-                                {product.productType && <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] rounded-full uppercase font-bold tracking-wide">{product.productType}</span>}
-                                {product.specifications?.['Cooling'] && <span className="px-2 py-0.5 bg-cyan-50 text-cyan-700 text-[10px] rounded-full uppercase font-bold tracking-wide">{product.specifications['Cooling']}</span>}
+                              <div className="flex flex-col">
+                                <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[10px]">Voltage</span>
+                                <span className="font-bold text-slate-800 truncate" title={product.specifications?.['Battery Nominal Voltage'] || product.specifications?.['Battery Nomi'] || product.specifications?.['Operating V'] || product.specifications?.['Operating Voltage Range'] || '-'} >{product.specifications?.['Battery Nominal Voltage'] || product.specifications?.['Battery Nomi'] || product.specifications?.['Operating V'] || product.specifications?.['Operating Voltage Range'] || '-'}</span>
                               </div>
-
-                              {/* 4. Sub-info (Description & Brand) */}
-                              <div className="flex flex-wrap items-center gap-2 mb-4 mt-auto pt-2">
-                                <span className="text-sm font-medium text-gray-400 line-clamp-1 flex-1 italic">{product.benefit || 'Energy Storage Module'}</span>
+                              <div className="flex flex-col">
+                                <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[10px]">Cycle Life</span>
+                                <span className="font-bold text-slate-800">{product.specifications?.['Cycle Life'] || '-'}</span>
                               </div>
-                            </>
+                              <div className="flex flex-col">
+                                <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[10px]">{['solplanet', 'involtics', 'sunways', 'turno volt', 'dyness'].some(b => product.brand?.toLowerCase().trim().includes(b)) ? 'Model' : 'Warranty'}</span>
+                                <span className="font-bold text-slate-800 truncate">
+                                  {['solplanet', 'involtics', 'sunways', 'turno volt', 'dyness'].some(b => product.brand?.toLowerCase().trim().includes(b))
+                                    ? `Model: ${product.specifications['Model / Type'] || product.specifications['Model Number'] || (product as any).model_number || (product as any).model || product.warranty}`
+                                    : (product.warranty || '-')}
+                                </span>
+                              </div>
+                            </div>
                           ) : (
-                            <>
-                              {/* 1. Type (and phase if applicable) */}
-                              <div className="flex flex-wrap gap-2 mb-2">
-                                {product.productType && <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] rounded-full uppercase font-bold tracking-wide">{product.productType}</span>}
-                                {product.phase && <span className="px-2 py-0.5 bg-purple-50 text-purple-700 text-[10px] rounded-full uppercase font-bold tracking-wide">{product.phase}</span>}
-                              </div>
-
-                              <h3 className={`font-heading font-semibold text-muted-foreground mb-1 group-hover:text-foreground transition-colors ${viewMode === 'list' ? 'text-lg line-clamp-2' : 'text-xl line-clamp-1'}`}>
-                                {product.name}
-                              </h3>
-                              {/* 2. Brand Header (Now under benefit) */}
-                              {product.brand && (
-                                <div className="text-xs font-heading font-bold text-primary mb-4 uppercase tracking-wider leading-none">
-                                  {product.brand}
-                                </div>
-                              )}
-
-                              {/* 3. Watt and Model/Warranty */}
-                              <div className="flex flex-wrap items-center gap-2 text-eco text-sm font-heading font-medium mb-2">
-                                <span>{product.capacity}{product.capacity && !/[wk]w$/i.test(String(product.capacity)) ? (product.isSolarPanel ? 'W' : 'kW') : ''}</span>
-                                <span className="text-muted-foreground">•</span>
-                                <span>{['solplanet', 'involtics', 'sunways', 'turno volt'].some(b => product.brand?.toLowerCase().trim().includes(b))
+                            <div className="flex flex-wrap items-center gap-2 text-eco text-sm font-heading font-medium mb-3">
+                              <span>{product.capacity}{product.capacity && !/[wk]w$/i.test(String(product.capacity)) ? (product.isSolarPanel ? 'W' : 'kW') : ''}</span>
+                              <span className="text-muted-foreground">•</span>
+                              <span className="truncate max-w-[150px]">
+                                {['solplanet', 'involtics', 'sunways', 'turno volt'].some(b => product.brand?.toLowerCase().trim().includes(b))
                                   ? `Model: ${product.specifications['Model / Type'] || product.specifications['Model Number'] || (product as any).model_number || (product as any).model || product.warranty}`
                                   : (
                                     <>
-                                      <span className="font-semibold">Warranty:</span>
-                                      {product.category === 'Solar Roof Top Hybrid Kit' ? product.warranty : `${product.warranty}${(product as any).isSolarPanel ? ' (product)' : ''}`}
+                                      {!['Solar Roof Top Hybrid Kit', 'Solar Roof Top On Grid Kit'].includes(product.category) && <span className="font-semibold">Warranty:</span>}
+                                      {['Solar Roof Top Hybrid Kit', 'Solar Roof Top On Grid Kit'].includes(product.category) ? product.warranty : `${product.warranty}${(product as any).isSolarPanel ? ' (product)' : ''}`}
                                     </>
                                   )}
-                                </span>
-                              </div>
-
-                              {product.benefit && (
-                                <div className="flex flex-wrap items-center gap-2 mb-4 mt-auto pt-2">
-                                  <span className="text-sm font-heading font-medium text-gray-400 tracking-wide italic line-clamp-2">{product.benefit}</span>
-                                </div>
-                              )}
-                            </>
+                              </span>
+                            </div>
                           )}
-                          <div className="flex items-center justify-between gap-4">
-                            <span className="text-2xl font-heading font-bold text-primary">
+
+                          {/* 5. Sub-info / Name */}
+                          <div className="flex flex-wrap items-center gap-2 mb-4 pt-2">
+                            <span className="text-sm font-medium text-gray-400 line-clamp-1 flex-1 italic">
+                              {product.category.toLowerCase().includes('storage') ? 'Energy Storage Module' : product.benefit}
+                            </span>
+                          </div>
+                          <div className="flex flex-nowrap items-center justify-between gap-1 sm:gap-4 mt-auto w-full pt-2 border-t border-gray-100">
+                            <span className="text-lg sm:text-2xl font-heading font-bold text-primary truncate">
                               {formatPrice(product.price)}
                             </span>
-                            <div className="flex gap-2">
+                            <div className="flex gap-1.5 sm:gap-2 shrink-0">
                               <Button
                                 variant="solar"
                                 size="sm"
+                                className="px-2 sm:px-3 h-8 sm:h-9"
                                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); product.datasheet && handleDownloadDatasheet(product.datasheet, product.name); }}
                               >
-                                <Download className="h-4 w-4" />
+                                <Download className="h-4 w-4 sm:h-5 sm:w-5" />
                               </Button>
-                              <Button variant="solar" size="sm" onClick={(e) => { e.preventDefault(); e.stopPropagation(); addToCart({ id: product.id, name: product.name, category: product.category, brand: product.brand, capacity: product.capacity, price: product.price, image: product.image, warranty: product.warranty, gstPercent: product.gstPercent || 0 }); }}>
-                                <ShoppingCart className="h-4 w-4" />
+                              <Button 
+                                variant="solar" 
+                                size="sm" 
+                                className="px-2 sm:px-3 h-8 sm:h-9"
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); addToCart({ id: product.id, name: product.name, category: product.category, brand: product.brand, capacity: product.capacity, price: product.price, image: product.image, warranty: product.warranty, gstPercent: product.gstPercent || 0 }); }}>
+                                <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" />
                               </Button>
                             </div>
                           </div>
