@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useCart } from '@/context/CartContext';
 import { useAdmin } from '@/context/AdminContext';
 import { Layout } from '@/components/layout/Layout';
@@ -64,23 +64,56 @@ const brandInfo: Record<string, { tagline: string; description: string; logo?: s
   },
   APAR: {
     tagline: "Excellence in Innovation. Quality in Cables.",
-    description: "APAR Industries is a global leader in the cable industry, providing high-quality Solar DC cables designed for long-term outdoor use. Their cables are UV resistant, flame retardant, and engineered to minimize power loss in solar installations.",
+    description: "APAR Industries is a global leader in the cable industry, providing high-quality Solar AC DC cables designed for long-term outdoor use. Their cables are UV resistant, flame retardant, and engineered to minimize power loss in solar installations.",
   },
   ORIENT: {
     tagline: "Powering a Greener Tomorrow.",
-    description: "Orient Cables manufactures premium Solar DC cables that meet international standards for safety and performance. Designed to withstand harsh weather conditions, Orient cables ensure reliable power transmission for residential and commercial solar systems.",
+    description: "Orient Cables manufactures premium Solar AC DC cables that meet international standards for safety and performance. Designed to withstand harsh weather conditions, Orient cables ensure reliable power transmission for residential and commercial solar systems.",
   },
   POLYCAB: {
     tagline: "Connection Zindagi Ka. Leading Cable Manufacturer.",
-    description: "Polycab is India's leading cable and wire manufacturer. Their Solar DC cables are specially designed for solar power applications, featuring cross-linked polyolefin insulation for superior thermal and chemical resistance, ensuring a long service life for your solar PV system.",
+    description: "Polycab is India's leading cable and wire manufacturer. Their Solar AC DC cables are specially designed for solar power applications, featuring cross-linked polyolefin insulation for superior thermal and chemical resistance, ensuring a long service life for your solar PV system.",
   },
 };
+
+function useSessionState<T>(key: string, defaultValue: T, locationOverride?: T): [T, (val: T | ((prev: T) => T)) => void] {
+  const [isRefresh] = useState(() => {
+    if (typeof performance !== 'undefined') {
+      const navEntry = performance.getEntriesByType?.("navigation")[0] as any;
+      return navEntry?.type === "reload" || performance.navigation?.type === 1;
+    }
+    return false;
+  });
+
+  const [state, setState] = useState<T>(() => {
+    if (locationOverride !== undefined && locationOverride !== null) return locationOverride;
+    if (isRefresh) return defaultValue;
+    try {
+      const item = sessionStorage.getItem(key);
+      return item ? JSON.parse(item) : defaultValue;
+    } catch {
+      return defaultValue;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      if (isRefresh && locationOverride === undefined) {
+        sessionStorage.removeItem(key);
+      } else {
+        sessionStorage.setItem(key, JSON.stringify(state));
+      }
+    } catch {}
+  }, [key, state, isRefresh, locationOverride]);
+
+  return [state, setState];
+}
 
 const Shop = () => {
   const { addToCart } = useCart();
   const { data } = useAdmin();
 
-  const categories = ['All', ...Array.from(new Set([...data.modules.map(m => m.name), 'Solar DC Cables'])).sort((a, b) => {
+  const categories = ['All', ...Array.from(new Set([...data.modules.map(m => m.name), 'Solar AC DC Cables'])).sort((a, b) => {
     const desiredOrder = [
       'Solar Modules ( Panels )',
       'Eversol Roof Top Kit',
@@ -89,8 +122,8 @@ const Shop = () => {
       'Solar Roof Top On Grid Kit',
       'Solar Roof Top Hybrid Kit',
       'Battery Energy Storage System ( BESS )',
-      'Solar Earthing Kit',
-      'Solar DC Cables'
+      'Solar Components',
+      'Solar AC DC Cables'
     ];
 
     const indexA = desiredOrder.indexOf(a);
@@ -120,8 +153,8 @@ const Shop = () => {
       });
     }
 
-    // 2. Custom brands for "Solar DC Cables"
-    if (categoryName === 'Solar DC Cables') {
+    // 2. Custom brands for "Solar AC DC Cables"
+    if (categoryName === 'Solar AC DC Cables') {
       const excelOrder = ['APAR', 'ORIENT', 'POLYCAB'];
       const brandsMap = new Map(brands.map(b => [b.name.toUpperCase().trim(), b]));
 
@@ -352,18 +385,19 @@ const Shop = () => {
   const getBrandsForInverterType = (type: string) => {
     return Array.from(new Set(inverterProducts.filter(p => p.productType === type).map(p => p.brand).filter(Boolean)));
   };
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
-  const [selectedInverterType, setSelectedInverterType] = useState<string | null>(null);
-  const [selectedInverterBrand, setSelectedInverterBrand] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const location = useLocation();
+  const [selectedCategory, setSelectedCategory] = useSessionState('shop_category', 'All', location.state?.autoFilterCategory);
+  const [selectedBrand, setSelectedBrand] = useSessionState<string | null>('shop_brand', null, location.state?.autoFilterBrand);
+  const [selectedInverterType, setSelectedInverterType] = useSessionState<string | null>('shop_invType', null);
+  const [selectedInverterBrand, setSelectedInverterBrand] = useSessionState<string | null>('shop_invBrand', null);
+  const [searchQuery, setSearchQuery] = useSessionState('shop_search', '');
+  const [viewMode, setViewMode] = useSessionState<'grid' | 'list'>('shop_viewMode', 'grid');
   const [isBrandsOpen, setIsBrandsOpen] = useState(false);
   const [openBrandDropdown, setOpenBrandDropdown] = useState<string | null>(null);
   const [isInverterFiltersOpen, setIsInverterFiltersOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useSessionState('shop_page', 1);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [showScrollUpBtn, setShowScrollUpBtn] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
@@ -1037,12 +1071,12 @@ const Shop = () => {
     </Layout>
 
     <AnimatePresence>
-      {(showScrollTop || showScrollUpBtn) && (
+      {showScrollTop && (
         <motion.div
-          initial={{ opacity: 0, y: showScrollUpBtn ? -20 : 20 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: showScrollUpBtn ? -20 : 20 }}
-          className={`fixed ${showScrollUpBtn ? 'top-20' : 'bottom-6'} right-6 z-50 lg:hidden`}
+          exit={{ opacity: 0, y: 20 }}
+          className="fixed bottom-6 right-6 z-50 lg:hidden"
         >
           <Button
             variant="solar"

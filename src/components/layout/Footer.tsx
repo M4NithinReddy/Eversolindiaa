@@ -5,11 +5,16 @@ const footerLinks = {
   quickLinks: [
     { name: 'Home', path: '/' },
     { name: 'About', path: '/about' },
-    { name: 'Products', path: '/shop' },
+    { name: 'Products', path: '/shop#product-search' },
     { name: 'Solutions', path: '/solutions' },
     { name: 'Impact', path: '/impact' },
     { name: 'Contact', path: '/contact' },
     { name: 'My Dashboard', path: '/user-dashboard' },
+    { name: 'Shipping Policy', path: '/shipping-policy' },
+    { name: 'Payment Policy', path: '/payment-policy' },
+    { name: 'Privacy Policy', path: '/privacy' },
+    { name: 'Cancellation and Returns Policy', path: '/cancellation-policy' },
+    { name: 'Terms and Conditions', path: '/terms' },
   ],
 };
 
@@ -52,11 +57,16 @@ export const Footer = () => {
           <div>
             <h4 className="font-heading font-bold text-lg mb-6 text-solar">Quick Links</h4>
             <ul className="space-y-3">
-              {footerLinks.quickLinks.slice(0, 3).map((link) => (
+              {footerLinks.quickLinks.slice(0, 6).map((link) => (
                 <li key={link.path}>
                   <Link
                     to={link.path}
                     className="text-primary-foreground/80 hover:text-solar transition-colors duration-300"
+                    onClick={() => {
+                      if (link.path.includes('/shop')) {
+                        ['shop_category', 'shop_brand', 'shop_invType', 'shop_invBrand', 'shop_search', 'shop_page'].forEach(k => sessionStorage.removeItem(k));
+                      }
+                    }}
                   >
                     {link.name}
                   </Link>
@@ -69,11 +79,16 @@ export const Footer = () => {
           <div className="flex flex-col">
             <div className="hidden lg:block h-7 mb-6" aria-hidden="true"></div>
             <ul className="space-y-3">
-              {footerLinks.quickLinks.slice(3).map((link) => (
+              {footerLinks.quickLinks.slice(6).map((link) => (
                 <li key={link.path}>
                   <Link
                     to={link.path}
                     className="text-primary-foreground/80 hover:text-solar transition-colors duration-300"
+                    onClick={() => {
+                      if (link.path.includes('/shop')) {
+                        ['shop_category', 'shop_brand', 'shop_invType', 'shop_invBrand', 'shop_search', 'shop_page'].forEach(k => sessionStorage.removeItem(k));
+                      }
+                    }}
                   >
                     {link.name}
                   </Link>

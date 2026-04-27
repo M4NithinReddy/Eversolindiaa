@@ -8,7 +8,7 @@ import { useCart } from '@/context/CartContext';
 const navLinks = [
   { name: 'Home', path: '/' },
   { name: 'About', path: '/about' },
-  { name: 'Products', path: '/shop' },
+  { name: 'Products', path: '/shop', hash: 'product-search' },
   { name: 'Solutions', path: '/solutions' },
   { name: 'Impact', path: '/impact' },
   { name: 'Contact', path: '/contact' },
@@ -24,6 +24,9 @@ export const Navbar = () => {
   const { totalItems } = useCart();
 
   const handleNavClick = (e: MouseEvent, link: { path: string; hash?: string }) => {
+    if (link.path.includes('/shop')) {
+      ['shop_category', 'shop_brand', 'shop_invType', 'shop_invBrand', 'shop_search', 'shop_page'].forEach(k => sessionStorage.removeItem(k));
+    }
     if (link.hash) {
       e.preventDefault();
       if (location.pathname === link.path) {
@@ -164,7 +167,10 @@ export const Navbar = () => {
                   <Link to="/contact" onClick={() => setIsMobileMenuOpen(false)}>Get Quote</Link>
                 </Button>
                 <Button variant="solar" asChild className="w-full">
-                  <Link to="/shop" onClick={() => setIsMobileMenuOpen(false)}>Shop Now</Link>
+                  <Link to="/shop" onClick={() => {
+                    ['shop_category', 'shop_brand', 'shop_invType', 'shop_invBrand', 'shop_search', 'shop_page'].forEach(k => sessionStorage.removeItem(k));
+                    setIsMobileMenuOpen(false);
+                  }}>Shop Now</Link>
                 </Button>
               </div>
             </div>
