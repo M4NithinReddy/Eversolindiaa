@@ -253,7 +253,13 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     setProductsBusy(true);
     try {
       const created = await createProductApi(product);
-      setProducts(p => [...p, normalizeProduct(created)]);
+      // Safely merge: keep images from what we sent if the API returns an empty array
+      const merged = {
+        ...product,
+        ...created,
+        images: (Array.isArray(created.images) && created.images.length > 0) ? created.images : (product.images || []),
+      };
+      setProducts(p => [...p, normalizeProduct(merged)]);
     } catch (e) {
       if (isCorsOrNetwork(e)) await refreshProducts(); else throw e;
     } finally {
@@ -305,8 +311,21 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
 
   const updateProduct = useCallback(async (id: string, product: Omit<AdminProduct, 'id' | 'createdAt'>) => {
     setProductsBusy(true);
-    setProducts(p => p.map(pr => pr.id === id ? { ...pr, ...product } : pr));
-    try { const u = await updateProductApi(id, product); setProducts(p => p.map(pr => pr.id === id ? u : pr)); }
+    // Optimistic update — immediately reflect changes in UI (including uploaded images)
+    setProducts(p => p.map(pr => pr.id === id ? normalizeProduct({ ...pr, ...product }) : pr));
+    try {
+      const u = await updateProductApi(id, product);
+      // Safely merge: prefer the API response but fall back to `product` for any missing/empty fields
+      // This prevents images from being wiped out if the Lambda returns an incomplete object
+      const merged = {
+        ...product,             // sent data (has images, specs, etc.)
+        ...u,                   // API response (may override with server-side values)
+        id,
+        // If the API response has no images (or an empty array), keep the ones we sent
+        images: (Array.isArray(u.images) && u.images.length > 0) ? u.images : (product.images || []),
+      };
+      setProducts(p => p.map(pr => pr.id === id ? normalizeProduct(merged) : pr));
+    }
     catch (e) { await refreshProducts(); if (!isCorsOrNetwork(e)) throw e; }
     finally { setProductsBusy(false); }
   }, [refreshProducts]);

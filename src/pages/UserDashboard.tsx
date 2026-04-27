@@ -19,7 +19,9 @@ import {
   User,
   Settings,
   ChevronRight,
-  Globe
+  Globe,
+  Menu as MenuIcon,
+  X as XIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,6 +31,7 @@ type ViewState = 'main' | 'orders' | 'details' | 'addresses' | 'payments';
 
 const UserDashboard = () => {
   const [view, setView] = useState<ViewState>('main');
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const orders = [
     { id: 'ORD-4821', name: '400W Mono PERC Solar Panel × 12', date: 'Apr 2, 2026', status: 'Delivered', icon: CheckCircle2, statusColor: 'text-emerald-500 bg-emerald-500/10', amount: '₹72,000', image: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=150&q=80' },
@@ -319,23 +322,53 @@ const UserDashboard = () => {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] flex">
-      {/* Sidebar */}
-      <aside className="w-72 bg-white border-r border-slate-100 hidden lg:flex flex-col sticky top-0 h-screen shadow-sm z-20">
+      {/* Mobile Sidebar Overlay */}
+      <AnimatePresence>
+        {isMobileSidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsMobileSidebarOpen(false)}
+            className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm"
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Sidebar (Desktop & Mobile) */}
+      <aside className={`
+        w-72 bg-white border-r border-slate-100 flex flex-col sticky top-0 h-screen shadow-sm z-50 transition-transform duration-300
+        ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        fixed lg:sticky
+      `}>
         <div className="p-7">
-          <Link to="/" className="flex items-center gap-3 mb-10 cursor-pointer h-12">
-            <img
-              src="/images/eversol.png"
-              alt="Eversol Logo"
-              className="h-full w-auto object-contain"
-            />
-          </Link>
+          <div className="flex items-center justify-between lg:block mb-10">
+            <Link to="/" className="flex items-center gap-3 cursor-pointer h-12">
+              <img
+                src="/images/eversol.png"
+                alt="Eversol Logo"
+                className="h-full w-auto object-contain"
+              />
+            </Link>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="lg:hidden" 
+              onClick={() => setIsMobileSidebarOpen(false)}
+            >
+              <XIcon className="w-6 h-6" />
+            </Button>
+          </div>
 
           <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4 px-4">Your Account</p>
           <nav className="space-y-2">
             {sidebarLinks.map((link) => (
               <button
                 key={link.name}
-                onClick={() => setView(link.tab)}
+                onClick={() => {
+                  setView(link.tab);
+                  setIsMobileSidebarOpen(false);
+                }}
                 className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 font-bold text-sm ${
                   view === link.tab
                     ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/10'
@@ -368,6 +401,14 @@ const UserDashboard = () => {
         {/* Topbar */}
         <header className="bg-white/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-100 px-8 py-4">
           <div className="flex items-center justify-between gap-4">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="lg:hidden mr-2" 
+              onClick={() => setIsMobileSidebarOpen(true)}
+            >
+              <MenuIcon className="w-6 h-6" />
+            </Button>
             <div className="flex-1 max-w-xl">
                <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-2xl w-full group focus-within:border-solar/50 transition-colors">
                  <Search className="w-5 h-5 text-slate-400 group-focus-within:text-solar transition-colors" />

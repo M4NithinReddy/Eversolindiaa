@@ -1,6 +1,6 @@
 import { useState, useEffect, MouseEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, ShoppingCart } from 'lucide-react';
+import { Menu, X, ShoppingCart, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/context/CartContext';
@@ -12,7 +12,8 @@ const navLinks = [
   { name: 'Solutions', path: '/solutions' },
   { name: 'Impact', path: '/impact' },
   { name: 'Contact', path: '/contact' },
-  // { name: 'Login', path: '/login' },
+  { name: 'Dashboard', path: '/user-dashboard' },
+  { name: 'Login', path: '/login' },
 ];
 
 export const Navbar = () => {
@@ -99,6 +100,9 @@ export const Navbar = () => {
                 </span>
               )}
             </Link>
+            <Link to="/user-dashboard" className={`p-2 rounded-full hover:bg-white/10 transition-colors ${textColor}`}>
+              <User className="h-5 w-5" />
+            </Link>
             <Button variant={isScrolled || !isHome ? "outline" : "heroOutline"} size="sm" asChild>
               <Link to="/contact">Get Quote</Link>
             </Button>
@@ -113,6 +117,9 @@ export const Navbar = () => {
                   {totalItems > 99 ? '99+' : totalItems}
                 </span>
               )}
+            </Link>
+            <Link to="/user-dashboard" className={`p-2 rounded-full hover:bg-white/10 transition-colors ${textColor}`}>
+              <User className="h-5 w-5" />
             </Link>
             <button
               className={`p-2 ${textColor}`}

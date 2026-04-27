@@ -9,6 +9,7 @@ const footerLinks = {
     { name: 'Solutions', path: '/solutions' },
     { name: 'Impact', path: '/impact' },
     { name: 'Contact', path: '/contact' },
+    { name: 'My Dashboard', path: '/user-dashboard' },
   ],
 };
 

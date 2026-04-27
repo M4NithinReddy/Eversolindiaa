@@ -56,12 +56,16 @@ const ProductForm = ({ moduleId, brandId, subBrandId, editProduct, onCancel, onS
       setImages(prev => [...prev, ...uploads]);
     } catch (err) {
       console.error('Image upload failed:', err);
-      // fallback: read as base64
-      Array.from(files).forEach(file => {
-        const reader = new FileReader();
-        reader.onload = () => { if (reader.result) setImages(prev => [...prev, reader.result as string]); };
-        reader.readAsDataURL(file);
-      });
+      // fallback: read as base64 — wrap in Promises so we await completion
+      const base64Results = await Promise.all(
+        Array.from(files).map(file => new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        }))
+      );
+      setImages(prev => [...prev, ...base64Results.filter(Boolean)]);
     } finally {
       setImageUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';

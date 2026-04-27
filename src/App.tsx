@@ -43,9 +43,12 @@ const App = () => (
               <Route path="/impact" element={<Impact />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/admindashboard" element={<AdminDashboard />} />
+              <Route path="/admin-dashboard" element={<AdminDashboard />} />
               <Route path="/login" element={<LoginPortal />} />
               <Route path="/user-dashboard" element={<UserDashboard />} />
+              <Route path="/userdashboard" element={<UserDashboard />} />
               <Route path="/partner-dashboard" element={<PartnerDashboard />} />
+              <Route path="/partnerdashboard" element={<PartnerDashboard />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
