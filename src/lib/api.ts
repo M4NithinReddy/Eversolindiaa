@@ -128,10 +128,11 @@ export async function uploadImageApi(file: File): Promise<string> {
     payload = JSON.parse(json.body);
   }
 
-  const uploadUrl: string = payload.uploadUrl;
-  const imageUrl: string = payload.imageUrl;
+  const uploadUrl: string = payload.uploadUrl || payload.uploadURL;
+  const imageUrl: string = payload.imageUrl || payload.imageURL;
 
   if (!uploadUrl || !imageUrl) {
+    console.error("Lambda payload did not contain expected URLs:", payload);
     throw new Error('Lambda did not return uploadUrl / imageUrl');
   }
 

@@ -26,6 +26,18 @@ const ProductImageGallery = ({ images, productName }: ProductImageGalleryProps) 
   };
 
   const visibleThumbnailsList = images.slice(startIndex, startIndex + visibleThumbnails);
+  
+  if (images.length <= 1) {
+    return (
+      <div className="w-full h-full bg-white border rounded-lg overflow-hidden">
+        <img
+          src={images[0]}
+          alt={`${productName} - Main view`}
+          className="w-full h-full object-contain"
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="flex gap-4 h-[500px]">
