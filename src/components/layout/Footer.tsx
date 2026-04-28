@@ -9,7 +9,6 @@ const footerLinks = {
     { name: 'Solutions', path: '/solutions' },
     { name: 'Impact', path: '/impact' },
     { name: 'Contact', path: '/contact' },
-    { name: 'My Dashboard', path: '/user-dashboard' },
     { name: 'Shipping Policy', path: '/shipping-policy' },
     { name: 'Payment Policy', path: '/payment-policy' },
     { name: 'Privacy Policy', path: '/privacy' },
