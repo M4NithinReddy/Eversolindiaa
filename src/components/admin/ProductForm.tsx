@@ -7,8 +7,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Trash2, Upload, X, Image as ImageIcon, Save, ArrowLeft, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Upload, X, Image as ImageIcon, Save, ArrowLeft, Loader2, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useToast } from '@/components/ui/use-toast';
 
 interface ProductFormProps {
   moduleId: string;
@@ -22,6 +23,7 @@ interface ProductFormProps {
 
 const ProductForm = ({ moduleId, brandId, subBrandId, editProduct, onCancel, onSaved, onSaveOverride }: ProductFormProps) => {
   const { data, addProduct, updateProduct, productsBusy } = useAdmin();
+  const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imageUploading, setImageUploading] = useState(false);
 
@@ -48,6 +50,18 @@ const ProductForm = ({ moduleId, brandId, subBrandId, editProduct, onCancel, onS
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
+
+    const oversizedFiles = Array.from(files).filter(file => file.size > 100 * 1024);
+    if (oversizedFiles.length > 0) {
+      toast({
+        variant: "destructive",
+        title: "Image too large",
+        description: `Maximum image size is below 100kb. ${oversizedFiles.length} image(s) exceed this limit.`,
+      });
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
     setImageUploading(true);
     try {
       const uploads = await Promise.all(
@@ -206,11 +220,17 @@ const ProductForm = ({ moduleId, brandId, subBrandId, editProduct, onCancel, onS
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={imageUploading}
-              className="aspect-square rounded-lg border-2 border-dashed border-gray-300 hover:border-emerald-400 flex flex-col items-center justify-center text-gray-400 hover:text-emerald-600 transition-colors disabled:opacity-50"
+              className="relative aspect-square rounded-lg border-2 border-dashed border-gray-300 hover:border-emerald-400 flex flex-col items-center justify-center text-gray-400 hover:text-emerald-600 transition-colors disabled:opacity-50 overflow-hidden p-2"
             >
               {imageUploading
                 ? <><Loader2 className="w-6 h-6 mb-1 animate-spin text-emerald-500" /><span className="text-xs">Uploading…</span></>
-                : <><Upload className="w-6 h-6 mb-1" /><span className="text-xs">Upload</span></>
+                : <>
+                    <Upload className="w-6 h-6 mb-1" />
+                    <span className="text-xs font-semibold">Upload</span>
+                    <span className="text-[9px] mt-2 text-amber-600 text-center leading-tight">
+                      Max image size<br />below 100KB
+                    </span>
+                  </>
               }
             </button>
           </div>
