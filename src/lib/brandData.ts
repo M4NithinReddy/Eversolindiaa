@@ -109,15 +109,16 @@ export const findBrandModel = (
   if (brandLower.includes('solplanet')) modelList = SOLPLANET_MODELS;
   else if (brandLower.includes('involtics')) {
     const fullCap = String(capacity).toLowerCase();
-    if (fullCap.includes('100ah') || fullCap.includes('100 ah')) return 'INVOLTICS LV';
+    if (fullCap.includes('100ah') || fullCap.includes('100 ah')) return 'INVOLTICS LV (51.2V)';
     modelList = INVOLTICS_MODELS;
   }
   else if (brandLower.includes('sunways')) modelList = SUNWAYS_MODELS;
   else if (brandLower.includes('turno volt')) {
     const fullCap = String(capacity).toLowerCase();
-    if (fullCap.includes('200ah') || fullCap.includes('200 ah') || fullCap.includes('280ah') || fullCap.includes('280 ah') || fullCap.includes('10') || fullCap.includes('14')) {
-      return 'Low Voltage';
+    if (fullCap.includes('280ah') || fullCap.includes('280 ah') || fullCap.includes('14')) {
+      return 'Low Voltage (51.2V)';
     }
+    return 'Low Voltage (48V)';
   }
   else if (brandLower.includes('dyness')) {
     // Special handling for Dyness which doesn't use price for matching

@@ -337,6 +337,20 @@ const Shop = () => {
       specifications['Features'] = finalName;
     }
 
+    // Inject Voltage for BESS products if missing for specific brands
+    if (categoryName.toLowerCase().includes('storage') || categoryName.toLowerCase().includes('bess')) {
+      if (brandLower.includes('involtics') || brandLower.includes('turno volt')) {
+        if (!specifications['Battery Nominal Voltage']) {
+          const capStr = String(capacity).toLowerCase();
+          if (brandLower.includes('turno volt') && (capStr.includes('200ah') || capStr.includes('200 ah') || capStr.includes('10'))) {
+            specifications['Battery Nominal Voltage'] = '48V';
+          } else {
+            specifications['Battery Nominal Voltage'] = '51.2V';
+          }
+        }
+      }
+    }
+
     return {
       id: p.id,
       name: finalName,
@@ -518,17 +532,28 @@ const Shop = () => {
 
     return matchesCategory && matchesSearch && matchesBrand && matchesInverterType && matchesInverterBrand;
   }).sort((a, b) => {
-    // Custom sort for Solar On Grid/Hybrid (Solplanet and Involtics) by capacity
-    if (selectedCategory === 'Solar On Grid' || selectedCategory === 'Solar Hybrid') {
-      const isTargetA = a.brand?.toUpperCase() === 'SOLPLANET' || a.brand?.toUpperCase() === 'INVOLTICS';
-      const isTargetB = b.brand?.toUpperCase() === 'SOLPLANET' || b.brand?.toUpperCase() === 'INVOLTICS';
-
-      if (isTargetA && isTargetB) {
-        const getCap = (c: string) => parseFloat(String(c).match(/(\d+(\.\d+)?)/)?.[0] || '0');
-        return getCap(a.capacity) - getCap(b.capacity);
+    // Normalization helper to get numerical kW value
+    const getKW = (p: any) => {
+      const cap = String(p.capacity || '0').toLowerCase().trim();
+      const num = parseFloat(cap.match(/(\d+(\.\d+)?)/)?.[0] || '0');
+      
+      // If it's a Solar Panel or ends with 'w' (but not 'kw') and value is > 20, assume Watts and convert to kW
+      const isWatts = (p.category.toLowerCase().includes('panel') || p.category.toLowerCase().includes('module') || (cap.endsWith('w') && !cap.endsWith('kw')));
+      if (isWatts && num > 20) {
+        return num / 1000;
       }
+      return num;
+    };
+
+    const kwA = getKW(a);
+    const kwB = getKW(b);
+
+    if (kwA !== kwB) {
+      return kwA - kwB;
     }
-    return 0;
+
+    // Secondary sort by price if capacity is equal
+    return (a.price || 0) - (b.price || 0);
   });
 
   const formatPrice = (price: number) => {
