@@ -94,6 +94,9 @@ const ProductDetail = () => {
     const categoryName = mod?.name || pData.category || 'Unknown';
     const brandName = br?.name || pData.brandName || 'Unknown';
 
+    // Resolve capacity early for use in specifications/logic
+    const capacity = pData.capacity || pData.capacity_kwh_ah || pData.wattage_w || pData.system_size_kw || '';
+
     const isSolarPanel = categoryName.toLowerCase().includes('module') || categoryName.toLowerCase().includes('panel');
 
     const getDefaultImage = (catName: string) => {
@@ -198,6 +201,20 @@ const ProductDetail = () => {
       specifications['Features'] = finalName;
     }
 
+    // Inject Voltage for BESS products if missing for specific brands
+    if (categoryName.toLowerCase().includes('storage') || categoryName.toLowerCase().includes('bess')) {
+      if (brandName.toLowerCase().includes('involtics') || brandName.toLowerCase().includes('turno volt')) {
+        if (!specifications['Battery Nominal Voltage']) {
+          const capStr = String(capacity).toLowerCase();
+          if (brandName.toLowerCase().includes('turno volt') && (capStr.includes('200ah') || capStr.includes('200 ah') || capStr.includes('10'))) {
+            specifications['Battery Nominal Voltage'] = '48V';
+          } else {
+            specifications['Battery Nominal Voltage'] = '51.2V';
+          }
+        }
+      }
+    }
+
     // Helper to split by * | newline only (NOT commas, to preserve parenthetical lists)
     const splitItems = (raw: any): string[] => {
       if (Array.isArray(raw) && raw.length > 0) return raw;
@@ -252,8 +269,7 @@ const ProductDetail = () => {
       ];
     }
 
-    // Resolve capacity
-    const capacity = pData.capacity || pData.capacity_kwh_ah || pData.wattage_w || pData.system_size_kw || '';
+
 
     // 4. Resolve Model Number with Brand lookup fallback
     let finalModel = flatSpecMap['Model / Type'] || arraySpecs['Model Number'] || pData.model_number || pData.model || '';
@@ -467,7 +483,7 @@ const ProductDetail = () => {
       <section className="pt-28 pb-8 bg-card border-b border-border">
         <div className="container mx-auto px-4">
           <div className="flex items-center gap-2 text-sm">
-            <Link to="/shop#product-search" state={{ autoFilterCategory: product.category, autoFilterBrand: product.brand }} className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
+            <Link to="/shop#product-search" state={{ autoFilterCategory: product.category, autoFilterBrand: ['Solar Roof Top Hybrid Kit', 'Solar Roof Top On Grid Kit'].includes(product.category) ? '' : (product.brand === 'Unknown' ? '' : product.brand) }} className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
               <ArrowLeft className="h-4 w-4" />
               Back to Shop
             </Link>
