@@ -4,7 +4,7 @@ const https = require('https');
 const API_URL = 'https://dmbnvtbx0d.execute-api.ap-south-1.amazonaws.com/prod/products';
 
 // ⚠️ IMPORTANT: Change this if your edit API is in same gateway
-const UPDATE_URL = 'https://jj43j7i7m6.execute-api.ap-south-1.amazonaws.com/prod/edit';
+const UPDATE_URL = 'https://dmbnvtbx0d.execute-api.ap-south-1.amazonaws.com/prod/products';
 
 const hybridMatter = {
     benefits: [
