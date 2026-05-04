@@ -4,8 +4,8 @@ const BRAND_BASE      = 'https://umehtqxexd.execute-api.ap-south-1.amazonaws.com
 const BRANDMOD_BASE   = 'https://zkw7qsaxz3.execute-api.ap-south-1.amazonaws.com/dev/brands-by-module';
 const IMG_BASE        = 'https://yf5ifvprf2.execute-api.ap-south-1.amazonaws.com/dev/upload-image';
 const GET_PRODS_BASE  = 'https://dmbnvtbx0d.execute-api.ap-south-1.amazonaws.com/prod/products';
-const POST_PRODS_BASE = 'https://dmbnvtbx0d.execute-api.ap-south-1.amazonaws.com/prod/products';
-const EDIT_PRODS_BASE = 'https://dmbnvtbx0d.execute-api.ap-south-1.amazonaws.com/prod/products';
+const POST_PRODS_BASE = 'https://b5flw79dm3.execute-api.ap-south-1.amazonaws.com/prod/products';
+const EDIT_PRODS_BASE = 'https://b5flw79dm3.execute-api.ap-south-1.amazonaws.com/prod/products';
 // POST_PRODS_BASE already supports bulk via { products: [...] } — reused below
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -219,10 +219,11 @@ export async function getProductById(id: string): Promise<ApiProduct> {
 }
 
 export async function createProductApi(product: Omit<ApiProduct, 'id' | 'createdAt'>): Promise<ApiProduct> {
-  const res = await fetch(`${POST_PRODS_BASE}`, {
-    method: 'POST',
+  const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 9);
+  const res = await fetch(`${POST_PRODS_BASE}/${id}`, {
+    method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(product),
+    body: JSON.stringify({ ...product, id }),
   });
   return parseResponse<ApiProduct>(res);
 }
@@ -256,19 +257,21 @@ export async function deleteAllProductsApi(): Promise<void> {
 }
 
 export async function bulkCreateProductsApi(products: Omit<ApiProduct, 'id' | 'createdAt'>[]): Promise<{ created: number; data: ApiProduct[] }> {
-  const res = await fetch(`${POST_PRODS_BASE}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ products }),
-  });
-  return parseResponse<{ created: number; data: ApiProduct[] }>(res);
+  // Since the production API doesn't support bulk POST, we simulate it with individual PUTs
+  const createdProducts: ApiProduct[] = [];
+  for (const product of products) {
+    const created = await createProductApi(product);
+    createdProducts.push(created);
+  }
+  return { created: createdProducts.length, data: createdProducts };
 }
 
 export async function unifiedExcelPostApi(products: any[]): Promise<{ created: number; data: ApiProduct[] }> {
-  const res = await fetch(`${POST_PRODS_BASE}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ products }),
-  });
-  return parseResponse<{ created: number; data: ApiProduct[] }>(res);
+  // Same logic for unified API
+  const createdProducts: ApiProduct[] = [];
+  for (const product of products) {
+    const created = await createProductApi(product);
+    createdProducts.push(created);
+  }
+  return { created: createdProducts.length, data: createdProducts };
 }
