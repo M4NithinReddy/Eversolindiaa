@@ -4,8 +4,8 @@ const BRAND_BASE      = 'https://umehtqxexd.execute-api.ap-south-1.amazonaws.com
 const BRANDMOD_BASE   = 'https://zkw7qsaxz3.execute-api.ap-south-1.amazonaws.com/dev/brands-by-module';
 const IMG_BASE        = 'https://yf5ifvprf2.execute-api.ap-south-1.amazonaws.com/dev/upload-image';
 const GET_PRODS_BASE  = 'https://dmbnvtbx0d.execute-api.ap-south-1.amazonaws.com/prod/products';
-const POST_PRODS_BASE = 'https://llbjgne219.execute-api.ap-south-1.amazonaws.com/dev/products';
-const EDIT_PRODS_BASE = 'https://b5flw79dm3.execute-api.ap-south-1.amazonaws.com/prod/products';
+const POST_PRODS_BASE = 'https://dmbnvtbx0d.execute-api.ap-south-1.amazonaws.com/prod/products';
+const EDIT_PRODS_BASE = 'https://dmbnvtbx0d.execute-api.ap-south-1.amazonaws.com/prod/products';
 // POST_PRODS_BASE already supports bulk via { products: [...] } — reused below
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -165,16 +165,54 @@ export interface ApiProduct {
 }
 
 export async function getProducts(): Promise<ApiProduct[]> {
-  const url = `${GET_PRODS_BASE}?all=true`;
-  console.log("Fetching:", url);
-  const res = await fetch(url);
-  return parseResponse<ApiProduct[]>(res);
+  const allProducts: ApiProduct[] = [];
+  let nextKey: Record<string, string> | null = null;
+  let page = 0;
+
+  while (true) {
+    page++;
+    let url = `${GET_PRODS_BASE}?all=true`;
+    if (nextKey) {
+      url += `&lastKey=${encodeURIComponent(JSON.stringify(nextKey))}`;
+    }
+    console.log(`Fetching products page ${page}:`, url);
+    const res = await fetch(url);
+    const json = await res.json();
+    if (!res.ok) {
+      throw new Error(json?.message || `HTTP ${res.status}`);
+    }
+
+    // Unwrap potential AWS double-encoding
+    let payload = json;
+    if (typeof json?.body === 'string') {
+      payload = JSON.parse(json.body);
+    }
+
+    const pageData: ApiProduct[] = payload?.data ?? payload ?? [];
+    if (Array.isArray(pageData)) {
+      allProducts.push(...pageData);
+    }
+
+    // Check if there are more pages
+    if (payload?.hasMore && payload?.nextKey) {
+      nextKey = payload.nextKey;
+    } else {
+      break;
+    }
+
+    // Safety: prevent infinite loops (max 20 pages = ~1000 products)
+    if (page >= 20) {
+      console.warn('getProducts: hit max page limit (20), stopping pagination');
+      break;
+    }
+  }
+
+  console.log(`Fetched ${allProducts.length} total products across ${page} pages`);
+  return allProducts;
 }
 
 export async function getProductById(id: string): Promise<ApiProduct> {
-  const url = `${GET_PRODS_BASE}?all=true`;
-  const res = await fetch(url);
-  const products = await parseResponse<ApiProduct[]>(res);
+  const products = await getProducts();
   const product = products.find(p => String(p.id) === String(id));
   if (!product) throw new Error("Product not found");
   return product;
