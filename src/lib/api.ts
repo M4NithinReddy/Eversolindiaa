@@ -3,7 +3,7 @@ const MOD_DEV_BASE    = 'https://6rdwi5p3pd.execute-api.ap-south-1.amazonaws.com
 const BRAND_BASE      = 'https://umehtqxexd.execute-api.ap-south-1.amazonaws.com/dev/brandname';
 const BRANDMOD_BASE   = 'https://zkw7qsaxz3.execute-api.ap-south-1.amazonaws.com/dev/brands-by-module';
 const IMG_BASE        = 'https://yf5ifvprf2.execute-api.ap-south-1.amazonaws.com/dev/upload-image';
-const GET_PRODS_BASE  = 'https://jj43j7i7m6.execute-api.ap-south-1.amazonaws.com/prod/getall';
+const GET_PRODS_BASE  = 'https://dmbnvtbx0d.execute-api.ap-south-1.amazonaws.com/prod/products';
 const POST_PRODS_BASE = 'https://llbjgne219.execute-api.ap-south-1.amazonaws.com/dev/products';
 const EDIT_PRODS_BASE = 'https://b5flw79dm3.execute-api.ap-south-1.amazonaws.com/prod/products';
 // POST_PRODS_BASE already supports bulk via { products: [...] } — reused below
