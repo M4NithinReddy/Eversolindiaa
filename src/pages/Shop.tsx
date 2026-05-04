@@ -103,7 +103,7 @@ function useSessionState<T>(key: string, defaultValue: T, locationOverride?: T):
       } else {
         sessionStorage.setItem(key, JSON.stringify(state));
       }
-    } catch {}
+    } catch { }
   }, [key, state, isRefresh, locationOverride]);
 
   return [state, setState];
@@ -436,7 +436,7 @@ const Shop = () => {
   // Reset page and scroll to results on mobile when filters change
   useEffect(() => {
     setCurrentPage(1);
-    
+
     // Check if the current category has brands
     const currentBrands = getBrandsForCategory(selectedCategory);
     const hasBrands = currentBrands.length > 0;
@@ -447,7 +447,7 @@ const Shop = () => {
     // 3. Scroll if 'All' is selected
     if (window.innerWidth < 1024) {
       const shouldScroll = selectedBrand !== null || (selectedCategory === 'All') || !hasBrands;
-      
+
       if (shouldScroll) {
         setTimeout(() => {
           resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -460,7 +460,7 @@ const Shop = () => {
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      
+
       // Bottom button show threshold
       setShowScrollTop(currentScrollY > 600);
 
@@ -474,7 +474,7 @@ const Shop = () => {
       } else {
         setShowScrollUpBtn(false);
       }
-      
+
       setLastScrollY(currentScrollY);
     };
     window.addEventListener('scroll', handleScroll);
@@ -536,7 +536,7 @@ const Shop = () => {
     const getKW = (p: any) => {
       const cap = String(p.capacity || '0').toLowerCase().trim();
       const num = parseFloat(cap.match(/(\d+(\.\d+)?)/)?.[0] || '0');
-      
+
       // If it's a Solar Panel or ends with 'w' (but not 'kw') and value is > 20, assume Watts and convert to kW
       const isWatts = (p.category.toLowerCase().includes('panel') || p.category.toLowerCase().includes('module') || (cap.endsWith('w') && !cap.endsWith('kw')));
       if (isWatts && num > 20) {
@@ -577,537 +577,537 @@ const Shop = () => {
   return (
     <>
       <Layout>
-      {/* Hero */}
-      <ProductsHero />
+        {/* Hero */}
+        <ProductsHero />
 
-      {/* Main Content */}
-      <div className="py-16">
-        <div className="container mx-auto px-4">
-          {/* Filters */}
-          <div ref={resultsRef} id="product-search" className="bg-white rounded-xl shadow-sm p-6 mb-8 lg:sticky lg:top-20 z-30 scroll-mt-24">
-            <div className="flex flex-col lg:flex-row gap-4 justify-between items-center">
-              <div className="flex flex-row gap-2 w-full lg:w-96">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    type="text"
-                    placeholder="Search products..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-
-
-              {/* Categories */}
-              <div className="flex flex-col gap-4 w-full">
-                <div className="flex flex-wrap gap-2 justify-center" ref={dropdownRef}>
-                  {categories.map((category) => (
-                    <div key={category} className="relative">
-                      <Button
-                        variant={selectedCategory === category ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => {
-                          const isChangingCategory = selectedCategory !== category;
-                          setSelectedCategory(category);
-                          // Toggle brand dropdown for categories with brands
-                          if (getBrandsForCategory(category).length > 0) {
-                            setOpenBrandDropdown(openBrandDropdown === category ? null : category);
-                          } else {
-                            setOpenBrandDropdown(null);
-                          }
-                          // Keep existing inverter filter toggle
-                          setIsInverterFiltersOpen(category === 'Solar Inverters' ? !isInverterFiltersOpen : false);
-
-                          // Reset filters only when changing category
-                          if (isChangingCategory) {
-                            setSelectedBrand(null);
-                            setSelectedInverterType(null);
-                            setSelectedInverterBrand(null);
-                          }
-                        }}
-                        className={`rounded-full ${getBrandsForCategory(category).length > 0 ? 'pr-8' : ''}`}
-                      >
-                        {category}
-                        {getBrandsForCategory(category).length > 0 && (
-                          <ChevronDown className="ml-1 h-4 w-4" />
-                        )}
-                      </Button>
-
-                      {/* Brand Dropdown for categories with brands */}
-                      {getBrandsForCategory(category).length > 0 && selectedCategory === category && openBrandDropdown === category && (
-                        <AnimatePresence>
-                          <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 10 }}
-                            className="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50"
-                          >
-                            <div className="p-2">
-                              <p className="px-3 py-1 text-sm font-medium text-gray-700">Select Brand</p>
-                              {getBrandsForCategory(category).map((brand) => (
-                                <button
-                                  key={brand.id}
-                                  onClick={() => {
-                                    setSelectedBrand(brand.name);
-                                    setIsBrandsOpen(false);
-                                    setOpenBrandDropdown(null);
-                                  }}
-                                  className={`w-full text-left px-3 py-2 text-sm rounded-md ${selectedBrand === brand.name
-                                    ? 'bg-primary text-primary-foreground'
-                                    : 'text-gray-700 hover:bg-gray-100'
-                                    }`}
-                                >
-                                  {brand.name}
-                                </button>
-                              ))}
-                              {selectedBrand && (
-                                <button
-                                  onClick={() => {
-                                    setSelectedBrand(null);
-                                    setIsBrandsOpen(false);
-                                  }}
-                                  className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md mt-1"
-                                >
-                                  Clear Filter
-                                </button>
-                              )}
-                            </div>
-                          </motion.div>
-                        </AnimatePresence>
-                      )}
-                    </div>
-                  ))}
-                  {selectedBrand && (
-                    <div className="ml-2 px-3 py-1 bg-primary/10 text-primary text-sm rounded-full flex items-center">
-                      {selectedBrand}
-                      <button
-                        onClick={() => setSelectedBrand(null)}
-                        className="ml-2 text-primary/70 hover:text-primary"
-                      >
-                        Ã—
-                      </button>
-                    </div>
-                  )}
+        {/* Main Content */}
+        <div className="py-16">
+          <div className="container mx-auto px-4">
+            {/* Filters */}
+            <div ref={resultsRef} id="product-search" className="bg-white rounded-xl shadow-sm p-6 mb-8 lg:sticky lg:top-20 z-30 scroll-mt-24">
+              <div className="flex flex-col lg:flex-row gap-4 justify-between items-center">
+                <div className="flex flex-row gap-2 w-full lg:w-96">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      type="text"
+                      placeholder="Search products..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
                 </div>
 
-                {/* Inverter Filters */}
-                {selectedCategory === 'Solar Inverters' && (
-                  <div className="flex flex-wrap gap-4 justify-center mt-2">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="gap-2">
-                          {selectedInverterType || 'Select Inverter Type'}
-                          <ChevronDown className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        {derivedInverterTypes.map((type) => (
-                          <DropdownMenuItem
-                            key={type}
-                            onClick={() => {
-                              setSelectedInverterType(type);
+
+                {/* Categories */}
+                <div className="flex flex-col gap-4 w-full">
+                  <div className="flex flex-wrap gap-2 justify-center" ref={dropdownRef}>
+                    {categories.map((category) => (
+                      <div key={category} className="relative">
+                        <Button
+                          variant={selectedCategory === category ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => {
+                            const isChangingCategory = selectedCategory !== category;
+                            setSelectedCategory(category);
+                            // Toggle brand dropdown for categories with brands
+                            if (getBrandsForCategory(category).length > 0) {
+                              setOpenBrandDropdown(openBrandDropdown === category ? null : category);
+                            } else {
+                              setOpenBrandDropdown(null);
+                            }
+                            // Keep existing inverter filter toggle
+                            setIsInverterFiltersOpen(category === 'Solar Inverters' ? !isInverterFiltersOpen : false);
+
+                            // Reset filters only when changing category
+                            if (isChangingCategory) {
+                              setSelectedBrand(null);
+                              setSelectedInverterType(null);
                               setSelectedInverterBrand(null);
-                            }}
-                          >
-                            {type}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                            }
+                          }}
+                          className={`rounded-full ${getBrandsForCategory(category).length > 0 ? 'pr-8' : ''}`}
+                        >
+                          {category}
+                          {getBrandsForCategory(category).length > 0 && (
+                            <ChevronDown className="ml-1 h-4 w-4" />
+                          )}
+                        </Button>
 
-                    {selectedInverterType && (
+                        {/* Brand Dropdown for categories with brands */}
+                        {getBrandsForCategory(category).length > 0 && selectedCategory === category && openBrandDropdown === category && (
+                          <AnimatePresence>
+                            <motion.div
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: 10 }}
+                              className="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50"
+                            >
+                              <div className="p-2">
+                                <p className="px-3 py-1 text-sm font-medium text-gray-700">Select Brand</p>
+                                {getBrandsForCategory(category).map((brand) => (
+                                  <button
+                                    key={brand.id}
+                                    onClick={() => {
+                                      setSelectedBrand(brand.name);
+                                      setIsBrandsOpen(false);
+                                      setOpenBrandDropdown(null);
+                                    }}
+                                    className={`w-full text-left px-3 py-2 text-sm rounded-md ${selectedBrand === brand.name
+                                      ? 'bg-primary text-primary-foreground'
+                                      : 'text-gray-700 hover:bg-gray-100'
+                                      }`}
+                                  >
+                                    {brand.name}
+                                  </button>
+                                ))}
+                                {selectedBrand && (
+                                  <button
+                                    onClick={() => {
+                                      setSelectedBrand(null);
+                                      setIsBrandsOpen(false);
+                                    }}
+                                    className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md mt-1"
+                                  >
+                                    Clear Filter
+                                  </button>
+                                )}
+                              </div>
+                            </motion.div>
+                          </AnimatePresence>
+                        )}
+                      </div>
+                    ))}
+                    {selectedBrand && (
+                      <div className="ml-2 px-3 py-1 bg-primary/10 text-primary text-sm rounded-full flex items-center">
+                        {selectedBrand}
+                        <button
+                          onClick={() => setSelectedBrand(null)}
+                          className="ml-2 text-primary/70 hover:text-primary"
+                        >
+                          Ã—
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Inverter Filters */}
+                  {selectedCategory === 'Solar Inverters' && (
+                    <div className="flex flex-wrap gap-4 justify-center mt-2">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="outline" className="gap-2">
-                            {selectedInverterBrand || 'Select Brand'}
+                            {selectedInverterType || 'Select Inverter Type'}
                             <ChevronDown className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
-                          {getBrandsForInverterType(selectedInverterType).map((brand) => (
+                          {derivedInverterTypes.map((type) => (
                             <DropdownMenuItem
-                              key={brand}
-                              onClick={() => setSelectedInverterBrand(brand)}
+                              key={type}
+                              onClick={() => {
+                                setSelectedInverterType(type);
+                                setSelectedInverterBrand(null);
+                              }}
                             >
-                              {brand}
+                              {type}
                             </DropdownMenuItem>
                           ))}
                         </DropdownMenuContent>
                       </DropdownMenu>
-                    )}
 
-                    {(selectedInverterType || selectedInverterBrand) && (
-                      <Button
-                        variant="ghost"
-                        onClick={() => {
-                          setSelectedInverterType(null);
-                          setSelectedInverterBrand(null);
-                        }}
-                        className="text-red-500 hover:text-red-700"
+                      {selectedInverterType && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="gap-2">
+                              {selectedInverterBrand || 'Select Brand'}
+                              <ChevronDown className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent>
+                            {getBrandsForInverterType(selectedInverterType).map((brand) => (
+                              <DropdownMenuItem
+                                key={brand}
+                                onClick={() => setSelectedInverterBrand(brand)}
+                              >
+                                {brand}
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+
+                      {(selectedInverterType || selectedInverterBrand) && (
+                        <Button
+                          variant="ghost"
+                          onClick={() => {
+                            setSelectedInverterType(null);
+                            setSelectedInverterBrand(null);
+                          }}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          Clear Filters
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* View Toggle */}
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant={viewMode === 'grid' ? 'default' : 'outline'}
+                    size="icon"
+                    onClick={() => setViewMode('grid')}
+                  >
+                    <Grid className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === 'list' ? 'default' : 'outline'}
+                    size="icon"
+                    onClick={() => setViewMode('list')}
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Brand Info Banner */}
+            <AnimatePresence>
+              {(() => {
+                const activeBrand = selectedBrand || selectedInverterBrand;
+                const info = activeBrand ? brandInfo[activeBrand] : null;
+                if (!activeBrand || !info) return null;
+                return (
+                  <motion.div
+                    key={activeBrand}
+                    initial={{ opacity: 0, y: -16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -16 }}
+                    transition={{ duration: 0.4 }}
+                    className="mb-8 rounded-2xl overflow-hidden border border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50 shadow-sm"
+                  >
+                    <div className="flex flex-col md:flex-row items-start md:items-center gap-6 p-6 md:p-8">
+                      <div className="flex-1">
+                        <p className="text-xs font-semibold uppercase tracking-widest text-orange-500 mb-1">Brand Spotlight</p>
+                        <h2 className="text-2xl font-bold text-gray-900 mb-1">{activeBrand}</h2>
+                        <p className="text-sm font-medium text-orange-600 mb-3 italic">{info.tagline}</p>
+                        <p className="text-sm text-gray-600 leading-relaxed max-w-3xl">{info.description}</p>
+                      </div>
+                      <button
+                        onClick={() => { setSelectedBrand(null); setSelectedInverterBrand(null); }}
+                        className="self-start md:self-center text-gray-400 hover:text-gray-600 transition-colors text-xl leading-none"
+                        aria-label="Clear brand filter"
                       >
-                        Clear Filters
-                      </Button>
-                    )}
+                        Ã—
+                      </button>
+                    </div>
+                  </motion.div>
+                );
+              })()}
+            </AnimatePresence>
+
+            {/* Products Grid */}
+            <div className="py-16 bg-background pt-8">
+              <div className="container mx-auto px-4">
+
+
+                <div className="mb-8">
+                  Showing {Math.min(filteredProducts.length, (currentPage - 1) * itemsPerPage + 1)} - {Math.min(filteredProducts.length, currentPage * itemsPerPage)} of {data.catalogStats.products} products
+                </div>
+
+                <div className={viewMode === 'grid'
+                  ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
+                  : 'flex flex-col gap-4'
+                }>
+                  {filteredProducts
+                    .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                    .map((product, index) => (
+                      <Link key={product.id} to={`/product/${product.id}`} className="block cursor-pointer">
+                        <motion.div
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.4, delay: index * 0.05 }}
+                          className={`group bg-card rounded-2xl overflow-hidden border-2 md:border-4 border-orange-500 hover:border-orange-600 transition-all duration-300 card-hover h-full ${viewMode === 'list' ? 'flex flex-row' : ''
+                            }`}
+                        >
+                          <div className={`relative flex justify-center items-center overflow-hidden bg-card ${viewMode === 'list' ? 'w-28 sm:w-48 shrink-0' : 'h-64'
+                            }`}>
+                            <img
+                              src={product.image}
+                              alt={product.name}
+                              className={`w-full h-full object-contain p-3 transition-transform duration-500 group-hover:scale-105 ${product.isOutOfStock ? 'grayscale opacity-50' : ''}`}
+                            />
+                            <span className="absolute top-4 left-4 px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-semibold max-w-[80%] truncate">
+                              {product.category}
+                            </span>
+                            {product.isOutOfStock && (
+                              <>
+                                <div className="absolute inset-0 bg-white/20 backdrop-blur-[1px] z-10" />
+                                <div className="absolute inset-0 flex flex-col items-center justify-center z-20 p-6">
+                                  <img
+                                    src="/images/out-of-stock-illustration.png"
+                                    alt="Out of stock"
+                                    className="w-1/2 h-auto object-contain drop-shadow-xl mb-2"
+                                  />
+                                  <div className="bg-red-600 text-white text-[10px] font-bold px-3 py-1 rounded shadow-lg uppercase tracking-widest border border-white/20">
+                                    Currently Out of Stock
+                                  </div>
+                                </div>
+                              </>
+                            )}
+                          </div>
+
+                          <div className={`flex flex-col min-w-0 ${viewMode === 'list' ? 'p-3 sm:p-6 flex-1' : 'p-4 sm:p-6 flex-1'}`}>
+                            {/* 1. Category-specific Badges (Type, Phase, Cooling) - Always at top */}
+                            <div className="flex flex-wrap gap-2 mb-2">
+                              {product.productType && <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] rounded-full uppercase font-bold tracking-wide">{product.productType}</span>}
+                              {product.phase && <span className="px-2 py-0.5 bg-purple-50 text-purple-700 text-[10px] rounded-full uppercase font-bold tracking-wide">{product.phase}</span>}
+                              {product.specifications?.['Cooling'] && <span className="px-2 py-0.5 bg-cyan-50 text-cyan-700 text-[10px] rounded-full uppercase font-bold tracking-wide">{product.specifications['Cooling']}</span>}
+                            </div>
+
+                            {/* 2. Main Title */}
+                            <h3 className={`font-heading font-semibold text-muted-foreground mb-1 group-hover:text-foreground transition-colors ${viewMode === 'list' ? 'text-lg line-clamp-2' : 'text-xl line-clamp-1'}`}>
+                              {product.name}
+                            </h3>
+
+                            {/* 3. Brand Identification */}
+                            {product.brand && (
+                              <div className="text-xs font-heading font-bold text-primary mb-3 uppercase tracking-wider leading-none">
+                                {product.brand}
+                              </div>
+                            )}
+
+                            {/* 4. Product Specific Content (Specs) */}
+                            {product.category.toLowerCase().includes('storage') ? (
+                              <div className="grid grid-cols-2 gap-x-2 gap-y-2.5 text-[10px] mb-3 bg-slate-50/80 p-3 rounded-lg border border-slate-100/50">
+                                <div className="flex flex-col">
+                                  <span className="text-slate-500 font-heading font-semibold mb-0.5 uppercase tracking-wider text-[10px]">Capacity</span>
+                                  <span className="font-heading font-bold text-slate-800">{product.capacity || '-'}</span>
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[10px]">Voltage</span>
+                                  <span className="font-bold text-slate-800 truncate" title={product.specifications?.['Battery Nominal Voltage'] || product.specifications?.['Battery Nomi'] || product.specifications?.['Operating V'] || product.specifications?.['Operating Voltage Range'] || '-'} >{product.specifications?.['Battery Nominal Voltage'] || product.specifications?.['Battery Nomi'] || product.specifications?.['Operating V'] || product.specifications?.['Operating Voltage Range'] || '-'}</span>
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[10px]">Cycle Life</span>
+                                  <span className="font-bold text-slate-800">{product.specifications?.['Cycle Life'] || '-'}</span>
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[10px]">{['solplanet', 'involtics', 'sunways', 'turno volt', 'dyness'].some(b => product.brand?.toLowerCase().trim().includes(b)) ? 'Model' : 'Warranty'}</span>
+                                  <span className="font-bold text-slate-800 truncate">
+                                    {['solplanet', 'involtics', 'sunways', 'turno volt', 'dyness'].some(b => product.brand?.toLowerCase().trim().includes(b))
+                                      ? `Model: ${product.specifications['Model / Type'] || product.specifications['Model Number'] || (product as any).model_number || (product as any).model || product.warranty}`
+                                      : (product.warranty || '-')}
+                                  </span>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex flex-wrap items-center gap-2 text-eco text-sm font-heading font-medium mb-3">
+                                <span>{product.capacity}{product.capacity && !/[wk]w$/i.test(String(product.capacity)) ? (product.isSolarPanel ? 'W' : 'kW') : ''}</span>
+                                <span className="text-muted-foreground">•</span>
+                                <span className="truncate max-w-[150px]">
+                                  {['solplanet', 'involtics', 'sunways', 'turno volt'].some(b => product.brand?.toLowerCase().trim().includes(b))
+                                    ? `Model: ${product.specifications['Model / Type'] || product.specifications['Model Number'] || (product as any).model_number || (product as any).model || product.warranty}`
+                                    : (
+                                      <>
+                                        {!['Solar Roof Top Hybrid Kit', 'Solar Roof Top On Grid Kit'].includes(product.category) && <span className="font-semibold">Warranty:</span>}
+                                        {['Solar Roof Top Hybrid Kit', 'Solar Roof Top On Grid Kit'].includes(product.category) ? product.warranty : `${product.warranty}${(product as any).isSolarPanel ? ' (product)' : ''}`}
+                                      </>
+                                    )}
+                                </span>
+                              </div>
+                            )}
+
+                            {/* 5. Sub-info / Name */}
+                            <div className="flex flex-wrap items-center gap-2 mb-4 pt-2">
+                              <span className="text-sm font-medium text-gray-400 line-clamp-1 flex-1 italic">
+                                {product.category.toLowerCase().includes('storage') ? 'Energy Storage Module' : product.benefit}
+                              </span>
+                            </div>
+                            <div className="flex flex-nowrap items-center justify-between gap-1 sm:gap-4 mt-auto w-full pt-2 border-t border-gray-100">
+                              <span className="text-lg sm:text-2xl font-heading font-bold text-primary truncate">
+                                {formatPrice(product.price)}
+                              </span>
+                              <div className="flex gap-1.5 sm:gap-2 shrink-0">
+                                <Button
+                                  variant="solar"
+                                  size="sm"
+                                  className="px-2 sm:px-3 h-8 sm:h-9"
+                                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); product.datasheet && handleDownloadDatasheet(product.datasheet, product.name); }}
+                                >
+                                  <Download className="h-4 w-4 sm:h-5 sm:w-5" />
+                                </Button>
+                                <Button
+                                  variant="solar"
+                                  size="sm"
+                                  className="px-2 sm:px-3 h-8 sm:h-9"
+                                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); addToCart({ id: product.id, name: product.name, category: product.category, brand: product.brand, capacity: product.capacity, price: product.price, image: product.image, warranty: product.warranty, gstPercent: product.gstPercent || 0 }); }}>
+                                  <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      </Link>
+                    ))}
+                </div>
+
+                {/* Pagination Controls */}
+                {filteredProducts.length > itemsPerPage && (
+                  <div className="mt-12 flex justify-center items-center gap-4">
+                    <Button
+                      variant="outline"
+                      disabled={currentPage === 1}
+                      onClick={() => setCurrentPage(prev => prev - 1)}
+                    >
+                      Previous
+                    </Button>
+                    <div className="flex items-center gap-2">
+                      {Array.from({ length: Math.ceil(filteredProducts.length / itemsPerPage) }).map((_, i) => {
+                        const page = i + 1;
+                        if (
+                          page === 1 ||
+                          page === Math.ceil(filteredProducts.length / itemsPerPage) ||
+                          (page >= currentPage - 1 && page <= currentPage + 1)
+                        ) {
+                          return (
+                            <Button
+                              key={page}
+                              variant={currentPage === page ? 'default' : 'ghost'}
+                              size="sm"
+                              onClick={() => setCurrentPage(page)}
+                              className="w-10"
+                            >
+                              {page}
+                            </Button>
+                          );
+                        }
+                        if (page === currentPage - 2 || page === currentPage + 2) {
+                          return <span key={page}>...</span>;
+                        }
+                        return null;
+                      })}
+                    </div>
+                    <Button
+                      variant="outline"
+                      disabled={currentPage === Math.ceil(filteredProducts.length / itemsPerPage)}
+                      onClick={() => setCurrentPage(prev => prev + 1)}
+                    >
+                      Next
+                    </Button>
                   </div>
                 )}
               </div>
-
-              {/* View Toggle */}
-              <div className="flex items-center gap-2">
-                <Button
-                  variant={viewMode === 'grid' ? 'default' : 'outline'}
-                  size="icon"
-                  onClick={() => setViewMode('grid')}
-                >
-                  <Grid className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === 'list' ? 'default' : 'outline'}
-                  size="icon"
-                  onClick={() => setViewMode('list')}
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-              </div>
             </div>
           </div>
+        </div>
 
-          {/* Brand Info Banner */}
-          <AnimatePresence>
-            {(() => {
-              const activeBrand = selectedBrand || selectedInverterBrand;
-              const info = activeBrand ? brandInfo[activeBrand] : null;
-              if (!activeBrand || !info) return null;
-              return (
-                <motion.div
-                  key={activeBrand}
-                  initial={{ opacity: 0, y: -16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -16 }}
-                  transition={{ duration: 0.4 }}
-                  className="mb-8 rounded-2xl overflow-hidden border border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50 shadow-sm"
-                >
-                  <div className="flex flex-col md:flex-row items-start md:items-center gap-6 p-6 md:p-8">
-                    <div className="flex-1">
-                      <p className="text-xs font-semibold uppercase tracking-widest text-orange-500 mb-1">Brand Spotlight</p>
-                      <h2 className="text-2xl font-bold text-gray-900 mb-1">{activeBrand}</h2>
-                      <p className="text-sm font-medium text-orange-600 mb-3 italic">{info.tagline}</p>
-                      <p className="text-sm text-gray-600 leading-relaxed max-w-3xl">{info.description}</p>
-                    </div>
-                    <button
-                      onClick={() => { setSelectedBrand(null); setSelectedInverterBrand(null); }}
-                      className="self-start md:self-center text-gray-400 hover:text-gray-600 transition-colors text-xl leading-none"
-                      aria-label="Clear brand filter"
-                    >
-                      Ã—
-                    </button>
-                  </div>
-                </motion.div>
-              );
-            })()}
-          </AnimatePresence>
+        {/* Product Details Modal */}
+        {isModalOpen && selectedProduct && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex justify-between items-start mb-6">
+                  <h2 className="text-2xl font-bold">{selectedProduct.name}</h2>
+                  <button
+                    onClick={() => setIsModalOpen(false)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
 
-           {/* Products Grid */}
-          <div className="py-16 bg-background pt-8">
-            <div className="container mx-auto px-4">
-              
-
-              <div className="mb-8">
-                Showing {Math.min(filteredProducts.length, (currentPage - 1) * itemsPerPage + 1)} - {Math.min(filteredProducts.length, currentPage * itemsPerPage)} of {data.catalogStats.products} products
-              </div>
-
-              <div className={viewMode === 'grid'
-                ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
-                : 'flex flex-col gap-4'
-              }>
-                {filteredProducts
-                  .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-                  .map((product, index) => (
-                    <Link key={product.id} to={`/product/${product.id}`} className="block cursor-pointer">
-                      <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.4, delay: index * 0.05 }}
-                        className={`group bg-card rounded-2xl overflow-hidden border-2 md:border-4 border-orange-500 hover:border-orange-600 transition-all duration-300 card-hover h-full ${viewMode === 'list' ? 'flex flex-row' : ''
-                          }`}
+                <div className="grid md:grid-cols-2 gap-8">
+                  <div>
+                    <img
+                      src={selectedProduct.image}
+                      alt={selectedProduct.name}
+                      className="w-full h-auto rounded-lg shadow-md"
+                    />
+                    <div className="mt-4 flex gap-4">
+                      <Button
+                        onClick={() => handleDownloadDatasheet(selectedProduct.datasheet, selectedProduct.name)}
+                        variant="default"
+                        className="w-full"
                       >
-                        <div className={`relative flex justify-center items-center overflow-hidden bg-card ${viewMode === 'list' ? 'w-28 sm:w-48 shrink-0' : 'h-64'
-                          }`}>
-                          <img
-                            src={product.image}
-                            alt={product.name}
-                            className={`w-full h-full object-contain p-3 transition-transform duration-500 group-hover:scale-105 ${product.isOutOfStock ? 'grayscale opacity-50' : ''}`}
-                          />
-                          <span className="absolute top-4 left-4 px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-semibold max-w-[80%] truncate">
-                            {product.category}
-                          </span>
-                          {product.isOutOfStock && (
-                            <>
-                              <div className="absolute inset-0 bg-white/20 backdrop-blur-[1px] z-10" />
-                              <div className="absolute inset-0 flex flex-col items-center justify-center z-20 p-6">
-                                <img
-                                  src="/images/out-of-stock-illustration.png"
-                                  alt="Out of stock"
-                                  className="w-1/2 h-auto object-contain drop-shadow-xl mb-2"
-                                />
-                                <div className="bg-red-600 text-white text-[10px] font-bold px-3 py-1 rounded shadow-lg uppercase tracking-widest border border-white/20">
-                                  Currently Out of Stock
-                                </div>
-                              </div>
-                            </>
-                          )}
-                        </div>
-
-                        <div className={`flex flex-col min-w-0 ${viewMode === 'list' ? 'p-3 sm:p-6 flex-1' : 'p-4 sm:p-6 flex-1'}`}>
-                          {/* 1. Category-specific Badges (Type, Phase, Cooling) - Always at top */}
-                          <div className="flex flex-wrap gap-2 mb-2">
-                            {product.productType && <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] rounded-full uppercase font-bold tracking-wide">{product.productType}</span>}
-                            {product.phase && <span className="px-2 py-0.5 bg-purple-50 text-purple-700 text-[10px] rounded-full uppercase font-bold tracking-wide">{product.phase}</span>}
-                            {product.specifications?.['Cooling'] && <span className="px-2 py-0.5 bg-cyan-50 text-cyan-700 text-[10px] rounded-full uppercase font-bold tracking-wide">{product.specifications['Cooling']}</span>}
-                          </div>
-
-                          {/* 2. Main Title */}
-                          <h3 className={`font-heading font-semibold text-muted-foreground mb-1 group-hover:text-foreground transition-colors ${viewMode === 'list' ? 'text-lg line-clamp-2' : 'text-xl line-clamp-1'}`}>
-                            {product.name}
-                          </h3>
-
-                          {/* 3. Brand Identification */}
-                          {product.brand && (
-                            <div className="text-xs font-heading font-bold text-primary mb-3 uppercase tracking-wider leading-none">
-                              {product.brand}
-                            </div>
-                          )}
-
-                          {/* 4. Product Specific Content (Specs) */}
-                          {product.category.toLowerCase().includes('storage') ? (
-                            <div className="grid grid-cols-2 gap-x-2 gap-y-2.5 text-[10px] mb-3 bg-slate-50/80 p-3 rounded-lg border border-slate-100/50">
-                              <div className="flex flex-col">
-                                <span className="text-slate-500 font-heading font-semibold mb-0.5 uppercase tracking-wider text-[10px]">Capacity</span>
-                                <span className="font-heading font-bold text-slate-800">{product.capacity || '-'}</span>
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[10px]">Voltage</span>
-                                <span className="font-bold text-slate-800 truncate" title={product.specifications?.['Battery Nominal Voltage'] || product.specifications?.['Battery Nomi'] || product.specifications?.['Operating V'] || product.specifications?.['Operating Voltage Range'] || '-'} >{product.specifications?.['Battery Nominal Voltage'] || product.specifications?.['Battery Nomi'] || product.specifications?.['Operating V'] || product.specifications?.['Operating Voltage Range'] || '-'}</span>
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[10px]">Cycle Life</span>
-                                <span className="font-bold text-slate-800">{product.specifications?.['Cycle Life'] || '-'}</span>
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="text-slate-500 font-semibold mb-0.5 uppercase tracking-wider text-[10px]">{['solplanet', 'involtics', 'sunways', 'turno volt', 'dyness'].some(b => product.brand?.toLowerCase().trim().includes(b)) ? 'Model' : 'Warranty'}</span>
-                                <span className="font-bold text-slate-800 truncate">
-                                  {['solplanet', 'involtics', 'sunways', 'turno volt', 'dyness'].some(b => product.brand?.toLowerCase().trim().includes(b))
-                                    ? `Model: ${product.specifications['Model / Type'] || product.specifications['Model Number'] || (product as any).model_number || (product as any).model || product.warranty}`
-                                    : (product.warranty || '-')}
-                                </span>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="flex flex-wrap items-center gap-2 text-eco text-sm font-heading font-medium mb-3">
-                              <span>{product.capacity}{product.capacity && !/[wk]w$/i.test(String(product.capacity)) ? (product.isSolarPanel ? 'W' : 'kW') : ''}</span>
-                              <span className="text-muted-foreground">•</span>
-                              <span className="truncate max-w-[150px]">
-                                {['solplanet', 'involtics', 'sunways', 'turno volt'].some(b => product.brand?.toLowerCase().trim().includes(b))
-                                  ? `Model: ${product.specifications['Model / Type'] || product.specifications['Model Number'] || (product as any).model_number || (product as any).model || product.warranty}`
-                                  : (
-                                    <>
-                                      {!['Solar Roof Top Hybrid Kit', 'Solar Roof Top On Grid Kit'].includes(product.category) && <span className="font-semibold">Warranty:</span>}
-                                      {['Solar Roof Top Hybrid Kit', 'Solar Roof Top On Grid Kit'].includes(product.category) ? product.warranty : `${product.warranty}${(product as any).isSolarPanel ? ' (product)' : ''}`}
-                                    </>
-                                  )}
-                              </span>
-                            </div>
-                          )}
-
-                          {/* 5. Sub-info / Name */}
-                          <div className="flex flex-wrap items-center gap-2 mb-4 pt-2">
-                            <span className="text-sm font-medium text-gray-400 line-clamp-1 flex-1 italic">
-                              {product.category.toLowerCase().includes('storage') ? 'Energy Storage Module' : product.benefit}
-                            </span>
-                          </div>
-                          <div className="flex flex-nowrap items-center justify-between gap-1 sm:gap-4 mt-auto w-full pt-2 border-t border-gray-100">
-                            <span className="text-lg sm:text-2xl font-heading font-bold text-primary truncate">
-                              {formatPrice(product.price)}
-                            </span>
-                            <div className="flex gap-1.5 sm:gap-2 shrink-0">
-                              <Button
-                                variant="solar"
-                                size="sm"
-                                className="px-2 sm:px-3 h-8 sm:h-9"
-                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); product.datasheet && handleDownloadDatasheet(product.datasheet, product.name); }}
-                              >
-                                <Download className="h-4 w-4 sm:h-5 sm:w-5" />
-                              </Button>
-                              <Button 
-                                variant="solar" 
-                                size="sm" 
-                                className="px-2 sm:px-3 h-8 sm:h-9"
-                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); addToCart({ id: product.id, name: product.name, category: product.category, brand: product.brand, capacity: product.capacity, price: product.price, image: product.image, warranty: product.warranty, gstPercent: product.gstPercent || 0 }); }}>
-                                <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" />
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    </Link>
-                  ))}
-              </div>
-
-              {/* Pagination Controls */}
-              {filteredProducts.length > itemsPerPage && (
-                <div className="mt-12 flex justify-center items-center gap-4">
-                  <Button
-                    variant="outline"
-                    disabled={currentPage === 1}
-                    onClick={() => setCurrentPage(prev => prev - 1)}
-                  >
-                    Previous
-                  </Button>
-                  <div className="flex items-center gap-2">
-                    {Array.from({ length: Math.ceil(filteredProducts.length / itemsPerPage) }).map((_, i) => {
-                      const page = i + 1;
-                      if (
-                        page === 1 ||
-                        page === Math.ceil(filteredProducts.length / itemsPerPage) ||
-                        (page >= currentPage - 1 && page <= currentPage + 1)
-                      ) {
-                        return (
-                          <Button
-                            key={page}
-                            variant={currentPage === page ? 'default' : 'ghost'}
-                            size="sm"
-                            onClick={() => setCurrentPage(page)}
-                            className="w-10"
-                          >
-                            {page}
-                          </Button>
-                        );
-                      }
-                      if (page === currentPage - 2 || page === currentPage + 2) {
-                        return <span key={page}>...</span>;
-                      }
-                      return null;
-                    })}
-                  </div>
-                  <Button
-                    variant="outline"
-                    disabled={currentPage === Math.ceil(filteredProducts.length / itemsPerPage)}
-                    onClick={() => setCurrentPage(prev => prev + 1)}
-                  >
-                    Next
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Product Details Modal */}
-      {isModalOpen && selectedProduct && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-start mb-6">
-                <h2 className="text-2xl font-bold">{selectedProduct.name}</h2>
-                <button
-                  onClick={() => setIsModalOpen(false)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-8">
-                <div>
-                  <img
-                    src={selectedProduct.image}
-                    alt={selectedProduct.name}
-                    className="w-full h-auto rounded-lg shadow-md"
-                  />
-                  <div className="mt-4 flex gap-4">
-                    <Button
-                      onClick={() => handleDownloadDatasheet(selectedProduct.datasheet, selectedProduct.name)}
-                      variant="default"
-                      className="w-full"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                      </svg>
-                      Download Datasheet
-                    </Button>
-                    <Button variant="outline" className="w-full">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                      </svg>
-                      Contact Sales
-                    </Button>
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">Product Details</h3>
-                  <p className="text-gray-700 mb-6">{selectedProduct.benefit}</p>
-
-                  <div className="mb-6">
-                    <h4 className="font-medium text-gray-900 mb-2">Key Features</h4>
-                    <ul className="list-disc pl-5 space-y-1 text-gray-700">
-                      {selectedProduct.features?.map((feature: string, index: number) => (
-                        <li key={index}>{feature}</li>
-                      )) || (
-                          <li>No features listed</li>
-                        )}
-                    </ul>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Download Datasheet
+                      </Button>
+                      <Button variant="outline" className="w-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                        </svg>
+                        Contact Sales
+                      </Button>
+                    </div>
                   </div>
 
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h4 className="font-medium text-gray-900 mb-3">Specifications</h4>
-                    <div className="space-y-2">
-                      {selectedProduct.specifications && Object.entries(selectedProduct.specifications).map(([key, value]) => (
-                        <div key={key} className="flex justify-between border-b border-gray-100 pb-1">
-                          <span className="text-gray-600">{key}:</span>
-                          <span className="font-medium text-gray-900">{String(value)}</span>
-                        </div>
-                      ))}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4">Product Details</h3>
+                    <p className="text-gray-700 mb-6">{selectedProduct.benefit}</p>
+
+                    <div className="mb-6">
+                      <h4 className="font-medium text-gray-900 mb-2">Key Features</h4>
+                      <ul className="list-disc pl-5 space-y-1 text-gray-700">
+                        {selectedProduct.features?.map((feature: string, index: number) => (
+                          <li key={index}>{feature}</li>
+                        )) || (
+                            <li>No features listed</li>
+                          )}
+                      </ul>
+                    </div>
+
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h4 className="font-medium text-gray-900 mb-3">Specifications</h4>
+                      <div className="space-y-2">
+                        {selectedProduct.specifications && Object.entries(selectedProduct.specifications).map(([key, value]) => (
+                          <div key={key} className="flex justify-between border-b border-gray-100 pb-1">
+                            <span className="text-gray-600">{key}:</span>
+                            <span className="font-medium text-gray-900">{String(value)}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
-    </Layout>
+        )}
+      </Layout>
 
-    <AnimatePresence>
-      {showScrollTop && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 20 }}
-          className="fixed bottom-6 right-6 z-50 lg:hidden"
-        >
-          <Button
-            variant="solar"
-            size="lg"
-            className="rounded-full shadow-2xl gap-2 font-bold py-6 px-6"
-            onClick={() => {
-              const element = document.getElementById('product-search');
-              if (element) {
-                element.scrollIntoView({ behavior: 'smooth' });
-              }
-            }}
+      <AnimatePresence>
+        {showScrollTop && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="fixed bottom-6 right-6 z-50 lg:hidden"
           >
-            <Filter className="h-5 w-5" />
-            Change Brand
-          </Button>
-        </motion.div>
-      )}
-    </AnimatePresence>
+            <Button
+              variant="solar"
+              size="lg"
+              className="rounded-full shadow-2xl gap-2 font-bold py-6 px-6"
+              onClick={() => {
+                const element = document.getElementById('product-search');
+                if (element) {
+                  element.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+            >
+              <Filter className="h-5 w-5" />
+              Change Brand
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 };
