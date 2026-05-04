@@ -13,7 +13,6 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ children }) => {
     '/images/dyness_logo.jpg',
     '/images/involitics_logo.jpeg',
     '/images/waareelogo.webp',
-    '/images/turnovolt_logo.png',
     '/images/apar_logo.png',
     '/images/anchor_logo.png',
     '/images/orient_logo.png',
@@ -91,7 +90,7 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ children }) => {
                       <img
                         src={image}
                         alt={`logo-${i}`}
-                        className={`block object-contain ${image.includes('anchor') || image.includes('turnovolt') || image.includes('involitics')
+                        className={`block object-contain ${image.includes('anchor') || image.includes('involitics')
                           ? 'max-h-[160px] max-w-[90%] scale-[1.3]'
                           : 'max-h-[140px] max-w-[80%]'
                           }`}
