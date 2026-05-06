@@ -9,7 +9,7 @@ const navLinks = [
   { name: 'Home', path: '/' },
   { name: 'About', path: '/about' },
   { name: 'Products', path: '/shop', hash: 'product-search' },
-  { name: 'Solutions', path: '/solutions' },
+  { name: 'Roof Top Solar Solutions', path: '/solutions' },
   { name: 'Impact', path: '/impact' },
   { name: 'Contact', path: '/contact' },
   { name: 'Login', path: '/login' },

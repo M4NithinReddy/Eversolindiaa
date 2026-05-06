@@ -1,12 +1,12 @@
 import { Link } from 'react-router-dom';
-import { Sun, Mail, Phone, MapPin, Facebook, Twitter, Linkedin, Instagram } from 'lucide-react';
+import { Sun, Mail, Phone, MapPin, Facebook, Twitter, Linkedin, Instagram, MessageCircle, Youtube } from 'lucide-react';
 
 const footerLinks = {
   quickLinks: [
     { name: 'Home', path: '/' },
     { name: 'About', path: '/about' },
     { name: 'Products', path: '/shop#product-search' },
-    { name: 'Solutions', path: '/solutions' },
+    { name: 'Roof Top Solar Solutions', path: '/solutions' },
     { name: 'Impact', path: '/impact' },
     { name: 'Contact', path: '/contact' },
     { name: 'Shipping Policy', path: '/shipping-policy' },
@@ -40,14 +40,14 @@ export const Footer = () => {
               <a href="https://www.facebook.com/profile.php?id=61567848662496" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-primary-foreground/10 hover:bg-solar hover:text-accent-foreground transition-all duration-300">
                 <Facebook className="h-5 w-5" />
               </a>
-              <a href="#" className="p-2 rounded-full bg-primary-foreground/10 hover:bg-solar hover:text-accent-foreground transition-all duration-300">
-                <Twitter className="h-5 w-5" />
+              <a href="https://www.instagram.com/eversol_india?igsh=MTZnZ3ZjczdnMGpyNA%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-primary-foreground/10 hover:bg-solar hover:text-accent-foreground transition-all duration-300">
+                <Instagram className="h-5 w-5" />
               </a>
-              <a href="#" className="p-2 rounded-full bg-primary-foreground/10 hover:bg-solar hover:text-accent-foreground transition-all duration-300">
+              <a href="https://www.linkedin.com/in/eversol-india-548543346/" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-primary-foreground/10 hover:bg-solar hover:text-accent-foreground transition-all duration-300">
                 <Linkedin className="h-5 w-5" />
               </a>
-              <a href="#" className="p-2 rounded-full bg-primary-foreground/10 hover:bg-solar hover:text-accent-foreground transition-all duration-300">
-                <Instagram className="h-5 w-5" />
+              <a href="https://www.youtube.com/@eversolindia" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-primary-foreground/10 hover:bg-solar hover:text-accent-foreground transition-all duration-300">
+                <Youtube className="h-5 w-5" />
               </a>
             </div>
           </div>
