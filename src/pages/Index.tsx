@@ -7,7 +7,7 @@ import { ImpactStats } from '@/components/home/ImpactStats';
 import { Testimonials } from '@/components/home/Testimonials';
 import { Certifications } from '@/components/home/Certifications';
 import { CTASection } from '@/components/home/CTASection';
-import { SubsidyBanner } from '@/components/home/SubsidyBanner';
+import { SocialSidebar } from '@/components/home/SocialSidebar';
 
 const Index = () => {
   return (
@@ -20,7 +20,7 @@ const Index = () => {
       <Testimonials />
       <Certifications />
       <CTASection />
-      <SubsidyBanner />
+      <SocialSidebar />
     </Layout>
   );
 };
