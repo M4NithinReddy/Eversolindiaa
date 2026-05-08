@@ -32,7 +32,7 @@ export const Footer = () => {
                 className="h-28 w-auto object-contain"
               />
             </Link>
-            <p className="text-primary-foreground/80 mb-4 max-w-sm leading-relaxed">
+            <p className="text-primary-foreground/80 mb-4 max-w-sm leading-relaxed font-heading">
               Powering India's sustainable future with premium solar energy solutions.
               Generate | Conserve | Contribute
             </p>
@@ -54,13 +54,13 @@ export const Footer = () => {
 
           {/* Quick Links Column 1 */}
           <div>
-            <h4 className="font-heading font-bold text-lg mb-6 text-solar">Quick Links</h4>
+            <h4 className="font-heading font-bold text-lg mb-6 text-solar tracking-wide">Quick Links</h4>
             <ul className="space-y-3">
               {footerLinks.quickLinks.slice(0, 6).map((link) => (
                 <li key={link.path}>
                   <Link
                     to={link.path}
-                    className="text-primary-foreground/80 hover:text-solar transition-colors duration-300"
+                    className="text-primary-foreground/80 hover:text-solar transition-colors duration-300 font-heading font-medium"
                     onClick={() => {
                       if (link.path.includes('/shop')) {
                         ['shop_category', 'shop_brand', 'shop_invType', 'shop_invBrand', 'shop_search', 'shop_page'].forEach(k => sessionStorage.removeItem(k));
@@ -98,11 +98,11 @@ export const Footer = () => {
 
           {/* Contact */}
           <div>
-            <h4 className="font-heading font-bold text-lg mb-6 text-solar">Contact</h4>
+            <h4 className="font-heading font-bold text-lg mb-6 text-solar tracking-wide">Contact</h4>
             <ul className="space-y-4">
               <li className="flex items-start gap-3">
                 <MapPin className="h-5 w-5 text-solar shrink-0 mt-0.5" />
-                <span className="text-primary-foreground/80">
+                <span className="text-primary-foreground/80 font-heading font-medium">
                   EVERSOL INDIA <br />
                   Vasu Complex New BEL Road,<br />
                   Bengaluru, Karnataka 560054
@@ -110,13 +110,13 @@ export const Footer = () => {
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="h-5 w-5 text-solar shrink-0" />
-                <a href="tel:+919902843835" className="text-primary-foreground/80 hover:text-solar transition-colors">
+                <a href="tel:+919902843835" className="text-primary-foreground/80 hover:text-solar transition-colors font-heading font-medium">
                   +91 99028 43835
                 </a>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="h-5 w-5 text-solar shrink-0" />
-                <a href="mailto:info@eversol.in" className="text-primary-foreground/80 hover:text-solar transition-colors">
+                <a href="mailto:info@eversol.in" className="text-primary-foreground/80 hover:text-solar transition-colors font-heading font-medium">
                   info@eversol.in
                 </a>
               </li>
@@ -129,14 +129,14 @@ export const Footer = () => {
       <div className="border-t border-primary-foreground/10">
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-primary-foreground/60 text-sm">
+            <p className="text-primary-foreground/60 text-sm font-heading">
               © {new Date().getFullYear()} EVERSOL INDIA. All rights reserved.
             </p>
             <div className="flex gap-6 text-sm">
-              <Link to="/privacy" className="text-primary-foreground/60 hover:text-solar transition-colors">
+              <Link to="/privacy" className="text-primary-foreground/60 hover:text-solar transition-colors font-heading font-medium">
                 Privacy Policy
               </Link>
-              <Link to="/terms" className="text-primary-foreground/60 hover:text-solar transition-colors">
+              <Link to="/terms" className="text-primary-foreground/60 hover:text-solar transition-colors font-heading font-medium">
                 Terms of Service
               </Link>
             </div>
